@@ -51,16 +51,18 @@ public class BanModCommands {
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
         var infractions = banMod.getEntityService().getInfractions(target)
-                .filter(i -> i.getExpires() == null || i.getExpires().isAfter(now()))
+                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
                 .toList();
         if (infractions.isEmpty())
-            text = text.append(text("- (none)").color(GRAY));
+            text = text.append(text("\n- (none)").color(GRAY));
         else for (var infraction : infractions)
-            text = text.append(textPunishment(infraction.getCategory().getPunishment()))
+            text = text.append(text("\n- "))
+                    .append(textPunishment(infraction.getCategory().getPunishment()))
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
                             ? "Server"
-                            : banMod.getPlayerAdapter().getName(infraction.getIssuer())))
+                            : banMod.getPlayerAdapter().getName(infraction.getIssuer()))
+                            .color(AQUA))
                     .append(text("\n"));
         return text;
     }
