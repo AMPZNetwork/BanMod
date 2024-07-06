@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.model.region.Group;
-import com.ampznetwork.banmod.api.model.region.Region;
+import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 import org.hibernate.jpa.HibernatePersistenceProvider;
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 public class BanModPersistenceUnit implements PersistenceUnitInfo {
     HikariDataSource dataSource;
     URL jarUrl = BanMod.class.getProtectionDomain().getCodeSource().getLocation();
-    List<String> classes = Stream.<Class<?>>of(Region.class, Group.class)
+    List<String> classes = Stream.of(PunishmentCategory.class, Infraction.class)
             .map(Class::getCanonicalName)
             .toList();
 

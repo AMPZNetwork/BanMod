@@ -2,19 +2,14 @@ package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.model.mini.RegionCompositeKey;
-import com.ampznetwork.banmod.api.model.region.Group;
-import com.ampznetwork.banmod.api.model.region.Region;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.comroid.api.data.Vector;
 import org.comroid.api.info.Constraint;
 import org.comroid.api.tree.Container;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import javax.persistence.EntityManager;
 import java.util.*;
-import java.util.stream.Stream;
 
 @Slf4j
 public class HibernateEntityService extends Container.Base implements EntityService {
@@ -29,7 +24,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 "hibernate.connection.url", url,
                 "hibernate.connection.username", user,
                 "hibernate.connection.password", pass,
-                "hibernate.dialect", type.getDialect(),
+                "hibernate.dialect", type.getDialectClass().getCanonicalName(),
                 //"hibernate.show_sql", String.valueOf(isDebug()),
                 "hibernate.hbm2ddl.auto", "update"
         );
@@ -45,33 +40,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.manager = factory.createEntityManager();
 
         addChildren(dataSource, factory, manager);
-    }
-
-    @Override
-    public Optional<Region> findRegion(RegionCompositeKey key) {
-        return Optional.ofNullable(manager.find(Region.class, key));
-    }
-
-    @Override
-    public Stream<Region> findRegions(Vector.N3 location, String worldName) {
-        // todo: query, needs area in db
-        return manager.createQuery("SELECT r FROM Region r", Region.class)
-                .getResultStream()
-                .filter(region -> region.getWorldName().equals(worldName))
-                .sorted(Comparator.comparingLong(Region::getPriority).reversed())
-                .filter(region -> region.isPointInside(location));
-    }
-
-    @Override
-    public Stream<Region> findClaims(UUID claimOwnerId) {
-        return manager.createQuery("SELECT Region FROM Region r WHERE r.claimOwner = :id", Region.class)
-                .setParameter("id", claimOwnerId)
-                .getResultStream();
-    }
-
-    @Override
-    public Optional<Group> findGroup(String name) {
-        return Optional.ofNullable(manager.find(Group.class, name));
     }
 
     @Override

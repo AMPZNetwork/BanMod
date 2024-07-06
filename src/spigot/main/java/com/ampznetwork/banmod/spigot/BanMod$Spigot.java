@@ -36,8 +36,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public void onLoad() {
-        if (!isDebug())
-            saveDefaultConfig();
+        saveDefaultConfig();
         this.config = super.getConfig();
 
         this.cmdr = new Command.Manager();
@@ -66,8 +65,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @SneakyThrows
     public void onEnable() {
         var dbImpl = config.getString("worldmod.entity-service", "database");
-        var dbType = EntityService.DatabaseType.valueOf(config.getString("worldmod.database.type", "h2"));
-        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./worldmod.h2");
+        var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));
+        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./banmod.h2");
         var dbUser = config.getString("worldmod.database.username", "sa");
         var dbPass = config.getString("worldmod.database.password", "");
         this.entityService = switch (dbImpl.toLowerCase()) {
