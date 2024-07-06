@@ -129,7 +129,9 @@ public class BanModCommands {
     @Command
     public Component kick(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
-        var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason).build();
+        var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
+                .expires(null)
+                .build();
         banMod.getEntityService().save(infraction);
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Kick);
