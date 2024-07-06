@@ -62,8 +62,7 @@ public class BanModCommands {
                     .append(text(infraction.getIssuer() == null
                             ? "Server"
                             : banMod.getPlayerAdapter().getName(infraction.getIssuer()))
-                            .color(AQUA))
-                    .append(text("\n"));
+                            .color(AQUA));
         return text;
     }
 
