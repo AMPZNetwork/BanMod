@@ -58,6 +58,7 @@ public class BanModCommands {
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
         var infractions = banMod.getEntityService().getInfractions(target)
+                .filter(i -> i.getCategory().getPunishment() != Punishment.Kick)
                 .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
                 .toList();
         if (infractions.isEmpty())
