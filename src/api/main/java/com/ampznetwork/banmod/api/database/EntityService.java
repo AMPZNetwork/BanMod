@@ -48,8 +48,9 @@ public interface EntityService extends LifeCycle {
                 .max(Comparator.comparingInt(i -> i.getCategory().getPunishment().ordinal()))
                 .map(infraction -> new PlayerResult(playerId,
                         infraction.getCategory().getPunishment() == Punishment.Mute,
-                        infraction.getCategory().getPunishment() == Punishment.Ban))
-                .orElseGet(() -> new PlayerResult(playerId, false, false));
+                        infraction.getCategory().getPunishment() == Punishment.Ban,
+                        infraction.getReason()))
+                .orElseGet(() -> new PlayerResult(playerId, false, false, null));
     }
 
     boolean save(Object... it);

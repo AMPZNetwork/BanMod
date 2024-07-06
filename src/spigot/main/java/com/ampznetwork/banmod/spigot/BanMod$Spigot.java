@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -27,6 +28,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     }
 
     private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
+    private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
     private FileConfiguration config;
     private EntityService entityService;
     private Command.Manager cmdr;

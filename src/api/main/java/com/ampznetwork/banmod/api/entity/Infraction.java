@@ -29,6 +29,8 @@ public class Infraction {
     Instant expires;
     @Nullable
     UUID issuer;
+    @Nullable
+    String reason;
     @ManyToOne
     PunishmentCategory category;
 }
