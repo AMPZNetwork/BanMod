@@ -1,0 +1,58 @@
+plugins {
+    id 'java-library'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+ext {
+    artifactName = 'banMod-api'
+    projectDescription = 'Minecraft World Protection Mod'
+    userbase = 'AMPZNetwork'
+}
+
+group = 'com.ampznetwork.banMod'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+sourceSets {
+    main.java.srcDirs       = files(parent.projectDir.toString() + "/src/api/main/java")
+    main.resources.srcDirs  = files(parent.projectDir.toString() + "/src/api/main/resources")
+    test.java.srcDirs       = files(parent.projectDir.toString() + "/src/api/test/java")
+    test.resources.srcDirs  = files(parent.projectDir.toString() + "/src/api/test/java")
+}
+
+apply from: "$rootDir/gradle/publishing.gradle"
+
+repositories {
+    maven { url 'https://maven.comroid.org' }
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    // json
+    api 'com.fasterxml.jackson.core:jackson-databind:2.+'
+
+    // database
+    implementation 'javax.persistence:javax.persistence-api:2.2'
+    compileOnly 'com.mysql:mysql-connector-j:8.4.0'
+    compileOnly 'com.h2database:h2:2.2.224'
+
+    // kyori
+    api 'net.kyori:adventure-api:4.11.+'
+
+    // logger
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.+'
+
+    // utility
+    compileOnly 'org.projectlombok:lombok:+'
+    annotationProcessor 'org.projectlombok:lombok:+'
+}
+
+task simplifyArtifact(type: Copy) {
+    // api module should be slim, and only contain banMod's own api
+    dependsOn test, jar
+    from jar.outputs.files.singleFile
+    into "$rootDir/build/libs/"
+    rename { n -> "BanMod-api.jar" }
+}

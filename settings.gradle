@@ -1,0 +1,37 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = 'MinecraftForge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'BanMod'
+
+include('api')
+include('core')
+
+include('spigot')
+//include('forge')
+include('fabric')
+
+var dirApi = file('../../java/japi/')
+if (!dirApi.exists())
+    dirApi = file('../../java/api')
+if (!dirApi.exists())
+    dirApi = file('../japi')
+if (dirApi.exists()) {
+    include(':japi')
+    project(':japi').projectDir = dirApi
+}

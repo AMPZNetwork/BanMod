@@ -1,0 +1,77 @@
+name: Upload Artifacts to Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    name: Upload Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          path: BanMod
+
+      - name: Clone japi repository
+        uses: actions/checkout@v2
+        with:
+          repository: comroid-git/japi
+          path: japi
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Build Artifacts
+        run: cd BanMod && ./gradlew simplifyArtifact
+
+      - name: Upload API JAR to Release
+        id: upload-api-assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: BanMod/build/libs/BanMod-api.jar
+          asset_name: "BanMod-api-${{ github.event.release.tag_name }}.jar"
+          asset_content_type: application/java-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Spigot Plugin to Release
+        id: upload-spigot-assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: BanMod/build/libs/BanMod-spigot.jar
+          asset_name: "BanMod-spigot-${{ github.event.release.tag_name }}.jar"
+          asset_content_type: application/java-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Forge Mod to Release
+        id: upload-forge-assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: BanMod/build/libs/BanMod-forge.jar
+          asset_name: "BanMod-forge-${{ github.event.release.tag_name }}.jar"
+          asset_content_type: application/java-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Fabric Mod to Release
+        id: upload-fabric-assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: BanMod/build/libs/BanMod-fabric.jar
+          asset_name: "BanMod-fabric-${{ github.event.release.tag_name }}.jar"
+          asset_content_type: application/java-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
