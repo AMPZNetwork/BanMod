@@ -172,7 +172,7 @@ public class BanModCommands {
             // todo: use book adapter
             var text = text("Available Punishment categories:");
             for (var category : banMod.getEntityService().getCategories().toList())
-                text = text.append(text("\n- "))
+                text = text.append(text("\n"))
                         .append(text(category.getName()).color(AQUA))
                         .append(text(" punishes with "))
                         .append(text(category.getPunishment().getName()).color(RED))
