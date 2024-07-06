@@ -35,6 +35,8 @@ dependencies {
 
     // database
     implementation 'javax.persistence:javax.persistence-api:2.2'
+    compileOnly 'org.hibernate:hibernate-core:5.6.0.Final'
+    compileOnly 'org.mariadb.jdbc:mariadb-java-client:3.4.0'
     compileOnly 'com.mysql:mysql-connector-j:8.4.0'
     compileOnly 'com.h2database:h2:2.2.224'
 

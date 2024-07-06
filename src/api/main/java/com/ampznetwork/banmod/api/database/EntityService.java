@@ -7,6 +7,9 @@ import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
 import org.comroid.api.data.Vector;
 import org.comroid.api.tree.LifeCycle;
+import org.hibernate.dialect.H2Dialect;
+import org.hibernate.dialect.MariaDBDialect;
+import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Contract;
 
 import java.util.UUID;
@@ -21,11 +24,12 @@ public interface EntityService extends LifeCycle {
     @AllArgsConstructor
     @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
     enum DatabaseType implements Named {
-        h2(org.h2.Driver.class, "org.hibernate.dialect.H2Dialect"),
-        MySQL(com.mysql.jdbc.Driver.class, "org.hibernate.dialect.MySQL57Dialect");
+        h2(org.h2.Driver.class, H2Dialect.class),
+        MySQL(com.mysql.jdbc.Driver.class, MySQL57Dialect.class),
+        MariaDB(org.mariadb.jdbc.Driver.class, MariaDBDialect.class);
 
         Class<?> driverClass;
-        String dialect;
+        Class<?> dialectClass;
     }
 
     @Getter
