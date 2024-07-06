@@ -12,6 +12,9 @@ commands:
   punish:
     description: Punish User
     permission: banmod.punish
+  mute:
+    description: Mute User
+    permission: banmod.mute
   kick:
     description: Kick User
     permission: banmod.kick
