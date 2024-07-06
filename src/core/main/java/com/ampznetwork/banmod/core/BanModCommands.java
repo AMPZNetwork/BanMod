@@ -6,6 +6,7 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
+import org.comroid.annotations.Alias;
 import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,26 +168,52 @@ public class BanModCommands {
     @UtilityClass
     public class category {
         @Command
-        public Component list(BanMod banMod, UUID issuer) {
-            throw new Command.Error("unimplemented");
+        public Component list(BanMod banMod) {
+            // todo: use book adapter
+            var text = text("Available Punishment categories:");
+            for (var category : banMod.getEntityService().getCategories().toList())
+                text = text.append(text("\n- "))
+                        .append(text(category.getName()).color(AQUA))
+                        .append(text(" punishes with "))
+                        .append(text(category.getPunishment().getName()).color(RED))
+                        .append(text("\n- Base Duration: "))
+                        .append(text(category.getBaseDuration().toString()).color(YELLOW))
+                        .append(text("\n- Exponent Base: "))
+                        .append(text(category.getRepetitionExpBase()).color(YELLOW));
+            return text;
         }
 
         @Command
-        public Component create(BanMod banMod, UUID issuer, @Arg String name, @Arg String baseDuration, @Nullable @Arg Double repetitionFactor) {
-            if (repetitionFactor != null)
-                repetitionFactor = Math.max(2, repetitionFactor);
-            else repetitionFactor = 2d;
-            throw new Command.Error("unimplemented");
+        @Alias("update")
+        public Component create(BanMod banMod, @Arg String name, @Arg String baseDuration, @Nullable @Arg Double repetitionBase) {
+            var duration = parseDuration(baseDuration);
+            if (repetitionBase != null)
+                repetitionBase = Math.max(2, repetitionBase);
+            else repetitionBase = 2d;
+            var update = new boolean[]{false};
+            var category = banMod.getEntityService().findCategory(name)
+                    .map(it -> {
+                        update[0] = true;
+                        return it.toBuilder();
+                    })
+                    .orElseGet(PunishmentCategory::builder)
+                    .name(name)
+                    .baseDuration(duration)
+                    .repetitionExpBase(repetitionBase)
+                    .build();
+            banMod.getEntityService().save(category);
+            return text("Category ")
+                    .append(text(name).color(AQUA))
+                    .append(text(" was "))
+                    .append(text(update[0] ? "updated" : "created")
+                            .color(update[0] ? GREEN : DARK_GREEN));
         }
 
         @Command
-        public Component delete(BanMod banMod, UUID issuer, @Arg String name) {
-            throw new Command.Error("unimplemented");
-        }
-
-        @Command("generate-defaults")
-        public Component generateDefaults(BanMod banMod, UUID issuer) {
-            throw new Command.Error("unimplemented");
+        public Component delete(BanMod banMod, @Arg String name) {
+            return banMod.getEntityService().deleteCategory(name)
+                    ? text("Deleted category " + name).color(RED)
+                    : text("Could not delete category " + name).color(DARK_RED);
         }
     }
 }

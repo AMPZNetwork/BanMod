@@ -26,6 +26,8 @@ import static java.time.Instant.now;
 public interface EntityService extends LifeCycle {
     Optional<PlayerData> getPlayerData(UUID playerId);
 
+    boolean deleteCategory(String name);
+
     Stream<PunishmentCategory> getCategories();
 
     default Optional<PunishmentCategory> findCategory(String name) {

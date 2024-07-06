@@ -10,10 +10,10 @@ import java.time.Duration;
 
 @Data
 @Entity
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
+@Builder(toBuilder = true)
 @EqualsAndHashCode(of = "name")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory {

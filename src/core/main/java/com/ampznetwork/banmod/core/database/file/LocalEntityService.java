@@ -23,6 +23,11 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
+    public boolean deleteCategory(String name) {
+        return false;
+    }
+
+    @Override
     public Stream<PunishmentCategory> getCategories() {
         return Stream.empty();
     }

@@ -58,6 +58,21 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
+    public boolean deleteCategory(String name) {
+        return findCategory(name)
+                .filter(it -> {
+                    try {
+                        manager.remove(it);
+                        return true;
+                    } catch (Throwable t) {
+                        log.warn("Could not delete category {}", name, t);
+                        return false;
+                    }
+                })
+                .isPresent();
+    }
+
+    @Override
     public Stream<PunishmentCategory> getCategories() {
         return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
                 .getResultStream();
