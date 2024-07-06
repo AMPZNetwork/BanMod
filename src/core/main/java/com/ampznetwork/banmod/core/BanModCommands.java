@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.core;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
 
 @UtilityClass
@@ -59,75 +61,110 @@ public class BanModCommands {
         return text;
     }
 
-    private Component textPunishment(Punishment punishment) {
-        return text(switch (punishment) {
-            case Mute -> "Muted";
-            case Ban -> "Banned";
-            default -> throw new IllegalStateException("Unexpected value: " + punishment);
-        }).color(switch (punishment) {
-            case Mute -> RED;
-            case Ban -> DARK_RED;
-            default -> throw new IllegalStateException("Unexpected value: " + punishment);
-        })
-    }
-
     @Command
     public Component punish(BanMod banMod, UUID issuer, @Arg String name, @Arg String category, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var cat = banMod.getEntityService().findCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
-        var rep = banMod.getEntityService().findRepetition(tgt, cat);
-
-        // create infraction
-        var infraction = Infraction.builder()
-                .playerId(tgt)
-                .punishment(cat.getPunishment())
-                .issuer(issuer)
-                .reason(reason)
-                .expires(now().plus(cat.calculateDuration(rep)))
+        var infraction = standardInfraction(banMod, cat, tgt, issuer, reason)
                 .build();
         banMod.getEntityService().save(infraction);
 
         // apply infraction
-        var punishment = cat.getPunishment();
+        var punishment = infraction.getCategory().getPunishment();
         if (punishment != Punishment.Mute)
             banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
 
-        return text("User ")
-                .append(text(name).color(AQUA))
-                .append(text(" was "))
-                .append(textPunishment(punishment));
+        return textPunishmentFull(name, punishment);
     }
 
     @Command
     public Component mute(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
-        var cat = banMod.getMuteCategory();
-        var rep = banMod.getEntityService().findRepetition(tgt, cat);
+        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
+        banMod.getEntityService().save(infraction);
+        return textPunishmentFull(name, Punishment.Mute);
+    }
 
-        // create infraction
-        var infraction = Infraction.builder()
-                .playerId(tgt)
-                .punishment(cat.getPunishment())
-                .issuer(issuer)
-                .reason(reason)
-                .expires(now().plus(cat.calculateDuration(rep)))
+    @Command
+    public Component tempmute(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var now = now();
+        var duration = parseDuration(durationText);
+        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason)
+                .timestamp(now)
+                .expires(now.plus(duration))
                 .build();
         banMod.getEntityService().save(infraction);
-        throw new Command.Error("unimplemented");
+        return textPunishmentFull(name, Punishment.Mute);
     }
 
     @Command
     public Component kick(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
-        throw new Command.Error("unimplemented");
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason).build();
+        banMod.getEntityService().save(infraction);
+        return textPunishmentFull(name, Punishment.Kick);
     }
 
     @Command
     public Component ban(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
-        throw new Command.Error("unimplemented");
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
+        banMod.getEntityService().save(infraction);
+        return textPunishmentFull(name, Punishment.Ban);
     }
 
     @Command
+    public Component tempban(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var now = now();
+        var duration = parseDuration(durationText);
+        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason)
+                .timestamp(now)
+                .expires(now.plus(duration))
+                .build();
+        banMod.getEntityService().save(infraction);
+        return textPunishmentFull(name, Punishment.Ban);
+    }
+
+    private Infraction.Builder standardInfraction(BanMod banMod,
+                                                  PunishmentCategory category,
+                                                  UUID target,
+                                                  @Nullable UUID issuer,
+                                                  @Nullable String reason) {
+        var rep = banMod.getEntityService().findRepetition(target, category);
+        var now = now();
+        return Infraction.builder()
+                .playerId(target)
+                .category(category)
+                .issuer(issuer)
+                .reason(reason)
+                .timestamp(now)
+                .expires(now.plus(category.calculateDuration(rep)));
+    }
+
+    private Component textPunishmentFull(String username, Punishment punishment) {
+        return text("User ")
+                .append(text(username).color(AQUA))
+                .append(text(" was "))
+                .append(textPunishment(punishment));
+    }
+
+    private Component textPunishment(Punishment punishment) {
+        return text(switch (punishment) {
+            case Mute -> "muted";
+            case Kick -> "kicked";
+            case Ban -> "banned";
+        }).color(switch (punishment) {
+            case Mute -> YELLOW;
+            case Kick -> RED;
+            case Ban -> DARK_RED;
+        });
+    }
+
+    @Command
+    @UtilityClass
     public class category {
         @Command
         public Component list(BanMod banMod, UUID issuer) {

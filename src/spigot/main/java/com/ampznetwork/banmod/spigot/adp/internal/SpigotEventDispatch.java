@@ -5,11 +5,12 @@ import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import lombok.Value;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 @Value
-public class SpigotEventDispatch extends EventDispatchBase {
+public class SpigotEventDispatch extends EventDispatchBase implements Listener {
     public SpigotEventDispatch(BanMod banMod) {
         super(banMod);
     }

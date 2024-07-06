@@ -3,12 +3,14 @@ package com.ampznetwork.banmod.spigot;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Stream;
 
+import static java.time.Duration.*;
 import static org.comroid.api.func.util.Streams.append;
 
 @Getter
@@ -79,7 +82,16 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
             default -> throw new IllegalStateException("Unexpected value: " + dbImpl.toLowerCase());
         };
 
-        //getPluginManager().registerEvents(eventDispatch, this);
+        // default categories
+        muteCategory = entityService.findCategory("mute")
+                .orElseGet(() -> new PunishmentCategory("mute", Punishment.Mute, ofHours(1), 3));
+        kickCategory = entityService.findCategory("kick")
+                .orElseGet(() -> new PunishmentCategory("kick", Punishment.Kick, ofSeconds(0), 1));
+        banCategory = entityService.findCategory("ban")
+                .orElseGet(() -> new PunishmentCategory("ban", Punishment.Ban, ofDays(1), 3));
+        entityService.save(muteCategory, kickCategory, banCategory);
+
+        Bukkit.getPluginManager().registerEvents(eventDispatch, this);
     }
 
     @Override

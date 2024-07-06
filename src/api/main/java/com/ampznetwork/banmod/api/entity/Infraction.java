@@ -1,6 +1,5 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.banmod.api.model.Punishment;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.comroid.annotations.Default;
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -26,7 +26,8 @@ public class Infraction {
     @NotNull
     UUID playerId;
     @NotNull
-    Punishment punishment;
+    @ManyToOne
+    PunishmentCategory category;
     @NotNull
     @Default
     Instant timestamp = Instant.now();
@@ -44,7 +45,7 @@ public class Infraction {
     UUID revoker = null;
 
     public @Nullable String getReason() {
-        return reason == null ? switch (punishment) {
+        return reason == null ? switch (category.getPunishment()) {
             case Mute -> "You were muted";
             case Kick -> "You were kicked";
             case Ban -> "You were banned";
