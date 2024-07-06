@@ -80,7 +80,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
-        return manager.createQuery("select i from Infraction i where i.playerId == :playerId", Infraction.class)
+        return manager.createQuery("select i from Infraction i where i.playerId = :playerId", Infraction.class)
                 .setParameter("playerId", playerId)
                 .getResultStream();
     }

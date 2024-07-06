@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.api.entity;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.comroid.annotations.Default;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import java.time.Instant;
 import java.util.UUID;
+
+import static lombok.Builder.Default;
 
 @Data
 @Entity
@@ -21,6 +22,7 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
+    @Default
     @Id
     UUID id = UUID.randomUUID();
     @NotNull

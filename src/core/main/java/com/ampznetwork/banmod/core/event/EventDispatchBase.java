@@ -34,8 +34,8 @@ public abstract class EventDispatchBase {
                 }, () -> {
                     // create new player data
                     var newData = new PlayerData(playerId,
-                            Set.of(address),
-                            Set.of(name));
+                            Set.of(name),
+                            Set.of(address));
                     service.save(newData);
                 });
 

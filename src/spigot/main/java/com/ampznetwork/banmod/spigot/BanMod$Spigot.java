@@ -4,14 +4,18 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.banmod.core.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.experimental.Delegate;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -38,6 +42,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     private PunishmentCategory banCategory;
     private FileConfiguration config;
     private Command.Manager cmdr;
+    @Delegate(types = {TabCompleter.class, CommandExecutor.class})
     private Command.Manager.Adapter$Spigot adapter;
     private EntityService entityService;
 
@@ -63,7 +68,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
                         .collect(append(BanMod$Spigot.this));
             }
         };
-        cmdr.register(BanMod$Spigot.class);
+        cmdr.register(BanModCommands.class);
         cmdr.register(this);
         cmdr.initialize();
     }

@@ -10,7 +10,6 @@ import java.time.Duration;
 
 @Data
 @Entity
-@NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Builder(toBuilder = true)

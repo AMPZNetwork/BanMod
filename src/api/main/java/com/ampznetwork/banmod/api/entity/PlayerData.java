@@ -13,7 +13,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = "id")
