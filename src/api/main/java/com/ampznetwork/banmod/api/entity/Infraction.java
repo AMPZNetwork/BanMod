@@ -23,14 +23,16 @@ public class Infraction {
     UUID id = UUID.randomUUID();
     @NotNull
     UUID playerId;
+    @ManyToOne
+    PunishmentCategory category;
     @NotNull
     Instant timestamp;
     @Nullable
     Instant expires;
     @Nullable
+    String reason;
+    @Nullable
     UUID issuer;
     @Nullable
-    String reason;
-    @ManyToOne
-    PunishmentCategory category;
+    UUID revoker;
 }

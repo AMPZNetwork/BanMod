@@ -21,7 +21,7 @@ public class PlayerData {
     @Id
     UUID id;
     @ElementCollection
-    Set<InetAddress> knownIPs;
-    @ElementCollection
     Set<String> knownNames;
+    @ElementCollection
+    Set<InetAddress> knownIPs;
 }

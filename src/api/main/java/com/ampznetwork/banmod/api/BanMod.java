@@ -7,4 +7,6 @@ public interface BanMod {
     PlayerAdapter getPlayerAdapter();
 
     EntityService getEntityService();
+
+    void reload();
 }

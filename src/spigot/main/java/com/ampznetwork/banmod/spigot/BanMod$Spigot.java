@@ -83,4 +83,10 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     public void onDisable() {
         this.entityService.terminate();
     }
+
+    @Override
+    public void reload() {
+        onDisable();
+        onEnable();
+    }
 }
