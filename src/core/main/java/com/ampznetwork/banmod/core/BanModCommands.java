@@ -14,6 +14,8 @@ import java.util.UUID;
 
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.event.ClickEvent.openUrl;
+import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
@@ -37,7 +39,10 @@ public class BanModCommands {
                 .append(text(name).color(AQUA))
                 .append(text("\n"))
                 .append(text("ID: "))
-                .append(text(target.toString()).color(YELLOW))
+                .append(text(target.toString())
+                        .clickEvent(openUrl("https://namemc.com/profile/" + target))
+                        .hoverEvent(showText(text("Open on NameMC.com")))
+                        .color(YELLOW))
                 .append(text("\n"))
                 .append(text("Known Names:"));
         for (var knownName : data.getKnownNames())
