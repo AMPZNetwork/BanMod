@@ -7,6 +7,7 @@ import lombok.Value;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
@@ -19,6 +20,15 @@ import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSeri
 @Value
 public class SpigotPlayerAdapter implements PlayerAdapter {
     BanMod$Spigot banMod;
+
+    @Override
+    public UUID getId(String name) {
+        return Arrays.stream(Bukkit.getOfflinePlayers())
+                .filter(player -> name.equals(player.getName()))
+                .findAny()
+                .map(OfflinePlayer::getUniqueId)
+                .orElseThrow();
+    }
 
     @Override
     public String getName(UUID playerId) {

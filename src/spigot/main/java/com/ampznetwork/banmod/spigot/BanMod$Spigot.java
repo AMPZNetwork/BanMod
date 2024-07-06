@@ -62,10 +62,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
             @Override
             protected Stream<Object> collectExtraArgs(@NotNull CommandSender sender) {
-                if (!(sender instanceof Player player))
-                    throw new Command.Error("Cannot be used from console");
                 return super.collectExtraArgs(sender)
-                        .collect(append(BanMod$Spigot.this));
+                        .collect(append(BanMod$Spigot.this, sender instanceof Player player ? player.getUniqueId() : null));
             }
         };
         cmdr.register(BanModCommands.class);

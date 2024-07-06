@@ -37,26 +37,29 @@ public class BanModCommands {
                 .append(text(name).color(AQUA))
                 .append(text("\n"))
                 .append(text("ID: "))
-                .append(text(target.toString()))
+                .append(text(target.toString()).color(YELLOW))
                 .append(text("\n"))
                 .append(text("Known Names:"));
         for (var knownName : data.getKnownNames())
-            text = text.append(text("- "))
-                    .append(text(knownName))
+            text = text.append(text("\n- "))
+                    .append(text(knownName).color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Known IPs:"));
         for (var knownIp : data.getKnownIPs())
-            text = text.append(text("- "))
-                    .append(text(knownIp.toString()))
+            text = text.append(text("\n- "))
+                    .append(text(knownIp.toString()).color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
-        for (var infraction : banMod.getEntityService().getInfractions(target)
+        var infractions = banMod.getEntityService().getInfractions(target)
                 .filter(i -> i.getExpires() == null || i.getExpires().isAfter(now()))
-                .toList())
+                .toList();
+        if (infractions.isEmpty())
+            text = text.append(text("- (none)").color(GRAY));
+        else for (var infraction : infractions)
             text = text.append(textPunishment(infraction.getCategory().getPunishment()))
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
-                            ? "Console"
+                            ? "Server"
                             : banMod.getPlayerAdapter().getName(infraction.getIssuer())))
                     .append(text("\n"));
         return text;

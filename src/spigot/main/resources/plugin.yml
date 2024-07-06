@@ -18,12 +18,18 @@ commands:
   punish:
     description: Punish User
     permission: banmod.punish
+  tempmute:
+    description: Temporarily Mute User
+    permission: banmod.tempmute
   mute:
     description: Mute User
     permission: banmod.mute
   kick:
     description: Kick User
     permission: banmod.kick
+  tempban:
+    description: Temporarily Ban User
+    permission: banmod.tempban
   ban:
     description: Ban User
     permission: banmod.ban
