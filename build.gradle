@@ -19,7 +19,7 @@ allprojects {
 subprojects {
     apply plugin: 'java-library'
 
-    group = 'com.ampznetwork.banMod'
+    group = 'com.ampznetwork.banmod'
     version = "0.1.${getCommitTimestampSeconds()}"
 
     compileJava.options.encoding = 'UTF-8'
