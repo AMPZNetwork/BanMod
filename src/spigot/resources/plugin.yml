@@ -1,0 +1,20 @@
+name: BanMod
+version: '0.1.0'
+description: Cross-Server Punishment modification
+main: com.ampznetwork.banmod.spigot.BanMod$Spigot
+api-version: '1.18'
+load: STARTUP
+website: https://github.com/AMPZNetwork/BanMod
+commands:
+  reload:
+    description: Reloads Configuration Files
+    permission: banmod.reload
+  punish:
+    description: Punish User
+    permission: banmod.punish
+  kick:
+    description: Kick User
+    permission: banmod.kick
+  ban:
+    description: Ban User
+    permission: banmod.ban

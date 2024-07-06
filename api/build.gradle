@@ -9,7 +9,7 @@ ext {
     userbase = 'AMPZNetwork'
 }
 
-group = 'com.ampznetwork.banMod'
+group = 'com.ampznetwork.banmod'
 sourceCompatibility = '17'
 targetCompatibility = '17'
 

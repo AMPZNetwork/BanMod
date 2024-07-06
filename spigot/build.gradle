@@ -4,7 +4,7 @@ plugins {
     id "de.undercouch.download" version "5.5.0"
 }
 
-group = 'com.ampznetwork.banMod'
+group = 'com.ampznetwork.banmod'
 
 sourceSets {
     main.java.srcDirs       = files(parent.projectDir.toString() + "/src/spigot/main/java")
