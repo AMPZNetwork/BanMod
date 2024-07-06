@@ -8,11 +8,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.time.Duration;
 
-@Entity
 @Data
+@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@RequiredArgsConstructor
 @EqualsAndHashCode(of = "name")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory {

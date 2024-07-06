@@ -5,11 +5,10 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.md_5.bungee.api.chat.BaseComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
-import org.comroid.api.data.Vector;
-import org.comroid.api.info.Constraint;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,16 +31,11 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Vector.N3 getPosition(UUID playerId) {
-        var player = banMod.getServer().getPlayer(playerId);
-        Constraint.notNull(player, "player").run();
-        var location = player.getLocation();
-        return new Vector.N3(location.getX(), location.getY(), location.getZ());
-    }
-
-    @Override
-    public String getWorldName(UUID playerId) {
-        return banMod.getServer().getPlayer(playerId).getWorld().getName();
+    public void kick(UUID playerId, String reason) {
+        var player = Bukkit.getPlayer(playerId);
+        if (player == null)
+            return;
+        player.kickPlayer(reason);
     }
 
     @Override

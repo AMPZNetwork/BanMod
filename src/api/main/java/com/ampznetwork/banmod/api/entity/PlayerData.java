@@ -10,11 +10,12 @@ import java.net.InetAddress;
 import java.util.Set;
 import java.util.UUID;
 
-@Entity
 @Data
+@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@RequiredArgsConstructor
 @EqualsAndHashCode(of = "id")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData {

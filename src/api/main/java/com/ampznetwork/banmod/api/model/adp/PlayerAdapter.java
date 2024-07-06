@@ -1,6 +1,5 @@
 package com.ampznetwork.banmod.api.model.adp;
 
-import org.comroid.api.data.Vector;
 import org.comroid.api.net.REST;
 
 import java.util.UUID;
@@ -17,9 +16,7 @@ public interface PlayerAdapter {
 
     boolean isOnline(UUID playerId);
 
-    Vector.N3 getPosition(UUID playerId);
-
-    String getWorldName(UUID playerId);
+    void kick(UUID playerId, String reason);
 
     void openBook(UUID playerId, BookAdapter book);
 }

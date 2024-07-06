@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.spigot;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
@@ -29,10 +30,13 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
     private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
+    private PunishmentCategory muteCategory;
+    private PunishmentCategory kickCategory;
+    private PunishmentCategory banCategory;
     private FileConfiguration config;
-    private EntityService entityService;
     private Command.Manager cmdr;
     private Command.Manager.Adapter$Spigot adapter;
+    private EntityService entityService;
 
     @Override
     public void onLoad() {
@@ -87,6 +91,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @Override
     public void reload() {
         onDisable();
+        reloadConfig();
+        config = getConfig();
         onEnable();
     }
 }
