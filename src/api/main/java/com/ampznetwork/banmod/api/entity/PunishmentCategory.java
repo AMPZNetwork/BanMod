@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.Duration;
 
 @Data
@@ -14,6 +15,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 @Builder(toBuilder = true)
 @EqualsAndHashCode(of = "name")
+@Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory {
     @Id

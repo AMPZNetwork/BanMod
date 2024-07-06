@@ -19,6 +19,7 @@ import static lombok.Builder.Default;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = "id")
+@Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
     @Default

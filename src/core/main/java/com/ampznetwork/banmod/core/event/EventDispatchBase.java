@@ -8,7 +8,7 @@ import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
 
 import java.net.InetAddress;
-import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 
 @Log
@@ -34,8 +34,12 @@ public abstract class EventDispatchBase {
                 }, () -> {
                     // create new player data
                     var newData = new PlayerData(playerId,
-                            Set.of(name),
-                            Set.of(address));
+                            new HashSet<>() {{
+                                add(name);
+                            }},
+                            new HashSet<>() {{
+                                add(address);
+                            }});
                     service.save(newData);
                 });
 

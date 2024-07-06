@@ -15,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = "id")
+@Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData {
     @Id
@@ -22,7 +23,9 @@ public class PlayerData {
     @Convert(converter = UUIDConverter.class)
     UUID id;
     @ElementCollection
+    @CollectionTable(name = "banmod_playerdata_names")
     Set<String> knownNames;
     @ElementCollection
+    @CollectionTable(name = "banmod_playerdata_ips")
     Set<InetAddress> knownIPs;
 }

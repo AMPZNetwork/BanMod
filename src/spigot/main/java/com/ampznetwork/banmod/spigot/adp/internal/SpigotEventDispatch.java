@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.comroid.api.java.StackTraceUtils;
 
 @Value
 public class SpigotEventDispatch extends EventDispatchBase implements Listener {
@@ -17,11 +18,16 @@ public class SpigotEventDispatch extends EventDispatchBase implements Listener {
 
     @EventHandler
     public void handle(PlayerLoginEvent event) {
-        var result = playerLogin(event.getPlayer().getUniqueId(), event.getRealAddress());
-        if (result.isBanned()) {
-            if (result.reason() != null)
-                event.setKickMessage(result.reason());
-            event.setResult(PlayerLoginEvent.Result.KICK_BANNED);
+        try {
+            var result = playerLogin(event.getPlayer().getUniqueId(), event.getRealAddress());
+            if (result.isBanned()) {
+                if (result.reason() != null)
+                    event.setKickMessage(result.reason());
+                event.setResult(PlayerLoginEvent.Result.KICK_BANNED);
+            }
+        } catch (Throwable t) {
+            event.setKickMessage("Internal error: " + StackTraceUtils.toString(t));
+            event.setResult(PlayerLoginEvent.Result.KICK_OTHER);
         }
     }
 
