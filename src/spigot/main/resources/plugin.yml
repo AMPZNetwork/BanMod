@@ -9,6 +9,9 @@ commands:
   reload:
     description: Reloads Configuration Files
     permission: banmod.reload
+  category:
+    description: Modify Punishment Categories
+    permission: banmod.category
   lookup:
     description: Lookup User Entry
     permission: banmod.lookup

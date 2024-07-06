@@ -2,6 +2,8 @@ package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.api.info.Constraint;
@@ -10,6 +12,7 @@ import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import javax.persistence.EntityManager;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 public class HibernateEntityService extends Container.Base implements EntityService {
@@ -40,6 +43,19 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.manager = factory.createEntityManager();
 
         addChildren(dataSource, factory, manager);
+    }
+
+    @Override
+    public Stream<PunishmentCategory> getCategories() {
+        return manager.createQuery("select pc from PunishmentCategory pc",PunishmentCategory.class)
+                .getResultStream();
+    }
+
+    @Override
+    public Stream<Infraction> getInfractions(UUID playerId) {
+        return manager.createQuery("select i from Infraction i where i.playerId == :playerId", Infraction.class)
+                .setParameter("playerId", playerId)
+                .getResultStream();
     }
 
     @Override
