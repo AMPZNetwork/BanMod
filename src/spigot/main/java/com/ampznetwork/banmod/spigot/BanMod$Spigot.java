@@ -105,7 +105,10 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public void reload() {
-        onDisable();
+        try {
+            onDisable();
+        } catch (Throwable ignored) {
+        }
         reloadConfig();
         config = getConfig();
         onEnable();

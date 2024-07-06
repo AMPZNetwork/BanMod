@@ -83,16 +83,10 @@ public class BanModCommands {
     }
 
     @Command
-    public Component mute(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
-        var tgt = banMod.getPlayerAdapter().getId(name);
-        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
-        banMod.getEntityService().save(infraction);
-        return textPunishmentFull(name, Punishment.Mute);
-    }
-
-    @Command
     public Component tempmute(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
+        if (banMod.getEntityService().queuePlayer(tgt).isMuted())
+            return text("User " + name + " is already muted").color(YELLOW);
         var now = now();
         var duration = parseDuration(durationText);
         var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason)
@@ -104,24 +98,42 @@ public class BanModCommands {
     }
 
     @Command
+    public Component mute(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        if (banMod.getEntityService().queuePlayer(tgt).isMuted())
+            return text("User " + name + " is already muted").color(YELLOW);
+        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
+        banMod.getEntityService().save(infraction);
+        return textPunishmentFull(name, Punishment.Mute);
+    }
+
+    @Command
+    public Component unmute(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var infraction = banMod.getEntityService().getInfractions(tgt)
+                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
+                .filter(i -> i.getCategory().getPunishment() == Punishment.Mute)
+                .findAny()
+                .orElseThrow(() -> new Command.Error("User is not muted"));
+        infraction.setRevoker(issuer);
+        banMod.getEntityService().save(infraction);
+        return text("User " + name + " was unmuted").color(GREEN);
+    }
+
+    @Command
     public Component kick(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason).build();
         banMod.getEntityService().save(infraction);
+        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Kick);
-    }
-
-    @Command
-    public Component ban(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
-        var tgt = banMod.getPlayerAdapter().getId(name);
-        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
-        banMod.getEntityService().save(infraction);
-        return textPunishmentFull(name, Punishment.Ban);
     }
 
     @Command
     public Component tempban(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable @Arg String reason) {
         var tgt = banMod.getPlayerAdapter().getId(name);
+        if (banMod.getEntityService().queuePlayer(tgt).isBanned())
+            return text("User " + name + " is already banned").color(YELLOW);
         var now = now();
         var duration = parseDuration(durationText);
         var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason)
@@ -129,7 +141,32 @@ public class BanModCommands {
                 .expires(now.plus(duration))
                 .build();
         banMod.getEntityService().save(infraction);
+        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Ban);
+    }
+
+    @Command
+    public Component ban(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        if (banMod.getEntityService().queuePlayer(tgt).isBanned())
+            return text("User " + name + " is already banned").color(YELLOW);
+        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
+        banMod.getEntityService().save(infraction);
+        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
+        return textPunishmentFull(name, Punishment.Ban);
+    }
+
+    @Command
+    public Component unban(BanMod banMod, UUID issuer, @Arg String name, @Nullable @Arg String reason) {
+        var tgt = banMod.getPlayerAdapter().getId(name);
+        var infraction = banMod.getEntityService().getInfractions(tgt)
+                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
+                .filter(i -> i.getCategory().getPunishment() == Punishment.Ban)
+                .findAny()
+                .orElseThrow(() -> new Command.Error("User is not banned"));
+        infraction.setRevoker(issuer);
+        banMod.getEntityService().save(infraction);
+        return text("User " + name + " was unbanned").color(GREEN);
     }
 
     private Infraction.Builder standardInfraction(BanMod banMod,

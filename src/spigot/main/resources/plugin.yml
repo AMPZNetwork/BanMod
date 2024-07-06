@@ -24,6 +24,9 @@ commands:
   mute:
     description: Mute User
     permission: banmod.mute
+  unmute:
+    description: Unmute User
+    permission: banmod.unmute
   kick:
     description: Kick User
     permission: banmod.kick
@@ -33,3 +36,6 @@ commands:
   ban:
     description: Ban User
     permission: banmod.ban
+  unban:
+    description: Unban User
+    permission: banmod.unban

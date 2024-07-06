@@ -46,12 +46,12 @@ public interface EntityService extends LifeCycle {
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
-                .filter(i -> i.getExpires() == null || i.getExpires().isAfter(now()))
+                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
                 .max(Comparator.comparingInt(i -> i.getCategory().getPunishment().ordinal()))
-                .map(infraction -> new PlayerResult(playerId,
-                        infraction.getCategory().getPunishment() == Punishment.Mute,
-                        infraction.getCategory().getPunishment() == Punishment.Ban,
-                        infraction.getReason()))
+                .map(i -> new PlayerResult(playerId,
+                        i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Mute,
+                        i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Ban,
+                        i.getReason()))
                 .orElseGet(() -> new PlayerResult(playerId, false, false, null));
     }
 
