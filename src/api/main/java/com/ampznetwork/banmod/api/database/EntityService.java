@@ -20,6 +20,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static java.time.Instant.now;
+
 public interface EntityService extends LifeCycle {
     Stream<PunishmentCategory> getCategories();
     default Optional<PunishmentCategory> findCategory(String name) {
@@ -35,9 +37,11 @@ public interface EntityService extends LifeCycle {
     }
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
-                .filter(i -> i.getState().getValue() > 0)
+                .filter(i -> i.getExpires() == null || i.getExpires().isAfter(now()))
                 .max(Comparator.comparingInt(i -> i.getCategory().getPunishment().ordinal()))
-                .map(infraction -> new PlayerResult(playerId, infraction.getCategory().getPunishment() == Punishment.Mute, infraction.getCategory().getPunishment() == Punishment.Ban))
+                .map(infraction -> new PlayerResult(playerId,
+                        infraction.getCategory().getPunishment() == Punishment.Mute,
+                        infraction.getCategory().getPunishment() == Punishment.Ban))
                 .orElseGet(() -> new PlayerResult(playerId, false, false));
     }
 
