@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.core.database.hibernate;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,10 @@ import org.comroid.api.tree.Container;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import javax.persistence.EntityManager;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -46,8 +50,16 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
+    public Optional<PlayerData> getPlayerData(UUID playerId) {
+        return manager.createQuery("select pd from PlayerData  pd where pd.id = :playerId", PlayerData.class)
+                .setParameter("playerId", playerId)
+                .getResultStream()
+                .findAny();
+    }
+
+    @Override
     public Stream<PunishmentCategory> getCategories() {
-        return manager.createQuery("select pc from PunishmentCategory pc",PunishmentCategory.class)
+        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
                 .getResultStream();
     }
 
@@ -70,7 +82,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 transaction.commit();
             } catch (Throwable t) {
                 transaction.rollback();
-                log.warn("Could not save all entities\n\tEntities: "+ Arrays.toString(entities), t);
+                log.warn("Could not save all entities\n\tEntities: " + Arrays.toString(entities), t);
                 return false;
             }
         }

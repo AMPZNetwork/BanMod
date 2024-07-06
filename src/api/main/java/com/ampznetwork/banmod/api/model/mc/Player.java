@@ -22,18 +22,19 @@ import static org.comroid.api.net.REST.Method.GET;
 @RequiredArgsConstructor
 public class Player implements UUIDContainer, Named {
     UUID id;
-    @NonFinal String name = null;
+    @NonFinal
+    String name = null;
 
     public CompletableFuture<String> fetchName() {
-        var future = Cache.get("minecraft.username."+id,
-                ()->REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/"+id).execute()
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("name").asString())
-                .exceptionally(t -> {
-                    log.log(Level.WARN, "Could not retrieve Minecraft Username for user " + id, t);
-                    return "<failed to obtain username>";
-                }));
-        future.thenAccept(str->name=str);
+        var future = Cache.get("minecraft.username." + id,
+                () -> REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
+                        .thenApply(REST.Response::validate2xxOK)
+                        .thenApply(rsp -> rsp.getBody().get("name").asString())
+                        .exceptionally(t -> {
+                            log.log(Level.WARN, "Could not retrieve Minecraft Username for user " + id, t);
+                            return "<failed to obtain username>";
+                        }));
+        future.thenAccept(str -> name = str);
         return future;
     }
 }

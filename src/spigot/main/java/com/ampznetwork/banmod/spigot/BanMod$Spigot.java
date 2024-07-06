@@ -18,21 +18,19 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Stream;
 
-import static org.bukkit.Bukkit.getPluginManager;
-import static org.comroid.api.func.util.Debug.isDebug;
 import static org.comroid.api.func.util.Streams.append;
 
 @Getter
 public class BanMod$Spigot extends JavaPlugin implements BanMod {
+    static {
+        StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
+    }
+
     private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
     private FileConfiguration config;
     private EntityService entityService;
     private Command.Manager cmdr;
     private Command.Manager.Adapter$Spigot adapter;
-
-    static {
-        StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
-    }
 
     @Override
     public void onLoad() {

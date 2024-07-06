@@ -1,6 +1,5 @@
 package com.ampznetwork.banmod.spigot.adp.internal;
 
-import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;

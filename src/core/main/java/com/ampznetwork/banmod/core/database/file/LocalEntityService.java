@@ -3,9 +3,9 @@ package com.ampznetwork.banmod.core.database.file;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Value;
-import org.comroid.api.data.Vector;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +16,11 @@ public class LocalEntityService implements EntityService {
     BanMod banMod;
 
     // todo
+
+    @Override
+    public Optional<PlayerData> getPlayerData(UUID playerId) {
+        return Optional.empty();
+    }
 
     @Override
     public Stream<PunishmentCategory> getCategories() {

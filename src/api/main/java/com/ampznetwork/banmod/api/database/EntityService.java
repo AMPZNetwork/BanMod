@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
@@ -23,18 +24,24 @@ import java.util.stream.Stream;
 import static java.time.Instant.now;
 
 public interface EntityService extends LifeCycle {
+    Optional<PlayerData> getPlayerData(UUID playerId);
+
     Stream<PunishmentCategory> getCategories();
+
     default Optional<PunishmentCategory> findCategory(String name) {
         return getCategories()
                 .filter(cat -> cat.getName().equals(name))
                 .findAny();
     }
+
     Stream<Infraction> getInfractions(UUID playerId);
+
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
                 .filter(i -> i.getCategory().equals(category))
                 .count();
     }
+
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
                 .filter(i -> i.getExpires() == null || i.getExpires().isAfter(now()))

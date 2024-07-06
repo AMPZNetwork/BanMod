@@ -5,5 +5,6 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 
 public interface BanMod {
     PlayerAdapter getPlayerAdapter();
+
     EntityService getEntityService();
 }

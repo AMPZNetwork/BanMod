@@ -19,11 +19,16 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
-    @Id UUID id = UUID.randomUUID();
-    @NotNull UUID playerId;
-    @NotNull Instant timestamp;
+    @Id
+    UUID id = UUID.randomUUID();
+    @NotNull
+    UUID playerId;
+    @NotNull
+    Instant timestamp;
     @Nullable
     Instant expires;
-    @Nullable UUID issuer;
-    @ManyToOne PunishmentCategory category;
+    @Nullable
+    UUID issuer;
+    @ManyToOne
+    PunishmentCategory category;
 }

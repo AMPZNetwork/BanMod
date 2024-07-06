@@ -16,7 +16,8 @@ import java.time.Duration;
 @EqualsAndHashCode(of = "name")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory {
-    @Id String name;
+    @Id
+    String name;
     Punishment punishment;
     Duration baseDuration;
     double repetitionExpBase;
