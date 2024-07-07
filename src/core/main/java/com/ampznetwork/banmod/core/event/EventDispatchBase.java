@@ -32,7 +32,7 @@ public abstract class EventDispatchBase {
                 // update cached player data
                 .map(existing -> {
                     existing.getKnownNames().put(name, now);
-                    existing.getKnownIPs().put(address, now);
+                    existing.getKnownIPs().put(address.toString(), now);
                     return existing;
                 })
                 // create new player data
@@ -41,7 +41,7 @@ public abstract class EventDispatchBase {
                             put(name, now);
                         }},
                         new HashMap<>() {{
-                            put(address, now);
+                            put(address.toString(), now);
                         }}));
         service.save(data);
 

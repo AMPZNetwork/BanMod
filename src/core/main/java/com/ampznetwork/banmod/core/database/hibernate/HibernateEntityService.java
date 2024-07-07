@@ -70,9 +70,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         var transaction = manager.getTransaction();
 
         synchronized (transaction) {
-            try {
-                transaction.begin();
-
                 boolean nameExists = manager.createQuery("""
                                 select count(pd) > 0
                                 from PlayerData pd
@@ -83,10 +80,16 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                         .setParameter("name", name)
                         .getSingleResult();
 
+            try {
+                transaction.begin();
+
                 if (!nameExists) {
+                    manager.createNativeQuery("insert into banmod_playerdata (id) values (:uuid)")
+                            .setParameter("uuid", uuid)
+                            .executeUpdate();
                     manager.createNativeQuery("""
                                     insert into banmod_playerdata_names (PlayerData_id, knownNames, knownNames_KEY)
-                                    values (:uuid, :lastSeen, :name)
+                                    values (:uuid, :lastSeen, :name);
                                     """)
                             .setParameter("uuid", uuid)
                             .setParameter("lastSeen", Timestamp.from(Instant.now()))  // or whatever timestamp you want to use

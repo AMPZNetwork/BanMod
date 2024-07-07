@@ -7,7 +7,6 @@ import org.comroid.annotations.Doc;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
-import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class PlayerData {
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames;
     @ElementCollection
     @CollectionTable(name = "banmod_playerdata_ips")
-    Map<@Doc("ip") InetAddress, @Doc("lastSeen") Instant> knownIPs;
+    Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs;
 
     @Basic
     @Nullable
@@ -43,7 +42,7 @@ public class PlayerData {
     }
 
     @Basic
-    public InetAddress getLastKnownIp() {
+    public String getLastKnownIp() {
         return knownIPs.entrySet().stream()
                 .max(Comparator.comparingLong(e -> e.getValue().toEpochMilli()))
                 .map(Map.Entry::getKey)
