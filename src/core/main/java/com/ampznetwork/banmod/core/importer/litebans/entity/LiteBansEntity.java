@@ -2,8 +2,12 @@ package com.ampznetwork.banmod.core.importer.litebans.entity;
 
 
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -14,7 +18,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)

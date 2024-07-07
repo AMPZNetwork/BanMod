@@ -76,10 +76,9 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @SneakyThrows
     public void onEnable() {
         var db = getDatabaseInfo();
-        this.entityService = switch (db.impl().toLowerCase()) {
-            case "file", "local" -> new LocalEntityService(this);
-            case "hibernate", "database" -> new HibernateEntityService(this);
-            default -> throw new IllegalStateException("Unexpected value: " + db.impl().toLowerCase());
+        this.entityService = switch (db.impl()) {
+            case FILE -> new LocalEntityService(this);
+            case DATABASE -> new HibernateEntityService(this);
         };
 
         // default categories
@@ -113,7 +112,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public DatabaseInfo getDatabaseInfo() {
-        var dbImpl = config.getString("worldmod.entity-service", "database");
+        var dbImpl = EntityService.Type.valueOf(config.getString("worldmod.entity-service", "database").toUpperCase());
         var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));
         var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./banmod.h2");
         var dbUser = config.getString("worldmod.database.username", "sa");

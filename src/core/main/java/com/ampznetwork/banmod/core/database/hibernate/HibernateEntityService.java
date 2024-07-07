@@ -16,10 +16,12 @@ import org.intellij.lang.annotations.MagicConstant;
 
 import javax.persistence.EntityManager;
 import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -93,18 +95,18 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     public HibernateEntityService(BanMod banMod) {
         this.banMod = banMod;
-        var unit = buildPersistenceUnit(banMod.getDatabaseInfo(), "update");
+        var unit = buildPersistenceUnit(banMod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
         this.manager = unit.manager;
-
         addChildren(unit);
     }
 
     public static Unit buildPersistenceUnit(
             DatabaseInfo info,
+            Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
             @MagicConstant(stringValues = {"update", "validate"}) String hbm2ddl) {
         var config = Map.of(
                 "hibernate.connection.driver_class", info.type().getDriverClass().getCanonicalName(),
-                "hibernate.connection.url", info.type(),
+                "hibernate.connection.url", info.url(),
                 "hibernate.connection.username", info.user(),
                 "hibernate.connection.password", info.pass(),
                 "hibernate.dialect", info.type().getDialectClass().getCanonicalName(),
@@ -117,7 +119,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             setUsername(info.user());
             setPassword(info.pass());
         }};
-        var unit = new BanModPersistenceUnit(dataSource);
+        var unit = unitProvider.apply(dataSource);
         var factory = SPI.createContainerEntityManagerFactory(unit, config);
         var manager = factory.createEntityManager();
         return new Unit(dataSource, manager);

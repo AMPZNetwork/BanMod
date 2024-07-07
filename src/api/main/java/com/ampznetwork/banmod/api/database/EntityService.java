@@ -66,6 +66,14 @@ public interface EntityService extends LifeCycle {
     @Getter
     @AllArgsConstructor
     @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+    enum Type implements Named {
+        DATABASE,
+        FILE
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
     enum DatabaseType implements Named {
         h2(org.h2.Driver.class, H2Dialect.class),
         MySQL(com.mysql.jdbc.Driver.class, MySQL57Dialect.class),
@@ -73,13 +81,5 @@ public interface EntityService extends LifeCycle {
 
         Class<?> driverClass;
         Class<?> dialectClass;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-    enum Type implements Named {
-        Database,
-        File
     }
 }

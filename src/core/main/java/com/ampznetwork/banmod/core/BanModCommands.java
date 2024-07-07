@@ -283,8 +283,6 @@ public class BanModCommands {
             try (var importer = new VanillaBansImporter(banMod)) {
                 var result = importer.run();
                 return text("Imported ")
-                        .append(text(result.muteCount() + " Mutes").color(YELLOW))
-                        .append(text(" and "))
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" from Vanilla Minecraft"));
             } catch (Throwable t) {

@@ -21,7 +21,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
 
     public LiteBansImporter(BanMod banMod, DatabaseInfo info) {
         this.banMod = banMod;
-        this.unit = HibernateEntityService.buildPersistenceUnit(info, "validate");
+        this.unit = HibernateEntityService.buildPersistenceUnit(info, LiteBansPersistenceUnit::new, "validate");
     }
 
     @Override

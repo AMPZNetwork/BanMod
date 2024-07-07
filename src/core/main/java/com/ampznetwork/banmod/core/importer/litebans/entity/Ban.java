@@ -1,7 +1,10 @@
 package com.ampznetwork.banmod.core.importer.litebans.entity;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -9,9 +12,8 @@ import java.util.Objects;
 
 @Data
 @Entity
-@Builder
+@SuperBuilder
 @AllArgsConstructor
-@RequiredArgsConstructor
 @Table(name = "litebans_bans")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class Ban extends LiteBansEntity {
