@@ -84,6 +84,8 @@ public class BanModCommands {
     @Command
     public Component punish(BanMod banMod, UUID issuer, @Arg String name, @Arg String category, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         var cat = banMod.getEntityService().findCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
@@ -106,7 +108,9 @@ public class BanModCommands {
 
     @Command
     public Component tempmute(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
+        var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
@@ -123,6 +127,8 @@ public class BanModCommands {
     @Command
     public Component mute(BanMod banMod, UUID issuer, @Arg String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
@@ -147,6 +153,8 @@ public class BanModCommands {
     @Command
     public Component kick(BanMod banMod, UUID issuer, @Arg String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
                 .expires(null)
@@ -163,7 +171,9 @@ public class BanModCommands {
 
     @Command
     public Component tempban(BanMod banMod, UUID issuer, @Arg String name, @Arg String durationText, @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
+        var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
@@ -181,6 +191,8 @@ public class BanModCommands {
     @Command
     public Component ban(BanMod banMod, UUID issuer, @Arg String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
+        if (reason.isBlank())
+            reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
