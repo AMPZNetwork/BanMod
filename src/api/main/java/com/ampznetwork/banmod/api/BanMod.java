@@ -8,6 +8,7 @@ import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 public interface BanMod {
     String AddonName = "BanMod";
     String AddonId = "banmod";
+    String IssuesUrl = "https://github.com/AMPZNetwork/BanMod/issues";
 
     DatabaseInfo getDatabaseInfo();
 

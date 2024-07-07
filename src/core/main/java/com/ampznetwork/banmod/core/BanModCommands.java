@@ -7,11 +7,13 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import org.comroid.annotations.Alias;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
+import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -27,6 +29,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
 
+@Slf4j
 @UtilityClass
 public class BanModCommands {
     @Command
@@ -342,8 +345,13 @@ public class BanModCommands {
                         .append(text(" and "))
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" from LiteBans"));
+            } catch (SchemaManagementException smex) {
+                var str = "LiteBans Databases were in an incorrect format.";
+                log.warn("{} Please report this at " + BanMod.IssuesUrl, str, smex);
+                return text(str).color(YELLOW);
             } catch (Throwable t) {
-                throw new Command.Error("Could not import from LiteBans: " + t);
+                log.error("Could not import from LiteBans. Please report this at " + BanMod.IssuesUrl, t);
+                throw new Command.Error("Could not import from LiteBans. Please check console for further information.");
             }
         }
     }
