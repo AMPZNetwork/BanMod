@@ -16,6 +16,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 import org.comroid.api.func.util.Command;
+import org.comroid.api.func.util.Command$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     private Config config = Config.createAndLoad();
     private MinecraftServer server;
     private Command.Manager cmdr;
-    private Command.Manager.Adapter$Fabric adapter;
+    private Command$Adapter$Fabric adapter;
     private EntityService entityService;
     private PunishmentCategory muteCategory;
     private PunishmentCategory kickCategory;
@@ -48,23 +49,13 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> this.server = server);
 
         this.cmdr = new Command.Manager();
-        this.adapter = cmdr.new Adapter$Fabric() {
+        this.adapter = new Command$Adapter$Fabric(cmdr) {
             @Override
             public String handleThrowable(Throwable throwable) {
                 return throwable instanceof InvocationTargetException ITEx
                         ? handleThrowable(ITEx.getCause())
                         : super.handleThrowable(new Command.Error(throwable));
             }
-
-//            @Override
-//            protected Stream<Object> collectExtraArgs(@NotNull CommandSender sender) {
-//                if (!(sender instanceof Player player))
-//                    throw new Command.Error("Cannot be used from console");
-//                var pos = playerAdapter.getPosition(player.getUniqueId());
-//                return super.collectExtraArgs(sender)
-//                        .collect(append(BanMod$Spigot.this, entityService.findRegion(pos,
-//                                playerAdapter.getWorldName(player.getUniqueId())).orElse(null)));
-//            }
         };
         cmdr.register(BanModCommands.class);
         cmdr.register(this);
