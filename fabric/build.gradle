@@ -39,8 +39,8 @@ tasks.register('serverJar', Copy) {
 }
 
 tasks.register('testMod', Copy) {
-	dependsOn shadowJar, serverJar
-	from shadowJar.outputs.files.singleFile
+	dependsOn remappedShadowJar, serverJar
+	from remappedShadowJar.outputs.files.singleFile
 	into "${projectDir}/run/mods"
 	rename { n -> "BanMod-fabric.jar" }
 }
@@ -80,8 +80,12 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	// banMod api
-	implementation project(':core') // todo: include as shadowjar
+	// banMod
+	if (findProject(':japi') != null)
+		implementation project(':japi')
+	else implementation 'org.comroid:japi:+'
+	implementation project(':api')
+	implementation project(':core')
 	implementation 'net.kyori:adventure-platform-fabric:5.9.0'
 
 	// owo lib
