@@ -25,7 +25,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
 
     @Override
     public UUID getId(String name) {
-        final var fetch = PlayerAdapter.fetchId(name);
+        final var fetch = PlayerAdapter.fetchId(banMod, name);
         return Arrays.stream(Bukkit.getOfflinePlayers())
                 .filter(player -> name.equals(player.getName()))
                 .findAny()
@@ -40,7 +40,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
 
     @Override
     public String getName(UUID playerId) {
-        final var fetch = PlayerAdapter.fetchName(playerId);
+        final var fetch = PlayerAdapter.fetchName(banMod, playerId);
         return Optional.ofNullable(banMod.getServer().getOfflinePlayer(playerId).getName())
                 .or(() -> banMod.getEntityService().getPlayerData(playerId)
                         .flatMap(pd -> Optional.ofNullable(pd.getLastKnownName())))
