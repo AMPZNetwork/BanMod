@@ -11,6 +11,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import org.comroid.annotations.Alias;
 import org.comroid.api.func.util.Command;
+import org.comroid.api.func.util.Streams;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -213,6 +214,8 @@ public class BanModCommands {
                         .append(textPunishmentFull(banMod.getPlayerAdapter().getName(i.getPlayerId()),
                                 i.getCategory().getPunishment(),
                                 i.getReason())))
+                .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
+                        .append(text("(none)").color(GRAY))))
                 .collect(Collector.of(() -> Component.text()
                                 .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, pageCount))),
                         ComponentBuilder::append,
