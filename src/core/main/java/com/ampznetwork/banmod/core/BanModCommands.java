@@ -204,7 +204,10 @@ public class BanModCommands {
     }
 
     private Component infractionList(BanMod banMod, int page, Punishment punishment) {
-        final var infractions = banMod.getEntityService().getInfractions().toList();
+        final var infractions = banMod.getEntityService().getInfractions()
+                .filter(Infraction.IS_IN_EFFECT)
+                .filter(i -> i.getCategory().getPunishment() == punishment)
+                .toList();
         final var perPage = 8;
         final var pageCount = infractions.size() / perPage;
         // todo: use book adapter here

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -26,7 +27,8 @@ import static lombok.Builder.Default;
 public class Infraction {
     public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getCategory().getPunishment().isInherentlyTemporary()
             && (i.getRevoker() == null
-            && (i.getExpires() == null || i.getExpires().isAfter(now())));
+            && (i.getExpires() == null || i.getExpires().isAfter(now())
+            || i.getExpires().isBefore(Instant.EPOCH.plus(Duration.ofDays(2)))));
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
