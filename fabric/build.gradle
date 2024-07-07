@@ -21,7 +21,8 @@ sourceSets {
 }
 
 tasks.register('dlServerJar', Download).configure {
-	src "https://serverjars.com/api/fetchJar/modded/fabric/${minecraft_version}"
+	src "https://meta.fabricmc.net/v2/versions/loader/1.20.1/0.15.11/1.0.1/server/jar"
+	//src "https://serverjars.com/api/fetchJar/modded/fabric/${minecraft_version}"
 	dest "${buildDir}/libs/server.jar"
 }
 
