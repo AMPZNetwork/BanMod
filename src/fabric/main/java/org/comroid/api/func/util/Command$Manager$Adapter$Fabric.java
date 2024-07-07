@@ -17,9 +17,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.kyori.adventure.text.Component;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.UuidArgumentType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import org.comroid.api.Polyfill;
@@ -29,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,18 +64,8 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
         return call;
     }
 
-    @Override
-    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
-        if (response instanceof CompletableFuture<?> future) {
-            future.thenAccept(it -> handleResponse(command, it, args));
-            return;
-        }
-        var source = Arrays.stream(args)
-                .flatMap(Streams.cast(ServerCommandSource.class))
-                .findAny().orElseThrow();
-        if (response instanceof Component component)
-            source.sendMessage(component2nbt(component));
-        else source.sendMessage(Text.of(String.valueOf(response)));
+    public static Text component2text(Component component) {
+        return Text.Serializer.fromJson(gson().serialize(component));
     }
 
     @Override
@@ -175,14 +161,18 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
         }).thenApply(ls -> new Suggestions(context.getRange(), ls));
     }
 
-    public Text component2nbt(Component component) {
-        final var key = "extra";
-        return Text.nbt(key, true, Optional.empty(),
-                $ -> of(new NbtCompound() {{
-                    put(key, new NbtList() {{
-                        add(NbtString.of(gson().serialize(component)));
-                    }});
-                }}));
+    @Override
+    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
+        if (response instanceof CompletableFuture<?> future) {
+            future.thenAccept(it -> handleResponse(command, it, args));
+            return;
+        }
+        var source = Arrays.stream(args)
+                .flatMap(Streams.cast(ServerCommandSource.class))
+                .findAny().orElseThrow();
+        if (response instanceof Component component)
+            source.sendMessage(component2text(component));
+        else source.sendMessage(Text.of(String.valueOf(response)));
     }
 
     @Value
