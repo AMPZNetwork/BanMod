@@ -17,6 +17,8 @@ import org.intellij.lang.annotations.MagicConstant;
 import javax.persistence.EntityManager;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -79,8 +81,48 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public boolean save(Object... entities) {
+    public void pingUsernameCache(UUID uuid, String name) {
         var transaction = manager.getTransaction();
+
+        synchronized (transaction) {
+            try {
+                transaction.begin();
+
+                boolean nameExists = manager.createQuery("""
+                                select count(pd) > 0
+                                from PlayerData pd
+                                join pd.knownNames kn
+                                where pd.id = :uuid and key(kn) = :name
+                                """, Boolean.class)
+                        .setParameter("uuid", uuid)
+                        .setParameter("name", name)
+                        .getSingleResult();
+
+                if (!nameExists) {
+                    manager.createNativeQuery("""
+                                    insert into banmod_playerdata_names (PlayerData_id, knownNames, knownNames_KEY)
+                                    values (:uuid, :lastSeen, :name)
+                                    """)
+                            .setParameter("uuid", uuid)
+                            .setParameter("lastSeen", Timestamp.from(Instant.now()))  // or whatever timestamp you want to use
+                            .setParameter("name", name)
+                            .executeUpdate();
+                }
+
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    public synchronized boolean save(Object... entities) {
+        var transaction = manager.getTransaction();
+
         synchronized (transaction) {
             try {
                 transaction.begin();

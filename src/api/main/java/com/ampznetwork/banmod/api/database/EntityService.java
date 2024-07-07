@@ -57,6 +57,8 @@ public interface EntityService extends LifeCycle {
                 .orElseGet(() -> new PlayerResult(playerId, false, false, null));
     }
 
+    void pingUsernameCache(UUID id, String name);
+
     boolean save(Object... it);
 
     @Contract("!null -> param1")

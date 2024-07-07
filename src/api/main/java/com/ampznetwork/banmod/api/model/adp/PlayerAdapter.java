@@ -1,18 +1,16 @@
 package com.ampznetwork.banmod.api.model.adp;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
 import org.comroid.api.net.REST;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static java.time.Instant.now;
-
 public interface PlayerAdapter {
+    private static void cache(BanMod banMod, UUID id, String name) {
+        banMod.getEntityService().pingUsernameCache(id, name);
+    }
     static CompletableFuture<UUID> fetchId(BanMod banMod, String name) {
         var fetch = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
                 .thenApply(REST.Response::validate2xxOK)
@@ -21,18 +19,7 @@ public interface PlayerAdapter {
                 .thenApply(UUID::fromString);
         // put into cache
         //noinspection DuplicatedCode
-        fetch.thenAccept(id -> banMod.getEntityService().getPlayerData(id)
-                .ifPresentOrElse(
-                        data -> {
-                            data.getKnownNames().put(name, now());
-                            banMod.getEntityService().save(data);
-                        },
-                        () -> {
-                            var data = new PlayerData(id, new HashMap<>() {{
-                                put(name, now());
-                            }}, new HashSet<>());
-                            banMod.getEntityService().save(data);
-                        }));
+        fetch.thenAccept(id -> cache(banMod, id, name));
         return fetch;
     }
 
@@ -42,18 +29,7 @@ public interface PlayerAdapter {
                 .thenApply(rsp -> rsp.getBody().get("name").asString());
         // put into cache
         //noinspection DuplicatedCode
-        fetch.thenAccept(name -> banMod.getEntityService().getPlayerData(id)
-                .ifPresentOrElse(
-                        data -> {
-                            data.getKnownNames().put(name, now());
-                            banMod.getEntityService().save(data);
-                        },
-                        () -> {
-                            var data = new PlayerData(id, new HashMap<>() {{
-                                put(name, now());
-                            }}, new HashSet<>());
-                            banMod.getEntityService().save(data);
-                        }));
+        fetch.thenAccept(name -> cache(banMod, id, name));
         return fetch;
     }
 

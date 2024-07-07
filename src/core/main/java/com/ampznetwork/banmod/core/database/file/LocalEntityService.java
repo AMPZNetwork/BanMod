@@ -48,6 +48,11 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
+    public void pingUsernameCache(UUID id, String name) {
+
+    }
+
+    @Override
     public boolean save(Object... entities) {
         return false;
     }
