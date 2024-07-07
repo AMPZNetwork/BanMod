@@ -15,6 +15,9 @@ commands:
   lookup:
     description: Lookup User Entry
     permission: banmod.lookup
+  banlist:
+    description: Lookup User Entry
+    permission: banmod.banlist
   punish:
     description: Punish User
     permission: banmod.punish

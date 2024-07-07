@@ -33,6 +33,11 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
+    public Stream<Infraction> getInfractions() {
+        return Stream.empty();
+    }
+
+    @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
         return Stream.empty();
     }

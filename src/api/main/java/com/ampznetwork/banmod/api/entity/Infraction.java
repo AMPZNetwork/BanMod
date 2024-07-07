@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Predicate;
 
+import static java.time.Instant.now;
 import static lombok.Builder.Default;
 
 @Data
@@ -22,6 +24,9 @@ import static lombok.Builder.Default;
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
+    public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getCategory().getPunishment().isInherentlyTemporary()
+            && (i.getRevoker() == null
+            && (i.getExpires() == null || i.getExpires().isAfter(now())));
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")

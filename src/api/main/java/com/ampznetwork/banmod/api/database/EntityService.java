@@ -21,8 +21,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
-
 public interface EntityService extends LifeCycle {
     Optional<PlayerData> getPlayerData(UUID playerId);
 
@@ -36,6 +34,8 @@ public interface EntityService extends LifeCycle {
                 .findAny();
     }
 
+    Stream<Infraction> getInfractions();
+
     Stream<Infraction> getInfractions(UUID playerId);
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
@@ -46,9 +46,7 @@ public interface EntityService extends LifeCycle {
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
-                .filter(i -> !i.getCategory().getPunishment().isInherentlyTemporary()
-                        && (i.getRevoker() == null
-                        && (i.getExpires() == null || i.getExpires().isAfter(now()))))
+                .filter(Infraction.IS_IN_EFFECT)
                 .sorted(Comparator.<Infraction>comparingInt(i -> i.getCategory().getPunishment().ordinal()).reversed())
                 .map(i -> new PlayerResult(playerId,
                         i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Mute,

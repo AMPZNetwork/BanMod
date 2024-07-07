@@ -8,12 +8,14 @@ import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
 import org.comroid.annotations.Alias;
 import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.time.Instant.now;
@@ -35,7 +37,7 @@ public class BanModCommands {
 
     @Command
     public Component lookup(BanMod banMod, @Arg String name) {
-        // todo: use book adapter here?
+        // todo: use book adapter here
         var target = banMod.getPlayerAdapter().getId(name);
         var data = banMod.getEntityService().getPlayerData(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
@@ -60,8 +62,7 @@ public class BanModCommands {
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
         var infractions = banMod.getEntityService().getInfractions(target)
-                .filter(i -> i.getCategory().getPunishment() != Punishment.Kick)
-                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
+                .filter(Infraction.IS_IN_EFFECT)
                 .toList();
         if (infractions.isEmpty())
             text = text.append(text("\n- (none)").color(GRAY));
@@ -91,7 +92,12 @@ public class BanModCommands {
         if (punishment != Punishment.Mute)
             banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
 
-        return textPunishmentFull(name, punishment);
+        return textPunishmentFull(name, punishment, reason);
+    }
+
+    @Command
+    public Component mutelist(BanMod banMod, @Nullable @Arg Integer page) {
+        return infractionList(banMod, page == null ? 1 : page, Punishment.Mute);
     }
 
     @Command
@@ -107,7 +113,7 @@ public class BanModCommands {
                 .expires(now.plus(duration))
                 .build();
         banMod.getEntityService().save(infraction);
-        return textPunishmentFull(name, Punishment.Mute);
+        return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
     }
 
     @Command
@@ -118,7 +124,7 @@ public class BanModCommands {
             return text("User " + name + " is already muted").color(YELLOW);
         var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
         banMod.getEntityService().save(infraction);
-        return textPunishmentFull(name, Punishment.Mute);
+        return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
     }
 
     @Command
@@ -143,7 +149,12 @@ public class BanModCommands {
                 .build();
         banMod.getEntityService().save(infraction);
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Kick);
+        return textPunishmentFull(name, Punishment.Kick, infraction.getReason());
+    }
+
+    @Command
+    public Component banlist(BanMod banMod, @Nullable @Arg Integer page) {
+        return infractionList(banMod, page == null ? 1 : page, Punishment.Ban);
     }
 
     @Command
@@ -160,7 +171,7 @@ public class BanModCommands {
                 .build();
         banMod.getEntityService().save(infraction);
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Ban);
+        return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
     }
 
     @Command
@@ -172,7 +183,7 @@ public class BanModCommands {
         var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
         banMod.getEntityService().save(infraction);
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Ban);
+        return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
     }
 
     @Command
@@ -186,6 +197,30 @@ public class BanModCommands {
         infraction.setRevoker(issuer);
         banMod.getEntityService().save(infraction);
         return text("User " + name + " was unbanned").color(GREEN);
+    }
+
+    private Component infractionList(BanMod banMod, int page, Punishment punishment) {
+        final var infractions = banMod.getEntityService().getInfractions().toList();
+        final var perPage = 8;
+        final var pageCount = infractions.size() / perPage;
+        // todo: use book adapter here
+        return infractions.stream()
+                .filter(Infraction.IS_IN_EFFECT)
+                .filter(i -> i.getCategory().getPunishment() == punishment)
+                .skip((page - 1L) * perPage)
+                .limit(perPage)
+                .map(i -> text("\n- ")
+                        .append(textPunishmentFull(banMod.getPlayerAdapter().getName(i.getPlayerId()),
+                                i.getCategory().getPunishment(),
+                                i.getReason())))
+                .collect(Collector.of(() -> Component.text()
+                                .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, pageCount))),
+                        ComponentBuilder::append,
+                        (l, r) -> {
+                            l.append(r);
+                            return l;
+                        },
+                        ComponentBuilder::build));
     }
 
     private Infraction.Builder standardInfraction(BanMod banMod,
@@ -204,11 +239,15 @@ public class BanModCommands {
                 .expires(now.plus(category.calculateDuration(rep)));
     }
 
-    private Component textPunishmentFull(String username, Punishment punishment) {
-        return text("User ")
+    private Component textPunishmentFull(String username, Punishment punishment, @Nullable String reason) {
+        var text = text("User ")
                 .append(text(username).color(AQUA))
-                .append(text(" was "))
+                .append(text(" has been "))
                 .append(textPunishment(punishment));
+        if (reason != null)
+            text = text.append(text(": "))
+                    .append(text(reason).color(LIGHT_PURPLE));
+        return text;
     }
 
     private Component textPunishment(Punishment punishment) {
