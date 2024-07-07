@@ -9,6 +9,9 @@ commands:
   reload:
     description: Reloads Configuration Files
     permission: banmod.reload
+  import:
+    description: Import Data from other sources
+    permission: banmod.import
   category:
     description: Modify Punishment Categories
     permission: banmod.category
