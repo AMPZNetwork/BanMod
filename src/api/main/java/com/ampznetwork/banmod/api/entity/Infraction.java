@@ -25,10 +25,11 @@ import static lombok.Builder.Default;
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
+    public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
     public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getCategory().getPunishment().isInherentlyTemporary()
             && (i.getRevoker() == null
             && (i.getExpires() == null || i.getExpires().isAfter(now())
-            || i.getExpires().isBefore(Instant.EPOCH.plus(Duration.ofDays(2)))));
+            || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
