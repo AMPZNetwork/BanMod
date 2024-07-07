@@ -12,14 +12,14 @@ import io.wispforest.owo.config.annotation.RestartRequired;
 @Config(name = "banMod-config", wrapperName = "Config")
 public class ConfigModel {
     @RestartRequired
-    EntityService.Type entityService = EntityService.Type.DATABASE;
+    public EntityService.Type entityService = EntityService.Type.DATABASE;
     @Nest
-    Database database;
+    public Database database = new Database();
 
     public static class Database {
-        EntityService.DatabaseType type = EntityService.DatabaseType.h2;
-        String url = "jdbc:h2:file:./BanMod.h2";
-        String username = "sa";
-        String password = "";
+        public EntityService.DatabaseType type = EntityService.DatabaseType.h2;
+        public String url = "jdbc:h2:file:./BanMod.h2";
+        public String username = "sa";
+        public String password = "";
     }
 }

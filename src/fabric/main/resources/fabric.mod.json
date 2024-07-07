@@ -21,7 +21,7 @@
     "client": []
   },
   "mixins": [
-    "banmod-fabric.mixins.json",
+    "banmod.mixins.json",
     {
       "config": "banmod-fabric.client.mixins.json",
       "environment": "client"

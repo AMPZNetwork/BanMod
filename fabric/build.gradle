@@ -31,16 +31,21 @@ tasks.register('dlFabricApi', Download).configure {
 	dest "${projectDir}/run/mods/fabric-api.jar"
 }
 
+tasks.register('dlOwoLib', Download).configure {
+	src "https://mediafilez.forgecdn.net/files/4573/684/owo-lib-0.11.0%2B1.20.jar"
+	dest "${projectDir}/run/mods/owolib.jar"
+}
+
 tasks.register('serverJar', Copy) {
-	dependsOn dlServerJar, dlFabricApi
+	dependsOn dlServerJar, dlFabricApi, dlOwoLib
 	from dlServerJar.outputs.files.singleFile
 	into "$projectDir/run"
 	rename { n -> "server.jar" }
 }
 
 tasks.register('testMod', Copy) {
-	dependsOn remappedShadowJar, serverJar
-	from remappedShadowJar.outputs.files.singleFile
+	dependsOn clean, remapJar, serverJar
+	from remapJar.outputs.files.singleFile
 	into "${projectDir}/run/mods"
 	rename { n -> "BanMod-fabric.jar" }
 }
@@ -82,11 +87,72 @@ dependencies {
 
 	// banMod
 	if (findProject(':japi') != null)
-		implementation project(':japi')
-	else implementation 'org.comroid:japi:+'
-	implementation project(':api')
+		include project(':japi')
+	else include 'org.comroid:japi:+'
+	include project(':api')
 	implementation project(':core')
-	implementation 'net.kyori:adventure-platform-fabric:5.9.0'
+	include project(':core')
+	include 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+	include 'javax.persistence:javax.persistence-api:2.2'
+	include 'net.kyori:adventure-api:4.14.0'
+	include 'net.kyori:adventure-platform-fabric:5.9.0'
+	implementation 'net.kyori:adventure-text-serializer-gson:4.14.0'
+	include 'org.hibernate:hibernate-core:5.6.0.Final'
+	include 'org.jboss:jandex:2.4.5.Final'
+	include 'com.zaxxer:HikariCP:4.0.3'
+	include 'com.fasterxml.jackson.core:jackson-core:2.17.2'
+
+
+	include 'org.hibernate.common:hibernate-commons-annotations:5.1.2.Final'
+	include 'net.java.dev.jna:jna-platform:5.13.0'
+	include 'com.github.oshi:oshi-core:6.2.2'
+	include 'com.zaxxer:HikariCP:4.0.3'
+	include 'net.bytebuddy:byte-buddy:1.11.20'
+	include 'com.google.errorprone:error_prone_annotations:2.10.0'
+	include 'org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec:1.1.1.Final'
+	include 'javax.xml.bind:jaxb-api:2.3.1'
+	include 'net.kyori:examination-string:1.3.0'
+	include 'org.slf4j:slf4j-api:2.0.7'
+	include 'org.jetbrains:annotations:24.1.0'
+	include 'net.kyori:adventure-key:4.14.0'
+	include 'javax.persistence:javax.persistence-api:2.2'
+	include 'net.fabricmc:dev-launch-injector:0.2.1+build.8'
+	include 'com.sun.xml.fastinfoset:FastInfoset:1.2.15'
+	include 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
+	include 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+	include 'net.kyori:adventure-text-serializer-gson:4.14.0'
+	include 'org.apache.logging.log4j:log4j-api:2.19.0'
+	include 'com.fasterxml:classmate:1.5.1'
+	include 'com.fasterxml.jackson.core:jackson-annotations:2.17.2'
+	include 'com.fasterxml.jackson.core:jackson-core:2.17.2'
+	include 'org.jvnet.staxex:stax-ex:1.8'
+	include 'org.jboss:jandex:2.4.5.Final'
+	include 'org.jline:jline-terminal:3.20.0'
+	include 'net.kyori:adventure-text-serializer-json:4.14.0'
+	include 'net.kyori:adventure-api:4.14.0'
+	include 'antlr:antlr:2.7.7'
+	include 'com.sun.istack:istack-commons-runtime:3.0.7'
+	include 'org.glassfish.jaxb:txw2:2.3.1'
+	include 'org.hibernate:hibernate-core:5.6.0.Final'
+	include 'org.mariadb.jdbc:mariadb-java-client:3.4.0'
+	include 'org.jboss.logging:jboss-logging:3.4.2.Final'
+	include 'org.checkerframework:checker-qual:3.32.0'
+	include 'net.minecrell:terminalconsoleappender:1.3.0'
+	include 'net.kyori:examination-api:1.3.0'
+	include 'com.github.ben-manes.caffeine:caffeine:2.9.3'
+	include 'com.h2database:h2:2.2.224'
+	include 'org.jline:jline-reader:3.20.0'
+	include 'com.github.waffle:waffle-jna:3.3.0'
+	include 'net.java.dev.jna:jna:5.13.0'
+	include 'io.github.llamalad7:mixinextras-fabric:0.3.5'
+	include 'blue.endless:jankson:1.2.2'
+	include 'javax.activation:javax.activation-api:1.2.0'
+	include 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+	include 'com.mysql:mysql-connector-j:8.4.0'
+	include 'com.google.protobuf:protobuf-java:3.25.1'
+	include 'com.google.code.gson:gson:2.10'
+	include 'org.apache.logging.log4j:log4j-core:2.19.0'
+
 
 	// owo lib
 	modImplementation "io.wispforest:owo-lib:${project.owo_version}"
