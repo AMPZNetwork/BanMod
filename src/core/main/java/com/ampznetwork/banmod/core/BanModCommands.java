@@ -209,11 +209,9 @@ public class BanModCommands {
                 .filter(i -> i.getCategory().getPunishment() == punishment)
                 .toList();
         final var perPage = 8;
-        final var pageCount = infractions.size() / perPage;
+        final var pageCount = Math.ceil(1d * infractions.size() / perPage);
         // todo: use book adapter here
         return infractions.stream()
-                .filter(Infraction.IS_IN_EFFECT)
-                .filter(i -> i.getCategory().getPunishment() == punishment)
                 .skip((page - 1L) * perPage)
                 .limit(perPage)
                 .map(i -> text("\n- ")
@@ -223,7 +221,7 @@ public class BanModCommands {
                 .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                         .append(text("(none)").color(GRAY))))
                 .collect(Collector.of(() -> Component.text()
-                                .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, pageCount))),
+                                .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, (int) pageCount))),
                         ComponentBuilder::append,
                         (l, r) -> {
                             l.append(r);
