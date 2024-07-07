@@ -318,6 +318,7 @@ public class BanModCommands {
         }
     }
 
+    @UtilityClass
     @Command("import")
     public class Import {
         @Command
