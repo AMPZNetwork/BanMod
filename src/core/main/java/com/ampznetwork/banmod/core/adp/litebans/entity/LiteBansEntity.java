@@ -1,4 +1,4 @@
-package com.ampznetwork.banmod.spigot.adp.litebans.entity;
+package com.ampznetwork.banmod.core.adp.litebans.entity;
 
 
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;

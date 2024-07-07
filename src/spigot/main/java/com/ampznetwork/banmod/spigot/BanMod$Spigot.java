@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
@@ -74,15 +75,11 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @Override
     @SneakyThrows
     public void onEnable() {
-        var dbImpl = config.getString("worldmod.entity-service", "database");
-        var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));
-        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./banmod.h2");
-        var dbUser = config.getString("worldmod.database.username", "sa");
-        var dbPass = config.getString("worldmod.database.password", "");
-        this.entityService = switch (dbImpl.toLowerCase()) {
+        var db = getDatabaseInfo();
+        this.entityService = switch (db.impl().toLowerCase()) {
             case "file", "local" -> new LocalEntityService(this);
-            case "hibernate", "database" -> new HibernateEntityService(this, dbType, dbUrl, dbUser, dbPass);
-            default -> throw new IllegalStateException("Unexpected value: " + dbImpl.toLowerCase());
+            case "hibernate", "database" -> new HibernateEntityService(this);
+            default -> throw new IllegalStateException("Unexpected value: " + db.impl().toLowerCase());
         };
 
         // default categories
@@ -112,5 +109,15 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         reloadConfig();
         config = getConfig();
         onEnable();
+    }
+
+    @Override
+    public DatabaseInfo getDatabaseInfo() {
+        var dbImpl = config.getString("worldmod.entity-service", "database");
+        var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));
+        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./banmod.h2");
+        var dbUser = config.getString("worldmod.database.username", "sa");
+        var dbPass = config.getString("worldmod.database.password", "");
+        return new DatabaseInfo(dbImpl, dbType, dbUrl, dbUser, dbPass);
     }
 }

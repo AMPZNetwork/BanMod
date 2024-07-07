@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.banmod.core.adp.litebans.LiteBansImporter;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
@@ -271,6 +272,23 @@ public class BanModCommands {
             return banMod.getEntityService().deleteCategory(name)
                     ? text("Deleted category " + name).color(RED)
                     : text("Could not delete category " + name).color(DARK_RED);
+        }
+    }
+
+    @Command("import")
+    public class Import {
+        @Command
+        public Component litebans(BanMod banMod) {
+            try (var importer = new LiteBansImporter(banMod, banMod.getDatabaseInfo())) {
+                var result = importer.run();
+                return text("Imported ")
+                        .append(text(result.muteCount() + " Mutes").color(YELLOW))
+                        .append(text(" and "))
+                        .append(text(result.banCount() + " Bans").color(RED))
+                        .append(text(" from LiteBans"));
+            } catch (Throwable t) {
+                throw new Command.Error("Could not import from LiteBans: " + t);
+            }
         }
     }
 }

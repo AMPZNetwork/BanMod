@@ -1,4 +1,4 @@
-package com.ampznetwork.banmod.spigot.adp.litebans.entity;
+package com.ampznetwork.banmod.core.adp.litebans.entity;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -12,11 +12,11 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "litebans_mutes")
+@Table(name = "litebans_bans")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public final class Mute extends LiteBansEntity {
+public final class Ban extends LiteBansEntity {
     public boolean equals(Object other) {
-        return other instanceof Mute mute && mute.getId() == getId();
+        return other instanceof Ban ban && ban.getId() == getId();
     }
 
     public int hashCode() {
