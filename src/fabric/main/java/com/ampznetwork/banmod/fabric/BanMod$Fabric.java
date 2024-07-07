@@ -16,12 +16,13 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 import org.comroid.api.func.util.Command;
-import org.comroid.api.func.util.Command$Adapter$Fabric;
+import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.stream.Stream;
 
 import static java.time.Duration.*;
 
@@ -38,7 +39,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     private Config config = Config.createAndLoad();
     private MinecraftServer server;
     private Command.Manager cmdr;
-    private Command$Adapter$Fabric adapter;
+    private Command$Manager$Adapter$Fabric adapter;
     private EntityService entityService;
     private PunishmentCategory muteCategory;
     private PunishmentCategory kickCategory;
@@ -49,7 +50,12 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> this.server = server);
 
         this.cmdr = new Command.Manager();
-        this.adapter = new Command$Adapter$Fabric(cmdr) {
+        this.adapter = new Command$Manager$Adapter$Fabric(cmdr) {
+            @Override
+            protected Stream<Object> streamExtraArgs() {
+                return Stream.of(BanMod$Fabric.this);
+            }
+
             @Override
             public String handleThrowable(Throwable throwable) {
                 return throwable instanceof InvocationTargetException ITEx

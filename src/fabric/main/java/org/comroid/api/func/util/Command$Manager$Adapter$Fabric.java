@@ -12,6 +12,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.kyori.adventure.text.Component;
 import net.minecraft.command.CommandRegistryAccess;
@@ -31,20 +32,22 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 
 @Value
+@Slf4j
 @NonFinal
-public class Command$Adapter$Fabric extends Command.Manager.Adapter implements CommandRegistrationCallback,
+public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter implements CommandRegistrationCallback,
         com.mojang.brigadier.Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
     Command.Manager cmdr;
 
-    public Command$Adapter$Fabric(Command.Manager cmdr) {
+    public Command$Manager$Adapter$Fabric(Command.Manager cmdr) {
         this.cmdr = cmdr;
 
         cmdr.adapters.add(this);
@@ -101,13 +104,13 @@ public class Command$Adapter$Fabric extends Command.Manager.Adapter implements C
                                 .map(ArgumentConverter::getSupplier)
                                 .map(Supplier::get)
                                 .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string())))
-                                .suggests(Command$Adapter$Fabric.this));
+                                .suggests(Command$Manager$Adapter$Fabric.this));
                     }
-                    base.executes(Command$Adapter$Fabric.this);
+                    base.executes(Command$Manager$Adapter$Fabric.this);
                 }
                 if (node instanceof Command.Node.Group group) {
                     if (group.getDefaultCall() != null)
-                        base.executes(Command$Adapter$Fabric.this);
+                        base.executes(Command$Manager$Adapter$Fabric.this);
                     group.nodes()
                             .map(this::convertNode)
                             .forEach(base::then);
@@ -123,15 +126,23 @@ public class Command$Adapter$Fabric extends Command.Manager.Adapter implements C
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         var fullCommand = context.getInput().split(" ");
-        var adp = Command$Adapter$Fabric.this;
+        var adp = Command$Manager$Adapter$Fabric.this;
         var usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
         try {
             usage.advanceFull();
             var call = getCall(usage);
-            var args = call.getParameters().stream()
-                    .collect(Collectors.toMap(Command.Node.Parameter::getName,
-                            key -> (Object) context.getArgument(key.getName(), key.getParam().getType())));
-            cmdr.execute(usage, args);
+            var args = new ConcurrentHashMap<String, Object>();
+            call.getParameters().forEach(param -> {
+                var key = param.getName();
+                try {
+                    var value = (Object) context.getArgument(key, param.getParam().getType());
+                    args.put(key, value);
+                } catch (IllegalArgumentException iaex) {
+                    log.warn("Could not obtain argument " + key);
+                }
+            });
+            cmdr.execute(this, fullCommand, args, concat(of(this, context.getSource()), streamExtraArgs())
+                    .distinct().toArray());
             return 1;
         } catch (CommandSyntaxException csex) {
             throw csex;
@@ -143,10 +154,19 @@ public class Command$Adapter$Fabric extends Command.Manager.Adapter implements C
     }
 
     @Override
+    public Stream<Command.Capability> capabilities() {
+        return concat(super.capabilities(), of(Command.Capability.NAMED_ARGS));
+    }
+
+    protected Stream<Object> streamExtraArgs() {
+        return empty();
+    }
+
+    @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         return CompletableFuture.supplyAsync(() -> {
             var fullCommand = context.getInput().split(" ");
-            var adp = Command$Adapter$Fabric.this;
+            var adp = Command$Manager$Adapter$Fabric.this;
             var usage = cmdr.createUsageBase(adp, fullCommand, adp);
             usage.advanceFull();
             return usage.getNode().nodes()
@@ -158,7 +178,7 @@ public class Command$Adapter$Fabric extends Command.Manager.Adapter implements C
     public Text component2nbt(Component component) {
         final var key = "extra";
         return Text.nbt(key, true, Optional.empty(),
-                $ -> Stream.of(new NbtCompound() {{
+                $ -> of(new NbtCompound() {{
                     put(key, new NbtList() {{
                         add(NbtString.of(gson().serialize(component)));
                     }});
