@@ -14,9 +14,11 @@ import org.comroid.annotations.Alias;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -40,6 +42,49 @@ public class BanModCommands {
     }
 
     @Command
+    public Component cleanup(BanMod banMod, @Arg @MagicConstant(stringValues = {"infractions", "playerdata", "*"}) String method) {
+        final var service = banMod.getEntityService();
+        var text = text();
+        int c;
+        switch (method) {
+            case "*":
+            case "infractions":
+                c = service.delete(service.getInfractions()
+                        .filter(Infraction.IS_IN_EFFECT.negate())
+                        .toArray());
+                text.append(text("Removed ")
+                        .append(text(c).color(GREEN))
+                        .append(text(" expired infractions")));
+                if (!"*".equals(method))
+                    break;
+                else text.append(text("\n"));
+            case "playerdata":
+                var affected = service.getPlayerData()
+                        .filter(data -> data.getKnownNames().size() > 1 || data.getKnownIPs().size() > 1)
+                        .peek(data -> {
+                            var knownName = data.getLastKnownName();
+                            var knownIp = data.getLastKnownIp();
+                            var now = now();
+                            data.setKnownNames(new HashMap<>() {{
+                                put(knownName, now);
+                            }});
+                            data.setKnownIPs(new HashMap<>() {{
+                                put(knownIp, now);
+                            }});
+                        })
+                        .toArray();
+                service.save(affected);
+                text.append(text("Cleaned up ")
+                        .append(text(affected.length).color(GREEN))
+                        .append(text(" users")));
+                break;
+            default:
+                throw new Command.Error("Unexpected value: " + method);
+        }
+        return text.build();
+    }
+
+    @Command
     public Component lookup(BanMod banMod, @Arg String name) {
         // todo: use book adapter here
         var target = banMod.getPlayerAdapter().getId(name);
@@ -55,14 +100,18 @@ public class BanModCommands {
                         .color(YELLOW))
                 .append(text("\n"))
                 .append(text("Known Names:"));
-        for (var knownName : data.getKnownNames().keySet())
+        for (var knownName : data.getKnownNames().entrySet())
             text = text.append(text("\n- "))
-                    .append(text(knownName).color(YELLOW))
+                    .append(text(knownName.getKey())
+                            .hoverEvent(showText(text("Last seen: " + knownName.getValue())))
+                            .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Known IPs:"));
-        for (var knownIp : data.getKnownIPs())
+        for (var knownIp : data.getKnownIPs().entrySet())
             text = text.append(text("\n- "))
-                    .append(text(knownIp.toString()).color(YELLOW))
+                    .append(text(knownIp.toString())
+                            .hoverEvent(showText(text("Last seen: " + knownIp.getValue())))
+                            .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
         var infractions = banMod.getEntityService().getInfractions(target)
@@ -232,7 +281,7 @@ public class BanModCommands {
                                 i.getReason())))
                 .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                         .append(text("(none)").color(GRAY))))
-                .collect(Collector.of(() -> Component.text()
+                .collect(Collector.of(() -> text()
                                 .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, (int) pageCount))),
                         ComponentBuilder::append,
                         (l, r) -> {
@@ -328,7 +377,9 @@ public class BanModCommands {
 
         @Command
         public Component delete(BanMod banMod, @Arg String name) {
-            return banMod.getEntityService().deleteCategory(name)
+            var service = banMod.getEntityService();
+            var cat = service.findCategory(name);
+            return service.delete(cat) > 0
                     ? text("Deleted category " + name).color(RED)
                     : text("Could not delete category " + name).color(DARK_RED);
         }

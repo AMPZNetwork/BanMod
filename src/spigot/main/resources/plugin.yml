@@ -9,6 +9,9 @@ commands:
   reload:
     description: Reloads Configuration Files
     permission: banmod.reload
+  cleanup:
+    description: Cleanup Database
+    permission: banmod.cleanup
   import:
     description: Import Data from other sources
     permission: banmod.import

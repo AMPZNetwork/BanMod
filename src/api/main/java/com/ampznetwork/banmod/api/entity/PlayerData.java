@@ -11,7 +11,6 @@ import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -32,12 +31,20 @@ public class PlayerData {
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames;
     @ElementCollection
     @CollectionTable(name = "banmod_playerdata_ips")
-    Set<InetAddress> knownIPs;
+    Map<@Doc("ip") InetAddress, @Doc("lastSeen") Instant> knownIPs;
 
     @Basic
     @Nullable
     public String getLastKnownName() {
         return knownNames.entrySet().stream()
+                .max(Comparator.comparingLong(e -> e.getValue().toEpochMilli()))
+                .map(Map.Entry::getKey)
+                .orElse(null);
+    }
+
+    @Basic
+    public InetAddress getLastKnownIp() {
+        return knownIPs.entrySet().stream()
                 .max(Comparator.comparingLong(e -> e.getValue().toEpochMilli()))
                 .map(Map.Entry::getKey)
                 .orElse(null);

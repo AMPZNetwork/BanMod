@@ -28,11 +28,6 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public boolean deleteCategory(String name) {
-        return false;
-    }
-
-    @Override
     public Stream<PunishmentCategory> getCategories() {
         return Stream.empty();
     }
@@ -60,5 +55,10 @@ public class LocalEntityService implements EntityService {
     @Override
     public <T> T refresh(T it) {
         return null;
+    }
+
+    @Override
+    public int delete(Object... infractions) {
+        return 0;
     }
 }

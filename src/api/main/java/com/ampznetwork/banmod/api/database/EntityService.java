@@ -25,8 +25,6 @@ public interface EntityService extends LifeCycle {
     Stream<PlayerData> getPlayerData();
     Optional<PlayerData> getPlayerData(UUID playerId);
 
-    boolean deleteCategory(String name);
-
     Stream<PunishmentCategory> getCategories();
 
     default Optional<PunishmentCategory> findCategory(String name) {
@@ -63,6 +61,8 @@ public interface EntityService extends LifeCycle {
 
     @Contract("!null -> param1")
     <T> T refresh(T it);
+
+    int delete(Object... objects);
 
     @Getter
     @AllArgsConstructor

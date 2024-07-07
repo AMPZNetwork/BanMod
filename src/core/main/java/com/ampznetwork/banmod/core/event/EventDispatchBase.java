@@ -10,7 +10,6 @@ import lombok.extern.java.Log;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.UUID;
 
 @Log
@@ -29,23 +28,22 @@ public abstract class EventDispatchBase {
         final var now = Instant.now();
 
         // push player data cache
-        service.getPlayerData(playerId)
-                .ifPresentOrElse(existing -> {
-                    // update cached player data
+        var data = service.getPlayerData(playerId)
+                // update cached player data
+                .map(existing -> {
                     existing.getKnownNames().put(name, now);
-                    existing.getKnownIPs().add(address);
-                    service.save(existing);
-                }, () -> {
-                    // create new player data
-                    var newData = new PlayerData(playerId,
-                            new HashMap<>() {{
-                                put(name, now);
-                            }},
-                            new HashSet<>() {{
-                                add(address);
-                            }});
-                    service.save(newData);
-                });
+                    existing.getKnownIPs().put(address, now);
+                    return existing;
+                })
+                // create new player data
+                .orElseGet(() -> new PlayerData(playerId,
+                        new HashMap<>() {{
+                            put(name, now);
+                        }},
+                        new HashMap<>() {{
+                            put(address, now);
+                        }}));
+        service.save(data);
 
         // queue player
         return player(playerId);

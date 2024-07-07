@@ -47,21 +47,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public boolean deleteCategory(String name) {
-        return findCategory(name)
-                .filter(it -> {
-                    try {
-                        manager.remove(it);
-                        return true;
-                    } catch (Throwable t) {
-                        log.warn("Could not delete category {}", name, t);
-                        return false;
-                    }
-                })
-                .isPresent();
-    }
-
-    @Override
     public Stream<PunishmentCategory> getCategories() {
         return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
                 .getResultStream();
@@ -122,7 +107,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     @Override
     public synchronized boolean save(Object... entities) {
         var transaction = manager.getTransaction();
-
         synchronized (transaction) {
             try {
                 transaction.begin();
@@ -144,6 +128,27 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         Constraint.notNull(it, "entity");
         manager.refresh(it);
         return it;
+    }
+
+    @Override
+    public int delete(Object... infractions) {
+        var transaction = manager.getTransaction();
+        var c = 0;
+        synchronized (transaction) {
+            try {
+                transaction.begin();
+                for (Object each : infractions) {
+                    manager.remove(each);
+                    c += 1;
+                }
+                manager.flush();
+                transaction.commit();
+            } catch (Throwable t) {
+                transaction.rollback();
+                log.warn("Could not remove all entities\n\tEntities: " + Arrays.toString(infractions), t);
+            }
+        }
+        return c;
     }
 
     public HibernateEntityService(BanMod banMod) {
