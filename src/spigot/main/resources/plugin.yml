@@ -15,12 +15,12 @@ commands:
   lookup:
     description: Lookup User Entry
     permission: banmod.lookup
-  banlist:
-    description: Lookup User Entry
-    permission: banmod.banlist
   punish:
     description: Punish User
     permission: banmod.punish
+  mutelist:
+    description: Mute User
+    permission: banmod.mutelist
   tempmute:
     description: Temporarily Mute User
     permission: banmod.tempmute
@@ -33,6 +33,9 @@ commands:
   kick:
     description: Kick User
     permission: banmod.kick
+  banlist:
+    description: Lookup User Entry
+    permission: banmod.banlist
   tempban:
     description: Temporarily Ban User
     permission: banmod.tempban
