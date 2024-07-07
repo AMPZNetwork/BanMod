@@ -1,6 +1,6 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.banmod.api.model.adp.UUIDConverter;
+import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class PlayerData {
     @Id
     @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UUIDConverter.class)
+    @Convert(converter = UuidBinary16Converter.class)
     UUID id;
     @ElementCollection
     @CollectionTable(name = "banmod_playerdata_names")

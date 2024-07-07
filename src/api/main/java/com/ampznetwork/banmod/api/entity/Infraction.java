@@ -1,6 +1,6 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.banmod.api.model.adp.UUIDConverter;
+import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +25,11 @@ public class Infraction {
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UUIDConverter.class)
+    @Convert(converter = UuidBinary16Converter.class)
     UUID id = UUID.randomUUID();
     @NotNull
     @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UUIDConverter.class)
+    @Convert(converter = UuidBinary16Converter.class)
     UUID playerId;
     @NotNull
     @ManyToOne
@@ -46,12 +46,12 @@ public class Infraction {
     @Nullable
     @Default
     @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UUIDConverter.class)
+    @Convert(converter = UuidBinary16Converter.class)
     UUID issuer = null;
     @Nullable
     @Default
     @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UUIDConverter.class)
+    @Convert(converter = UuidBinary16Converter.class)
     UUID revoker = null;
 
     public @Nullable String getReason() {

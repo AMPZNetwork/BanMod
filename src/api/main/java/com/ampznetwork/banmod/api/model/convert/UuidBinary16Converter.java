@@ -1,13 +1,15 @@
-package com.ampznetwork.banmod.api.model.adp;
+package com.ampznetwork.banmod.api.model.convert;
+
+import lombok.Value;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+@Value
 @Converter(autoApply = true)
-public class UUIDConverter implements AttributeConverter<UUID, byte[]> {
-
+public class UuidBinary16Converter implements AttributeConverter<UUID, byte[]> {
     @Override
     public byte[] convertToDatabaseColumn(UUID uuid) {
         if (uuid == null) {
