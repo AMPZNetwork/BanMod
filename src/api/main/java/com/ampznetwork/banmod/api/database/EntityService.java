@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public interface EntityService extends LifeCycle {
+    Stream<PlayerData> getPlayerData();
     Optional<PlayerData> getPlayerData(UUID playerId);
 
     boolean deleteCategory(String name);

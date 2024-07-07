@@ -13,8 +13,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
-import org.comroid.api.data.Vector;
-import org.comroid.api.net.REST;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -27,35 +25,14 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     BanMod$Fabric banMod;
 
     @Override
-    public String getName(UUID playerId) {
-        return REST.get("https://sessionserver.mojang.com/session/minecraft/profile/" + playerId)
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("name").asString())
-                .exceptionally(t -> {
-                    BanMod$Fabric.LOGGER.warn("Could not retrieve Minecraft Username for user {}", playerId, t);
-                    return "Steve";
-                }).join();
-    }
-
-    @Override
     public boolean isOnline(UUID playerId) {
         return banMod.getServer().getPlayerManager()
                 .getPlayer(playerId) != null;
     }
 
     @Override
-    public Vector.N3 getPosition(UUID playerId) {
-        var vec = banMod.getServer().getPlayerManager()
-                .getPlayer(playerId).getPos();
-        return new Vector.N3(vec.x, vec.y, vec.z);
-    }
+    public void kick(UUID playerId, String reason) {
 
-    @Override
-    public String getWorldName(UUID playerId) {
-        return banMod.getServer().getPlayerManager()
-                .getPlayer(playerId).getWorld()
-                .getRegistryKey().getValue()
-                .toString();
     }
 
     @Override

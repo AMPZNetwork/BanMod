@@ -55,7 +55,7 @@ public class BanModCommands {
                         .color(YELLOW))
                 .append(text("\n"))
                 .append(text("Known Names:"));
-        for (var knownName : data.getKnownNames())
+        for (var knownName : data.getKnownNames().keySet())
             text = text.append(text("\n- "))
                     .append(text(knownName).color(YELLOW))
                     .append(text("\n"));

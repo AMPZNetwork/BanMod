@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.spigot.adp.internal;
 
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
@@ -13,6 +14,7 @@ import org.bukkit.inventory.meta.BookMeta;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
@@ -23,16 +25,26 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
 
     @Override
     public UUID getId(String name) {
+        final var fetch = PlayerAdapter.fetchId(name);
         return Arrays.stream(Bukkit.getOfflinePlayers())
                 .filter(player -> name.equals(player.getName()))
                 .findAny()
                 .map(OfflinePlayer::getUniqueId)
-                .orElseThrow();
+                .or(() -> banMod.getEntityService().getPlayerData()
+                        .filter(pd -> pd.getKnownNames().keySet()
+                                .stream().anyMatch(name::equals))
+                        .map(PlayerData::getId)
+                        .findAny())
+                .orElseGet(fetch::join);
     }
 
     @Override
     public String getName(UUID playerId) {
-        return banMod.getServer().getOfflinePlayer(playerId).getName();
+        final var fetch = PlayerAdapter.fetchName(playerId);
+        return Optional.ofNullable(banMod.getServer().getOfflinePlayer(playerId).getName())
+                .or(() -> banMod.getEntityService().getPlayerData(playerId)
+                        .flatMap(pd -> Optional.ofNullable(pd.getLastKnownName())))
+                .orElseGet(fetch::join);
     }
 
     @Override

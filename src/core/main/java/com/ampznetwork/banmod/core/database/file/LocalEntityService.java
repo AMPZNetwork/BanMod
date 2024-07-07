@@ -18,6 +18,11 @@ public class LocalEntityService implements EntityService {
     // todo
 
     @Override
+    public Stream<PlayerData> getPlayerData() {
+        return Stream.empty();
+    }
+
+    @Override
     public Optional<PlayerData> getPlayerData(UUID playerId) {
         return Optional.empty();
     }

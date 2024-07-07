@@ -8,6 +8,8 @@ import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
 
 import java.net.InetAddress;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -24,18 +26,20 @@ public abstract class EventDispatchBase {
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
         final var service = banMod.getEntityService();
         final var name = banMod.getPlayerAdapter().getName(playerId);
+        final var now = Instant.now();
 
         // push player data cache
         service.getPlayerData(playerId)
                 .ifPresentOrElse(existing -> {
                     // update cached player data
-                    if (existing.getKnownIPs().add(address) | existing.getKnownNames().add(name))
-                        service.save(existing);
+                    existing.getKnownNames().put(name, now);
+                    existing.getKnownIPs().add(address);
+                    service.save(existing);
                 }, () -> {
                     // create new player data
                     var newData = new PlayerData(playerId,
-                            new HashSet<>() {{
-                                add(name);
+                            new HashMap<>() {{
+                                put(name, now);
                             }},
                             new HashSet<>() {{
                                 add(address);

@@ -32,6 +32,11 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
 
     @Override
+    public Stream<PlayerData> getPlayerData() {
+        return manager.createQuery("select pd from PlayerData pd", PlayerData.class).getResultStream();
+    }
+
+    @Override
     public Optional<PlayerData> getPlayerData(UUID playerId) {
         return manager.createQuery("select pd from PlayerData  pd where pd.id = :playerId", PlayerData.class)
                 .setParameter("playerId", playerId)
