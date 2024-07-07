@@ -4,7 +4,8 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.core.adp.litebans.LiteBansImporter;
+import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
+import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
@@ -277,6 +278,20 @@ public class BanModCommands {
 
     @Command("import")
     public class Import {
+        @Command
+        public Component vanilla(BanMod banMod) {
+            try (var importer = new VanillaBansImporter(banMod)) {
+                var result = importer.run();
+                return text("Imported ")
+                        .append(text(result.muteCount() + " Mutes").color(YELLOW))
+                        .append(text(" and "))
+                        .append(text(result.banCount() + " Bans").color(RED))
+                        .append(text(" from Vanilla Minecraft"));
+            } catch (Throwable t) {
+                throw new Command.Error("Could not import from Vanilla Minecraft: " + t);
+            }
+        }
+
         @Command
         public Component litebans(BanMod banMod) {
             try (var importer = new LiteBansImporter(banMod, banMod.getDatabaseInfo())) {

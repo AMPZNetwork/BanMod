@@ -1,21 +1,21 @@
-package com.ampznetwork.banmod.core.adp.litebans;
+package com.ampznetwork.banmod.core.importer.litebans;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
-import com.ampznetwork.banmod.core.adp.litebans.entity.Ban;
-import com.ampznetwork.banmod.core.adp.litebans.entity.Mute;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.banmod.core.importer.ImportResult;
+import com.ampznetwork.banmod.core.importer.litebans.entity.Ban;
+import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
 import lombok.Value;
-import org.comroid.api.tree.UncheckedCloseable;
 
 import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 @Value
-public class LiteBansImporter implements UncheckedCloseable {
+public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Importer {
     BanMod banMod;
     HibernateEntityService.Unit unit;
 
@@ -24,6 +24,7 @@ public class LiteBansImporter implements UncheckedCloseable {
         this.unit = HibernateEntityService.buildPersistenceUnit(info, "validate");
     }
 
+    @Override
     public ImportResult run() {
         int[] count = new int[]{0, 0};
         var convert = Stream.concat(
@@ -59,8 +60,5 @@ public class LiteBansImporter implements UncheckedCloseable {
     @Override
     public void close() {
         unit.close();
-    }
-
-    public record ImportResult(int muteCount, int banCount) {
     }
 }

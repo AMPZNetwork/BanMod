@@ -1,9 +1,9 @@
-package com.ampznetwork.banmod.core.adp.litebans;
+package com.ampznetwork.banmod.core.importer.litebans;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.core.adp.litebans.entity.Ban;
-import com.ampznetwork.banmod.core.adp.litebans.entity.Mute;
 import com.ampznetwork.banmod.core.database.hibernate.PersistenceUnitBase;
+import com.ampznetwork.banmod.core.importer.litebans.entity.Ban;
+import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 
