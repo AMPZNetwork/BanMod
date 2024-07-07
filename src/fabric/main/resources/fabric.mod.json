@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "banMod",
+  "version": "${version}",
+  "name": "BanMod",
+  "description": "World Protection Mod, because EngineHub people are assholes",
+  "authors": [
+    "Kaleidox"
+  ],
+  "contact": {
+    "homepage": "https://github.com/AMPZNetwork/BanMod",
+    "sources": "https://github.com/AMPZNetwork/BanMod"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/banMod/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "org.comroid.mcsd.fabric.BanMod_Fabric"
+    ],
+    "client": []
+  },
+  "mixins": [
+    "banMod-fabric.mixins.json",
+    {
+      "config": "mcsd-fabric-integration.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.9",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

@@ -6,6 +6,9 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 
 public interface BanMod {
+    String AddonName = "BanMod";
+    String AddonId = "banmod";
+
     DatabaseInfo getDatabaseInfo();
 
     PunishmentCategory getMuteCategory();

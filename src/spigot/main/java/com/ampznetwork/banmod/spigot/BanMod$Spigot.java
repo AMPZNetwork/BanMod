@@ -114,7 +114,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     public DatabaseInfo getDatabaseInfo() {
         var dbImpl = EntityService.Type.valueOf(config.getString("worldmod.entity-service", "database").toUpperCase());
         var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));
-        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./banmod.h2");
+        var dbUrl = config.getString("worldmod.database.url", "jdbc:h2:file:./BanMod.h2");
         var dbUser = config.getString("worldmod.database.username", "sa");
         var dbPass = config.getString("worldmod.database.password", "");
         return new DatabaseInfo(dbImpl, dbType, dbUrl, dbUser, dbPass);
