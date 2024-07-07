@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
@@ -15,6 +16,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 @Value
+@Slf4j
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.Init, ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
     public FabricEventDispatch(BanMod banMod) {
         super(banMod);
@@ -27,9 +29,9 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
 
     @Override
     public void onLoginInit(ServerLoginNetworkHandler handler, MinecraftServer server) {
-        System.out.println("FabricEventDispatch.onLoginInit");
-        System.out.println("handler = " + handler);
-        System.out.println("server = " + server);
+        log.warn("FabricEventDispatch.onLoginInit");
+        log.warn("handler = " + handler);
+        log.warn("server = " + server);
     }
 
     @Override
@@ -37,11 +39,11 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
                              MinecraftServer server,
                              PacketSender sender,
                              ServerLoginNetworking.LoginSynchronizer synchronizer) {
-        System.out.println("FabricEventDispatch.onLoginStart");
-        System.out.println("handler = " + handler);
-        System.out.println("server = " + server);
-        System.out.println("sender = " + sender);
-        System.out.println("synchronizer = " + synchronizer);
+        log.warn("FabricEventDispatch.onLoginStart");
+        log.warn("handler = " + handler);
+        log.warn("server = " + server);
+        log.warn("sender = " + sender);
+        log.warn("synchronizer = " + synchronizer);
     }
 
     @Override
