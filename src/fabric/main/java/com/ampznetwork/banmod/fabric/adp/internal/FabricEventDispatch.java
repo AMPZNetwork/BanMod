@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
@@ -15,35 +16,49 @@ import net.minecraft.server.network.ServerLoginNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
+import java.net.InetAddress;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
 @Value
 @Slf4j
-public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.Init, ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
+public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
+    /**
+     * half arsed regex to work around the shit connection api
+     * todo: support ipv6
+     */
+    private static final Pattern ConInfoPattern = Pattern.compile(".*id=(?<id>[\\da-f-]+).*?(?<ip>\\d+\\.\\d+\\.\\d+\\.\\d+).*");
+
     public FabricEventDispatch(BanMod banMod) {
         super(banMod);
 
-        ServerLoginConnectionEvents.INIT.register(this);
         ServerLoginConnectionEvents.QUERY_START.register(this);
 
         ServerMessageEvents.ALLOW_CHAT_MESSAGE.register(this);
     }
 
     @Override
-    public void onLoginInit(ServerLoginNetworkHandler handler, MinecraftServer server) {
-        log.warn("FabricEventDispatch.onLoginInit");
-        log.warn("handler = " + handler);
-        log.warn("server = " + server);
-    }
-
-    @Override
+    @SneakyThrows
     public void onLoginStart(ServerLoginNetworkHandler handler,
                              MinecraftServer server,
                              PacketSender sender,
                              ServerLoginNetworking.LoginSynchronizer synchronizer) {
-        log.warn("FabricEventDispatch.onLoginStart");
-        log.warn("handler = " + handler);
-        log.warn("server = " + server);
-        log.warn("sender = " + sender);
-        log.warn("synchronizer = " + synchronizer);
+        // thank you fabric devs for this very useful and reasonable method
+        var info = handler.getConnectionInfo();
+        var matcher = ConInfoPattern.matcher(info);
+
+        if (!matcher.matches()) {
+            log.warn(("Could not parse connection info string. Please report this at %s" +
+                    "\n\tString: %s").formatted(BanMod.IssuesUrl, info));
+            return;
+        }
+
+        var id = UUID.fromString(matcher.group("id"));
+        var ip = InetAddress.getByName(matcher.group("ip"));
+        var result = playerLogin(id, ip);
+
+        if (result.isBanned())
+            handler.disconnect(Text.of(result.reason()));
     }
 
     @Override

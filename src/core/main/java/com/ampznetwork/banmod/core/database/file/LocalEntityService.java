@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Value;
 
+import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -44,6 +45,11 @@ public class LocalEntityService implements EntityService {
 
     @Override
     public void pingUsernameCache(UUID id, String name) {
+
+    }
+
+    @Override
+    public void pingIpCache(UUID id, InetAddress ip) {
 
     }
 
