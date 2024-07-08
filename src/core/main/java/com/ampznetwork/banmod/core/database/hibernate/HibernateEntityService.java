@@ -17,7 +17,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import javax.persistence.EntityManager;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
-import java.net.InetAddress;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -95,48 +94,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                             .setParameter("uuid", uuid)
                             .setParameter("lastSeen", Timestamp.from(Instant.now()))  // or whatever timestamp you want to use
                             .setParameter("name", name)
-                            .executeUpdate();
-                }
-
-                transaction.commit();
-            } catch (Exception e) {
-                if (transaction.isActive()) {
-                    transaction.rollback();
-                }
-                throw e;
-            }
-        }
-    }
-
-    @Override
-    public void pingIpCache(UUID uuid, InetAddress ip) {
-        var transaction = manager.getTransaction();
-
-        synchronized (transaction) {
-            boolean nameExists = manager.createQuery("""
-                            select count(pd) > 0
-                            from PlayerData pd
-                            join pd.knownIPs ki
-                            where pd.id = :uuid and key(ki) = :ip
-                            """, Boolean.class)
-                    .setParameter("uuid", uuid)
-                    .setParameter("ip", ip)
-                    .getSingleResult();
-
-            try {
-                transaction.begin();
-
-                if (!nameExists) {
-                    manager.createNativeQuery("insert into banmod_playerdata (id) values (:uuid)")
-                            .setParameter("uuid", uuid)
-                            .executeUpdate();
-                    manager.createNativeQuery("""
-                                    insert into banmod_playerdata_ips (PlayerData_id, knownIPs, knownIPs_KEY)
-                                    values (:uuid, :lastSeen, :ip);
-                                    """)
-                            .setParameter("uuid", uuid)
-                            .setParameter("lastSeen", Timestamp.from(Instant.now()))  // or whatever timestamp you want to use
-                            .setParameter("ip", ip)
                             .executeUpdate();
                 }
 

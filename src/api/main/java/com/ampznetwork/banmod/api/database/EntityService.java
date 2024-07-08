@@ -16,7 +16,6 @@ import org.hibernate.dialect.MariaDBDialect;
 import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Contract;
 
-import java.net.InetAddress;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,8 +56,6 @@ public interface EntityService extends LifeCycle {
     }
 
     void pingUsernameCache(UUID id, String name);
-
-    void pingIpCache(UUID id, InetAddress ip);
 
     boolean save(Object... it);
 
