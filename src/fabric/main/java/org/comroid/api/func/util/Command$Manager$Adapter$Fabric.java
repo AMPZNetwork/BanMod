@@ -3,6 +3,7 @@ package org.comroid.api.func.util;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -32,9 +33,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.util.function.Predicate.not;
 import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
+import static org.comroid.api.func.util.Debug.isDebug;
 
 @Value
 @Slf4j
@@ -77,37 +80,84 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
     public void register(CommandDispatcher<ServerCommandSource> dispatcher,
                          CommandRegistryAccess registryAccess,
                          RegistrationEnvironment environment) {
-        final var helper = new Object() {
-            LiteralArgumentBuilder<ServerCommandSource> convertNode(Command.Node node) {
-                var base = literal(node.getName());
-                if (node instanceof Command.Node.Call call) {
-                    var tree = base;
-                    for (var parameter : call.getParameters()) {
-                        var argType = StandardValueType.forClass(parameter.getParam().getType())
-                                .wrap()
-                                .flatMap(type -> ArgumentConverter.VALUES.stream()
-                                        .filter(conv -> conv.valueType.equals(type))
-                                        .findAny()
-                                        .map(ArgumentConverter::getSupplier)
-                                        .map(Supplier::get))
-                                .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
-                        tree = tree.then(argument(parameter.getName(), argType)
-                                .suggests(Command$Manager$Adapter$Fabric.this));
-                    }
-                    tree.executes(Command$Manager$Adapter$Fabric.this);
-                } else if (node instanceof Command.Node.Group group) {
-                    if (group.getDefaultCall() != null)
-                        base.executes(Command$Manager$Adapter$Fabric.this);
-                    group.nodes()
-                            .map(this::convertNode)
-                            .forEach(base::then);
-                } else throw new IllegalStateException("Invalid node: " + node);
-                return base;
-            }
-        };
         cmdr.getBaseNodes().stream()
-                .map(helper::convertNode)
+                .map(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .forEach(dispatcher::register);
+    }
+
+    private LiteralArgumentBuilder<ServerCommandSource> convertNode(String pad, Command.Node node, int rec) {
+        // this node
+        final var base = literal(node.name());
+        if (isDebug()) System.out.printf("%s Command '%s'\n", pad, node.name());
+
+        if (node instanceof Command.Node.Call call) {
+            var parameters = call.getParameters();
+            if (!parameters.isEmpty()) {
+                // convert parameter nodes recursively
+                var param = convertParam(pad + "->", 0,
+                        parameters.toArray(new Command.Node.Parameter[0]));
+
+                // set base executable if there is no (required) parameters
+                if (parameters.stream().allMatch(not(Command.Node.Parameter::isRequired))) {
+                    base.executes(this);
+                    if (isDebug()) System.out.printf("%s-> Can be executed because no parameters are required\n", pad);
+                }
+
+                // append parameter
+                base.then(param);
+            } else {
+                base.executes(this);
+                if (isDebug()) System.out.printf("%s-> Can be executed because it has no parameters\n", pad);
+            }
+        } else if (node instanceof Command.Node.Group group) {
+            // add execution layer if group is callable
+            if (group.getDefaultCall() != null)
+                base.executes(this);
+
+            // recurse into subcommand nodes
+            for (Command.Node sub : group.nodes().toList()) {
+                var groupNode = convertNode(pad + " -", sub, rec + 1);
+                base.then(groupNode);
+            }
+        }
+
+        return base;
+    }
+
+    private RequiredArgumentBuilder<ServerCommandSource, ?> convertParam(
+            String pad,
+            int level,
+            Command.Node.Parameter... parameters
+    ) {
+        if (level >= parameters.length)
+            throw new IllegalStateException("Recursion limit exceeded");
+
+        final var parameter = parameters[level];
+
+        // find argument type minecraft representation
+        var argType = ArgumentConverter.blob(parameter);
+        var arg = argument(parameter.name(), argType).suggests(this);
+        if (isDebug()) System.out.printf("%s Argument '%s: %s'\n", pad, argType, parameter.name());
+
+        // try recurse deeper
+        if (level + 1 < parameters.length) {
+            // set executable if followup parameter(s) are not required
+            if (!parameters[level + 1].isRequired()) {
+                arg.executes(this);
+                if (isDebug())
+                    System.out.printf("%s-> Can be executed because followup parameters are not required\n", pad);
+            }
+
+            // convert & append next parameter
+            var next = convertParam(pad + "->", level + 1, parameters);
+            arg.then(next);
+        } else {
+            // last one is always executable
+            arg.executes(this);
+            if (isDebug()) System.out.printf("%s-> Can be executed because it is last in the chain\n", pad);
+        }
+
+        return arg;
     }
 
     @Override
@@ -150,7 +200,8 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
+                                                         SuggestionsBuilder builder) throws CommandSyntaxException {
         return CompletableFuture.supplyAsync(() -> {
             var fullCommand = context.getInput().split(" ");
             var adp = Command$Manager$Adapter$Fabric.this;
@@ -158,6 +209,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
             usage.advanceFull();
             return usage.getNode().nodes()
                     .map(here -> new Suggestion(context.getRange(), here.getName()))
+                    //.collect(Streams.append(new Suggestion(context.getRange(), "tst")))
                     .toList();
         }).thenApply(ls -> new Suggestions(context.getRange(), ls));
     }
@@ -191,6 +243,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
 
         {
             VALUES.add(this);
+        }
+
+        public static ArgumentType<?> blob(Command.Node.Parameter parameter) {
+            return StandardValueType.forClass(parameter.getParam().getType())
+                    .stream()
+                    .flatMap(type -> ArgumentConverter.VALUES.stream()
+                            .filter(conv -> conv.valueType.equals(type)))
+                    .findAny()
+                    .map(conv -> conv.supplier.get())
+                    .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
         }
     }
 }
