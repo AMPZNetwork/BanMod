@@ -44,7 +44,7 @@ tasks.register('serverJar', Copy) {
 }
 
 tasks.register('testMod', Copy) {
-	dependsOn clean, remapJar, serverJar
+	dependsOn clean, remapJar
 	from remapJar.outputs.files.singleFile
 	into "${projectDir}/run/mods"
 	rename { n -> "BanMod-fabric.jar" }

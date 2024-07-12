@@ -42,7 +42,7 @@ shadowJar {
 }
 
 tasks.register('testPlugin', Copy) {
-    dependsOn shadowJar, dlArclightServerJar, dlPaperServerJar, dlSpigotServerJar
+    dependsOn shadowJar
     from shadowJar.outputs.files.singleFile
     into "${projectDir}/run/plugins"
     rename { n -> "BanMod-spigot.jar" }
