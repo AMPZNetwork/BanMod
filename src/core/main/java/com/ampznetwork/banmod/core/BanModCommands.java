@@ -15,6 +15,7 @@ import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -42,7 +43,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component cleanup(BanMod banMod, @Arg("method") @MagicConstant(stringValues = {"infractions", "playerdata", "*"}) String method) {
+    public Component cleanup(BanMod banMod, @NotNull @Arg("method") @MagicConstant(stringValues = {"infractions", "playerdata", "*"}) String method) {
         final var service = banMod.getEntityService();
         var text = text();
         int c;
@@ -85,7 +86,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component lookup(BanMod banMod, @Arg("name") String name) {
+    public Component lookup(BanMod banMod, @NotNull @Arg("name") String name) {
         // todo: use book adapter here
         var target = banMod.getPlayerAdapter().getId(name);
         var data = banMod.getEntityService().getPlayerData(target)
@@ -131,7 +132,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component punish(BanMod banMod, UUID issuer, @Arg("name") String name, @Arg("category") String category, @Nullable String[] args) {
+    public Component punish(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("category") String category, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -151,12 +152,12 @@ public class BanModCommands {
     }
 
     @Command
-    public Component mutelist(BanMod banMod, @Nullable @Arg("page") Integer page) {
+    public Component mutelist(BanMod banMod, @Nullable @Arg(value = "page", required = false) Integer page) {
         return infractionList(banMod, page == null ? 1 : page, Punishment.Mute);
     }
 
     @Command
-    public Component tempmute(BanMod banMod, UUID issuer, @Arg("name") String name, @Arg("duration") String durationText, @Nullable String[] args) {
+    public Component tempmute(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("duration") String durationText, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -174,7 +175,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component mute(BanMod banMod, UUID issuer, @Arg("name") String name, @Nullable String[] args) {
+    public Component mute(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -187,7 +188,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component unmute(BanMod banMod, UUID issuer, @Arg("name") String name, @Nullable String[] args) {
+    public Component unmute(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @Nullable String[] args) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = banMod.getEntityService().getInfractions(tgt)
                 .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
@@ -200,7 +201,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component kick(BanMod banMod, UUID issuer, @Arg("name") String name, @Nullable String[] args) {
+    public Component kick(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -214,12 +215,12 @@ public class BanModCommands {
     }
 
     @Command
-    public Component banlist(BanMod banMod, @Nullable @Arg("page") Integer page) {
+    public Component banlist(BanMod banMod, @Nullable @Arg(value = "page", required = false) Integer page) {
         return infractionList(banMod, page == null ? 1 : page, Punishment.Ban);
     }
 
     @Command
-    public Component tempban(BanMod banMod, UUID issuer, @Arg("name") String name, @Arg("duration") String durationText, @Nullable String[] args) {
+    public Component tempban(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("duration") String durationText, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -238,7 +239,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component ban(BanMod banMod, UUID issuer, @Arg("name") String name, @Nullable String[] args) {
+    public Component ban(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -252,7 +253,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component unban(BanMod banMod, UUID issuer, @Arg("name") String name, @Nullable String[] args) {
+    public Component unban(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @Nullable String[] args) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = banMod.getEntityService().getInfractions(tgt)
                 .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
@@ -351,7 +352,7 @@ public class BanModCommands {
 
         @Command
         @Alias("update")
-        public Component create(BanMod banMod, @Arg("name") String name, @Arg("baseDuration") String baseDuration, @Nullable @Arg("repetitionBase") Double repetitionBase) {
+        public Component create(BanMod banMod, @NotNull @Arg("name") String name, @NotNull @Arg("baseDuration") String baseDuration, @Nullable @Arg("repetitionBase") Double repetitionBase) {
             var duration = parseDuration(baseDuration);
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
@@ -376,7 +377,7 @@ public class BanModCommands {
         }
 
         @Command
-        public Component delete(BanMod banMod, @Arg("name") String name) {
+        public Component delete(BanMod banMod, @NotNull @Arg("name") String name) {
             var service = banMod.getEntityService();
             var cat = service.findCategory(name);
             return service.delete(cat) > 0
