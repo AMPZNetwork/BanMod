@@ -245,6 +245,11 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
         else source.sendMessage(Text.of(String.valueOf(response)));
     }
 
+    @Override
+    public String handleThrowable(Throwable throwable) {
+        return "§c" + super.handleThrowable(throwable);
+    }
+
     @Value
     public static class ArgumentConverter<T> {
         public static final Set<ArgumentConverter<?>> VALUES = new HashSet<>();
