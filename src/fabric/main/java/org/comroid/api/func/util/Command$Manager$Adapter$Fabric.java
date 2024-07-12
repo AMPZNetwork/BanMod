@@ -38,6 +38,7 @@ import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 import static org.comroid.api.func.util.Debug.isDebug;
+import static org.comroid.api.func.util.Streams.expand;
 
 @Value
 @Slf4j
@@ -81,21 +82,22 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
                          CommandRegistryAccess registryAccess,
                          RegistrationEnvironment environment) {
         cmdr.getBaseNodes().stream()
-                .map(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
+                // recurse into subcommand nodes
+                .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
+                .distinct()
                 .forEach(dispatcher::register);
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> convertNode(String pad, Command.Node node, int rec) {
+    private Stream<LiteralArgumentBuilder<ServerCommandSource>> convertNode(String pad, Command.Node node, int rec) {
         // this node
-        final var base = literal(node.name());
-        if (isDebug()) System.out.printf("%s Command '%s'\n", pad, node.name());
+        final var base = literal(node.getName());
+        if (isDebug()) System.out.printf("%s Command '%s'\n", pad, base.getLiteral());
 
         if (node instanceof Command.Node.Call call) {
             var parameters = call.getParameters();
             if (!parameters.isEmpty()) {
                 // convert parameter nodes recursively
-                var param = convertParam(pad + "->", 0,
-                        parameters.toArray(new Command.Node.Parameter[0]));
+                var param = convertParam(pad + "->", 0, parameters.toArray(new Command.Node.Parameter[0]));
 
                 // set base executable if there is no (required) parameters
                 if (parameters.stream().allMatch(not(Command.Node.Parameter::isRequired))) {
@@ -114,14 +116,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
             if (group.getDefaultCall() != null)
                 base.executes(this);
 
-            // recurse into subcommand nodes
-            for (Command.Node sub : group.nodes().toList()) {
-                var groupNode = convertNode(pad + " -", sub, rec + 1);
-                base.then(groupNode);
-            }
+            var subNodes = group.nodes()
+                    // recurse into subcommand nodes
+                    .flatMap(sub -> convertNode(pad + " -", sub, rec + 1))
+                    .peek(base::then)
+                    .toList();
+            return concat(of(base), subNodes.stream())
+                    .flatMap(expand(it -> createAliasRedirects(pad, node, it)));
         }
 
-        return base;
+        return of(base).flatMap(expand(it -> createAliasRedirects(pad, node, it)));
     }
 
     private RequiredArgumentBuilder<ServerCommandSource, ?> convertParam(
@@ -158,6 +162,19 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
         }
 
         return arg;
+    }
+
+    private Stream<LiteralArgumentBuilder<ServerCommandSource>> createAliasRedirects(
+            String pad,
+            Command.Node desc,
+            LiteralArgumentBuilder<ServerCommandSource> target) {
+        return desc.aliases()
+                .filter(not(desc.getName()::equals))
+                .map(alias -> {
+                    var redirect = literal(alias).redirect(target.build());
+                    if (isDebug()) System.out.printf("%s-> Alias: '%s'\n", pad, alias);
+                    return redirect;
+                });
     }
 
     @Override
