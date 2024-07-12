@@ -78,29 +78,30 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
                          CommandRegistryAccess registryAccess,
                          RegistrationEnvironment environment) {
         final var helper = new Object() {
-
             LiteralArgumentBuilder<ServerCommandSource> convertNode(Command.Node node) {
                 var base = literal(node.getName());
                 if (node instanceof Command.Node.Call call) {
+                    var tree = base;
                     for (var parameter : call.getParameters()) {
-                        var type = StandardValueType.forClass(parameter.getParam().getType());
-                        base.then(argument(parameter.getName(), ArgumentConverter.VALUES.stream()
-                                .filter(conv -> conv.valueType.equals(type))
-                                .findAny()
-                                .map(ArgumentConverter::getSupplier)
-                                .map(Supplier::get)
-                                .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string())))
+                        var argType = StandardValueType.forClass(parameter.getParam().getType())
+                                .wrap()
+                                .flatMap(type -> ArgumentConverter.VALUES.stream()
+                                        .filter(conv -> conv.valueType.equals(type))
+                                        .findAny()
+                                        .map(ArgumentConverter::getSupplier)
+                                        .map(Supplier::get))
+                                .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
+                        tree = tree.then(argument(parameter.getName(), argType)
                                 .suggests(Command$Manager$Adapter$Fabric.this));
                     }
-                    base.executes(Command$Manager$Adapter$Fabric.this);
-                }
-                if (node instanceof Command.Node.Group group) {
+                    tree.executes(Command$Manager$Adapter$Fabric.this);
+                } else if (node instanceof Command.Node.Group group) {
                     if (group.getDefaultCall() != null)
                         base.executes(Command$Manager$Adapter$Fabric.this);
                     group.nodes()
                             .map(this::convertNode)
                             .forEach(base::then);
-                }
+                } else throw new IllegalStateException("Invalid node: " + node);
                 return base;
             }
         };
