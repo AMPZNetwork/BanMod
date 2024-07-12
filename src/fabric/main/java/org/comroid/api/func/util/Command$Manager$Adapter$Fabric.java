@@ -33,11 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.mojang.brigadier.context.StringRange.at;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 import static org.comroid.api.func.util.Debug.isDebug;
+import static org.comroid.api.func.util.Streams.cast;
 import static org.comroid.api.func.util.Streams.expand;
 
 @Value
@@ -218,17 +220,23 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
-                                                         SuggestionsBuilder builder) throws CommandSyntaxException {
+                                                         SuggestionsBuilder builder) {
+        final var range = at(context.getInput().length());
         return CompletableFuture.supplyAsync(() -> {
             var fullCommand = context.getInput().split(" ");
-            var adp = Command$Manager$Adapter$Fabric.this;
-            var usage = cmdr.createUsageBase(adp, fullCommand, adp);
+            var usage = cmdr.createUsageBase(this, fullCommand, this);
             usage.advanceFull();
-            return usage.getNode().nodes()
-                    .map(here -> new Suggestion(context.getRange(), here.getName()))
-                    //.collect(Streams.append(new Suggestion(context.getRange(), "tst")))
+            return usage.getNode().nodes().flatMap(expand(
+                            node -> node instanceof Command.Node.Parameter
+                                    ? "<%s>".formatted(node.getName())
+                                    : node.getName(),
+                            node -> of(node)
+                                    .flatMap(cast(Command.Node.Parameter.class))
+                                    .flatMap(Command.Node.Parameter::nodes)
+                                    .map(Command.Node::getName)))
+                    .map(str -> new Suggestion(range, str))
                     .toList();
-        }).thenApply(ls -> new Suggestions(context.getRange(), ls));
+        }).thenApply(ls -> new Suggestions(range, ls));
     }
 
     @Override
