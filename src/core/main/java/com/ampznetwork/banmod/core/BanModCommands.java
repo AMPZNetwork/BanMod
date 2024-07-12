@@ -74,7 +74,8 @@ public class BanModCommands {
                             }});
                         })
                         .toArray();
-                service.save(affected);
+                if (!service.save(affected))
+                    throw couldNotSaveError();
                 text.append(text("Cleaned up ")
                         .append(text(affected.length).color(GREEN))
                         .append(text(" users")));
@@ -132,7 +133,11 @@ public class BanModCommands {
     }
 
     @Command
-    public Component punish(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("category") String category, @Nullable String[] args) {
+    public Component punish(BanMod banMod,
+                            UUID issuer,
+                            @NotNull @Arg("name") String name,
+                            @NotNull @Arg("category") String category,
+                            @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -141,7 +146,10 @@ public class BanModCommands {
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
         var infraction = standardInfraction(banMod, cat, tgt, issuer, reason)
                 .build();
-        banMod.getEntityService().save(infraction);
+
+        // save infraction
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
 
         // apply infraction
         var punishment = infraction.getCategory().getPunishment();
@@ -157,7 +165,11 @@ public class BanModCommands {
     }
 
     @Command
-    public Component tempmute(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("duration") String durationText, @Nullable String[] args) {
+    public Component tempmute(BanMod banMod,
+                              UUID issuer,
+                              @NotNull @Arg("name") String name,
+                              @NotNull @Arg("duration") String durationText,
+                              @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -170,7 +182,8 @@ public class BanModCommands {
                 .timestamp(now)
                 .expires(now.plus(duration))
                 .build();
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
     }
 
@@ -183,7 +196,8 @@ public class BanModCommands {
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
         var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
     }
 
@@ -196,7 +210,8 @@ public class BanModCommands {
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
         infraction.setRevoker(issuer);
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
@@ -209,7 +224,8 @@ public class BanModCommands {
         var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
                 .expires(null)
                 .build();
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Kick, infraction.getReason());
     }
@@ -220,7 +236,11 @@ public class BanModCommands {
     }
 
     @Command
-    public Component tempban(BanMod banMod, UUID issuer, @NotNull @Arg("name") String name, @NotNull @Arg("duration") String durationText, @Nullable String[] args) {
+    public Component tempban(BanMod banMod,
+                             UUID issuer,
+                             @NotNull @Arg("name") String name,
+                             @NotNull @Arg("duration") String durationText,
+                             @Nullable String[] args) {
         var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
         if (reason.isBlank())
             reason = null;
@@ -233,7 +253,8 @@ public class BanModCommands {
                 .timestamp(now)
                 .expires(now.plus(duration))
                 .build();
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
     }
@@ -247,7 +268,8 @@ public class BanModCommands {
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
         var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
         return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
     }
@@ -261,7 +283,8 @@ public class BanModCommands {
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not banned"));
         infraction.setRevoker(issuer);
-        banMod.getEntityService().save(infraction);
+        if (!banMod.getEntityService().save(infraction))
+            throw couldNotSaveError();
         return text("User " + name + " was unbanned").color(GREEN);
     }
 
@@ -331,6 +354,10 @@ public class BanModCommands {
         });
     }
 
+    private static Command.@NotNull Error couldNotSaveError() {
+        return new Command.Error("Could not save changes");
+    }
+
     @Command
     @UtilityClass
     public class category {
@@ -352,7 +379,10 @@ public class BanModCommands {
 
         @Command
         @Alias("update")
-        public Component create(BanMod banMod, @NotNull @Arg("name") String name, @NotNull @Arg("baseDuration") String baseDuration, @Nullable @Arg("repetitionBase") Double repetitionBase) {
+        public Component create(BanMod banMod,
+                                @NotNull @Arg("name") String name,
+                                @NotNull @Arg("baseDuration") String baseDuration,
+                                @Nullable @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
             var duration = parseDuration(baseDuration);
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
@@ -368,7 +398,8 @@ public class BanModCommands {
                     .baseDuration(duration)
                     .repetitionExpBase(repetitionBase)
                     .build();
-            banMod.getEntityService().save(category);
+            if (!banMod.getEntityService().save(category))
+                throw couldNotSaveError();
             return text("Category ")
                     .append(text(name).color(AQUA))
                     .append(text(" was "))
