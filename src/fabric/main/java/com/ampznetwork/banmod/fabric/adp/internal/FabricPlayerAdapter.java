@@ -12,9 +12,12 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.comroid.api.func.util.Command;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 import static net.kyori.adventure.text.Component.text;
@@ -32,7 +35,11 @@ public class FabricPlayerAdapter implements PlayerAdapter {
 
     @Override
     public void kick(UUID playerId, String reason) {
-
+        Optional.ofNullable(banMod.getServer().getPlayerManager()
+                        .getPlayer(playerId))
+                .orElseThrow(() -> new Command.Error("Player not found"))
+                .networkHandler
+                .disconnect(Text.of(reason));
     }
 
     @Override
