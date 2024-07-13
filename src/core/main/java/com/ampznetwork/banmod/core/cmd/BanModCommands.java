@@ -18,11 +18,9 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
@@ -89,7 +87,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component lookup(BanMod banMod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name) {
+    public Component lookup(BanMod banMod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
         var target = banMod.getPlayerAdapter().getId(name);
         var data = banMod.getEntityService().getPlayerData(target)
@@ -137,11 +135,10 @@ public class BanModCommands {
     @Command
     public Component punish(BanMod banMod,
                             UUID issuer,
-                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
+                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                             @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String category,
-                            @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                            @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         var cat = banMod.getEntityService().findCategory(category)
@@ -169,11 +166,10 @@ public class BanModCommands {
     @Command
     public Component tempmute(BanMod banMod,
                               UUID issuer,
-                              @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
+                              @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                               @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                              @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                              @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
@@ -192,10 +188,9 @@ public class BanModCommands {
     @Command
     public Component mute(BanMod banMod,
                           UUID issuer,
-                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
-                          @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+                          @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
@@ -209,8 +204,7 @@ public class BanModCommands {
     @Command
     public Component unmute(BanMod banMod,
                             UUID issuer,
-                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
-                            @Nullable String[] args) {
+                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = banMod.getEntityService().getInfractions(tgt)
                 .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
@@ -226,10 +220,9 @@ public class BanModCommands {
     @Command
     public Component kick(BanMod banMod,
                           UUID issuer,
-                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
-                          @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+                          @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
@@ -249,11 +242,10 @@ public class BanModCommands {
     @Command
     public Component tempban(BanMod banMod,
                              UUID issuer,
-                             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
+                             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                              @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                             @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(2).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                             @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
@@ -273,10 +265,9 @@ public class BanModCommands {
     @Command
     public Component ban(BanMod banMod,
                          UUID issuer,
-                         @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
-                         @Nullable String[] args) {
-        var reason = Arrays.stream(args).skip(1).collect(Collectors.joining(" "));
-        if (reason.isBlank())
+                         @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+                         @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+        if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
@@ -291,8 +282,7 @@ public class BanModCommands {
     @Command
     public Component unban(BanMod banMod,
                            UUID issuer,
-                           @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
-                           @Nullable String[] args) {
+                           @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name) {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var infraction = banMod.getEntityService().getInfractions(tgt)
                 .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))

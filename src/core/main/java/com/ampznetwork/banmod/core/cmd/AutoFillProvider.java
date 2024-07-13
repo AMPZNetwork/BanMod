@@ -12,11 +12,13 @@ import org.comroid.api.func.util.Command;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.empty;
+import static java.util.function.Predicate.not;
+import static java.util.stream.Stream.*;
+import static org.comroid.api.func.util.Streams.atLeastOneOrElseFlatten;
 import static org.comroid.api.func.util.Streams.cast;
 
 @UtilityClass
@@ -44,7 +46,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum PlayerNames implements Command.AutoFillProvider {
+    enum Players implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -58,6 +60,33 @@ public class AutoFillProvider {
                     mod.getEntityService().getPlayerData()
                             .map(PlayerData::getLastKnownName)
             ).filter(Objects::nonNull).distinct();
+        }
+    }
+
+    enum PlayersByInfractionPunishment implements Command.AutoFillProvider {
+        @Instance INSTANCE;
+
+        @Override
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            var mod = usage.getContext().stream()
+                    .flatMap(cast(BanMod.class))
+                    .findAny().orElseThrow();
+            var playerId = usage.getContext().stream()
+                    .flatMap(cast(UUID.class))
+                    .findAny().orElseThrow();
+            return Arrays.stream(Punishment.values())
+                    .filter(not(Punishment::isInherentlyTemporary))
+                    // check if keyword is in full command
+                    .filter(key -> Arrays.stream(usage.getFullCommand())
+                            .map(String::toLowerCase)
+                            .anyMatch(key.getName()::equals))
+                    .collect(atLeastOneOrElseFlatten(() -> of(Punishment.Mute, Punishment.Ban)))
+                    // by active infractions and their type; list all currently punished players
+                    .flatMap(key -> mod.getEntityService()
+                            .getInfractions(playerId)
+                            .filter(Infraction.IS_IN_EFFECT)
+                            .filter(inf -> inf.getCategory().getPunishment() == key)
+                            .map($ -> mod.getPlayerAdapter().getName(playerId)));
         }
     }
 
