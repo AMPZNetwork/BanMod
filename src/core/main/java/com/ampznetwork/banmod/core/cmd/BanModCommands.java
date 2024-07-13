@@ -105,7 +105,7 @@ public class BanModCommands {
         for (var knownName : data.getKnownNames().entrySet())
             text = text.append(text("\n- "))
                     .append(text(knownName.getKey())
-                            .hoverEvent(showText(text("Last seen: " + knownName.getValue())))
+                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.textExpiryTime(knownName.getValue()))))
                             .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Known IPs:"));
@@ -117,7 +117,7 @@ public class BanModCommands {
         else for (var knownIp : knownIPs.entrySet())
             text = text.append(text("\n- "))
                     .append(text(knownIp.getKey())
-                            .hoverEvent(showText(text("Last seen: " + knownIp.getValue())))
+                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.textExpiryTime(knownIp.getValue()))))
                             .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
