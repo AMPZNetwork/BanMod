@@ -12,11 +12,7 @@ import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -27,12 +23,14 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.comroid.api.Polyfill;
+import org.comroid.api.data.seri.type.EnumValueType;
 import org.comroid.api.data.seri.type.StandardValueType;
 import org.comroid.api.data.seri.type.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -294,29 +292,37 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     }
 
     @Value
-    public static class ArgumentConverter<T> {
-        public static final Set<ArgumentConverter<?>> VALUES = new HashSet<>();
-        public static final ArgumentConverter<Boolean> BOOLEAN = new ArgumentConverter<>(StandardValueType.BOOLEAN, BoolArgumentType::bool);
-        public static final ArgumentConverter<Double> DOUBLE = new ArgumentConverter<>(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
-        public static final ArgumentConverter<Float> FLOAT = new ArgumentConverter<>(StandardValueType.FLOAT, FloatArgumentType::floatArg);
-        public static final ArgumentConverter<Integer> INTEGER = new ArgumentConverter<>(StandardValueType.INTEGER, IntegerArgumentType::integer);
-        public static final ArgumentConverter<Long> LONG = new ArgumentConverter<>(StandardValueType.LONG, LongArgumentType::longArg);
-        public static final ArgumentConverter<String> WORD = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::word);
-        public static final ArgumentConverter<String> STRING = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::string);
-        public static final ArgumentConverter<String> GREEDY_STRING = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::greedyString);
-        public static final ArgumentConverter<java.util.UUID> UUID = new ArgumentConverter<>(StandardValueType.UUID, UuidArgumentType::uuid);
-        ValueType<T> valueType;
-        Supplier<ArgumentType<T>> supplier;
+    public static class ArgumentConverter {
+        public static final ArgumentConverter BOOLEAN = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
+        public static final ArgumentConverter DOUBLE = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
+        public static final ArgumentConverter FLOAT = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
+        public static final ArgumentConverter INTEGER = new ArgumentConverter(StandardValueType.INTEGER, IntegerArgumentType::integer);
+        public static final ArgumentConverter LONG = new ArgumentConverter(StandardValueType.LONG, LongArgumentType::longArg);
+        public static final ArgumentConverter WORD = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::word);
+        public static final ArgumentConverter STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
+        public static final ArgumentConverter GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
+        public static final ArgumentConverter UUID = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
+        private static final Map<Class<?>, ArgumentConverter> $cache = new ConcurrentHashMap<>();
+        public static final Map<Class<?>, ArgumentConverter> CACHE = Collections.unmodifiableMap($cache);
+        ValueType<?> valueType;
+        Supplier<ArgumentType<?>> supplier;
 
-        {
-            VALUES.add(this);
+        public ArgumentConverter(ValueType<?> valueType, Supplier<ArgumentType<?>> supplier) {
+            this.valueType = valueType;
+            this.supplier = supplier;
+
+            $cache.put(valueType.getTargetClass(), this);
         }
 
-        public static ArgumentConverter<?> blob(Command.Node.Parameter parameter) {
-            return StandardValueType.forClass(parameter.getParam().getType())
+        public static <T> ArgumentConverter blob(Command.Node.Parameter parameter) {
+            var type = parameter.getParam().getType();
+            return type.isEnum()
+                    ? $cache.computeIfAbsent(type, k -> new ArgumentConverter(Polyfill
+                    .<ValueType<T>>uncheckedCast(EnumValueType.of(type)), StringArgumentType::word))
+                    : StandardValueType.forClass(type)
                     .stream()
-                    .flatMap(type -> ArgumentConverter.VALUES.stream()
-                            .filter(conv -> conv.valueType.equals(type)))
+                    .flatMap(t0 -> ArgumentConverter.CACHE.values().stream()
+                            .filter(conv -> conv.valueType.equals(t0)))
                     .findAny()
                     .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
         }
