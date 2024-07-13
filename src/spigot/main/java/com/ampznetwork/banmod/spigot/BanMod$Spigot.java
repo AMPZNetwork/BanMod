@@ -15,20 +15,15 @@ import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
-import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Stream;
 
 import static java.time.Duration.*;
-import static org.comroid.api.func.util.Streams.append;
 
 @Getter
 public class BanMod$Spigot extends JavaPlugin implements BanMod {
@@ -52,21 +47,10 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         saveDefaultConfig();
         this.config = super.getConfig();
 
-        this.cmdr = new Command.Manager();
-        this.adapter = cmdr.new Adapter$Spigot(this) {
-            @Override
-            public String handleThrowable(Throwable throwable) {
-                return throwable instanceof InvocationTargetException ITEx
-                        ? handleThrowable(ITEx.getCause())
-                        : super.handleThrowable(new Command.Error(throwable));
-            }
-
-            @Override
-            protected Stream<Object> collectExtraArgs(@NotNull CommandSender sender) {
-                return super.collectExtraArgs(sender)
-                        .collect(append(BanMod$Spigot.this, sender instanceof Player player ? player.getUniqueId() : null));
-            }
-        };
+        this.cmdr = new Command.Manager() {{
+            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Spigot.this));
+        }};
+        this.adapter = cmdr.new Adapter$Spigot(this);
         cmdr.register(BanModCommands.class);
         cmdr.register(this);
         cmdr.initialize();

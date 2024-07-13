@@ -21,7 +21,6 @@ import org.comroid.api.java.StackTraceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Stream;
 
 import static java.time.Duration.*;
@@ -49,20 +48,10 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> this.server = server);
 
-        this.cmdr = new Command.Manager();
-        this.adapter = new Command$Manager$Adapter$Fabric(cmdr) {
-            @Override
-            protected Stream<Object> streamExtraArgs() {
-                return Stream.of(BanMod$Fabric.this);
-            }
-
-            @Override
-            public String handleThrowable(Throwable throwable) {
-                return throwable instanceof InvocationTargetException ITEx
-                        ? handleThrowable(ITEx.getCause())
-                        : super.handleThrowable(new Command.Error(throwable));
-            }
-        };
+        this.cmdr = new Command.Manager() {{
+            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
+        }};
+        this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
         cmdr.register(BanModCommands.class);
         cmdr.register(this);
         cmdr.initialize();

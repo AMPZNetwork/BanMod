@@ -19,6 +19,7 @@ import net.kyori.adventure.text.Component;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.comroid.api.Polyfill;
 import org.comroid.api.data.seri.type.StandardValueType;
@@ -35,39 +36,26 @@ import java.util.stream.Stream;
 
 import static com.mojang.brigadier.context.StringRange.at;
 import static java.util.function.Predicate.not;
+import static java.util.stream.Stream.of;
 import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 import static org.comroid.api.func.util.Debug.isDebug;
-import static org.comroid.api.func.util.Streams.cast;
-import static org.comroid.api.func.util.Streams.expand;
+import static org.comroid.api.func.util.Streams.*;
 
 @Value
 @Slf4j
 @NonFinal
-public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter implements CommandRegistrationCallback,
+public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
+        implements Command.Handler.Minecraft, CommandRegistrationCallback,
         com.mojang.brigadier.Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
+    Set<Command.Capability> capabilities = Set.of(Command.Capability.NAMED_ARGS);
     Command.Manager cmdr;
 
     public Command$Manager$Adapter$Fabric(Command.Manager cmdr) {
         this.cmdr = cmdr;
 
-        cmdr.adapters.add(this);
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else {
-            var message = Text.of("Command parsing error");
-            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
-        }
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
+        cmdr.addChildren(this);
     }
 
     public static Text component2text(Component component) {
@@ -88,6 +76,108 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
                 .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .distinct()
                 .forEach(dispatcher::register);
+    }
+
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else {
+            var message = Text.of("Command parsing error");
+            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
+        }
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
+    }
+
+    @Override
+    public Stream<Object> expandContext(Object... context) {
+        return super.expandContext(context).collect(expandRecursive(it -> {
+            if (it instanceof CommandContext<?> ctx)
+                return of(ctx.getSource());
+            if (it instanceof ServerCommandSource scs)
+                return of(scs.getPlayer());
+            if (it instanceof ServerPlayerEntity player)
+                return of(player.getId());
+            return empty();
+        }));
+    }
+
+    @Override
+    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
+        if (response instanceof CompletableFuture<?> future) {
+            future.thenAccept(it -> handleResponse(command, it, args));
+            return;
+        }
+        var source = Arrays.stream(args)
+                .flatMap(Streams.cast(ServerCommandSource.class))
+                .findAny().orElseThrow();
+        if (response instanceof Component component)
+            source.sendMessage(component2text(component));
+        else source.sendMessage(Text.of(String.valueOf(response)));
+    }
+
+    @Override
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        var fullCommand = context.getInput()
+                .substring(1) // strip leading slash
+                .split(" ");
+        var adp = Command$Manager$Adapter$Fabric.this;
+        var usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
+        try {
+            usage.advanceFull();
+            var call = getCall(usage);
+            var args = new ConcurrentHashMap<String, Object>();
+            call.getParameters().forEach(param -> {
+                var key = param.getName();
+                try {
+                    var value = (Object) context.getArgument(key, param.getParam().getType());
+                    args.put(key, value);
+                } catch (IllegalArgumentException iaex) {
+                    log.warn("Could not obtain argument " + key);
+                }
+            });
+            cmdr.execute(this, fullCommand, args, expandContext(context).distinct().toArray());
+            return 1;
+        } catch (CommandSyntaxException csex) {
+            throw csex;
+        } catch (Throwable t) {
+            var result = handleThrowable(t);
+            handleResponse(usage, result);
+            return 0;
+        }
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
+                                                         SuggestionsBuilder builder) {
+        final var input = context.getInput().substring(1); // strip leading slash
+        final var range = at(input.length());
+        return CompletableFuture.supplyAsync(() -> {
+                    var fullCommand = input.split(" ");
+                    var usage = cmdr.createUsageBase(this, fullCommand, this);
+                    usage.advanceFull();
+                    return usage.getNode().nodes()
+                            .flatMap(n0 -> n0 instanceof Command.Node.Callable callable
+                                    ? callable.nodes()
+                                    .flatMap(expand(
+                                            node -> node instanceof Command.Node.Parameter
+                                                    ? "<%s>".formatted(node.getName())
+                                                    : node.getName(),
+                                            node -> of(node)
+                                                    .flatMap(cast(Command.Node.Parameter.class))
+                                                    .flatMap(param -> param.autoFill(usage, "", null))))
+                                    : of(n0)
+                                    .flatMap(cast(Command.AutoFillProvider.class))
+                                    .flatMap(provider -> provider.autoFill(usage, "", null)))
+                            .map(str -> new Suggestion(range, str))
+                            .toList();
+                })
+                .thenApply(ls -> new Suggestions(range, ls))
+                .exceptionally(Polyfill.exceptionLogger());
     }
 
     private Stream<LiteralArgumentBuilder<ServerCommandSource>> convertNode(String pad, Command.Node node, int rec) {
@@ -177,84 +267,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
                     if (isDebug()) System.out.printf("%s-> Alias: '%s'\n", pad, alias);
                     return redirect;
                 });
-    }
-
-    @Override
-    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        var fullCommand = context.getInput().split(" ");
-        var adp = Command$Manager$Adapter$Fabric.this;
-        var usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
-        try {
-            usage.advanceFull();
-            var call = getCall(usage);
-            var args = new ConcurrentHashMap<String, Object>();
-            call.getParameters().forEach(param -> {
-                var key = param.getName();
-                try {
-                    var value = (Object) context.getArgument(key, param.getParam().getType());
-                    args.put(key, value);
-                } catch (IllegalArgumentException iaex) {
-                    log.warn("Could not obtain argument " + key);
-                }
-            });
-            cmdr.execute(this, fullCommand, args, concat(of(this, context.getSource()), streamExtraArgs())
-                    .distinct().toArray());
-            return 1;
-        } catch (CommandSyntaxException csex) {
-            throw csex;
-        } catch (Throwable t) {
-            var result = handleThrowable(t);
-            handleResponse(usage, result);
-            return 0;
-        }
-    }
-
-    @Override
-    public Stream<Command.Capability> capabilities() {
-        return concat(super.capabilities(), of(Command.Capability.NAMED_ARGS));
-    }
-
-    protected Stream<Object> streamExtraArgs() {
-        return empty();
-    }
-
-    @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
-                                                         SuggestionsBuilder builder) {
-        final var range = at(context.getInput().length());
-        return CompletableFuture.supplyAsync(() -> {
-            var fullCommand = context.getInput().split(" ");
-            var usage = cmdr.createUsageBase(this, fullCommand, this);
-            usage.advanceFull();
-            return usage.getNode().nodes().flatMap(expand(
-                            node -> node instanceof Command.Node.Parameter
-                                    ? "<%s>".formatted(node.getName())
-                                    : node.getName(),
-                            node -> of(node)
-                                    .flatMap(cast(Command.Node.Parameter.class))
-                                    .flatMap(param -> param.autoFill(usage, "", null))))
-                    .map(str -> new Suggestion(range, str))
-                    .toList();
-        }).thenApply(ls -> new Suggestions(range, ls));
-    }
-
-    @Override
-    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
-        if (response instanceof CompletableFuture<?> future) {
-            future.thenAccept(it -> handleResponse(command, it, args));
-            return;
-        }
-        var source = Arrays.stream(args)
-                .flatMap(Streams.cast(ServerCommandSource.class))
-                .findAny().orElseThrow();
-        if (response instanceof Component component)
-            source.sendMessage(component2text(component));
-        else source.sendMessage(Text.of(String.valueOf(response)));
-    }
-
-    @Override
-    public String handleThrowable(Throwable throwable) {
-        return "§c" + super.handleThrowable(throwable);
     }
 
     @Value
