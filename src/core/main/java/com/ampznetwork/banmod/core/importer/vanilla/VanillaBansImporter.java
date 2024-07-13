@@ -38,7 +38,7 @@ public class VanillaBansImporter implements Importer {
             // todo: ip bans
 
             banMod.getEntityService().save(list.toArray());
-            return new ImportResult(0, list.size());
+            return new ImportResult(0, list.size(), 0);
         } catch (FileNotFoundException e) {
             return ImportResult.ZERO;
         } catch (IOException e) {

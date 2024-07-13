@@ -389,7 +389,10 @@ public class BanModCommands {
                         .append(text(result.muteCount() + " Mutes").color(YELLOW))
                         .append(text(", "))
                         .append(text(result.banCount() + " Bans").color(RED))
-                        .append(text(" from LiteBans"));
+                        .append(text(" and "))
+                        .append(text(result.playerDataCount() + " Player Entries ").color(AQUA))
+                        .append(text(" from LiteBans\n"))
+                        .append(cleanup(mod, "*"));
             } catch (SchemaManagementException smex) {
                 var msg = "LiteBans Databases have an unexpected format. " + BanMod.Strings.PleaseCheckConsole;
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, smex);

@@ -26,12 +26,12 @@ public class PlayerData {
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
     UUID id;
+    @Singular
     @ElementCollection
-    @lombok.Builder.Default
     @CollectionTable(name = "banmod_playerdata_names")
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
+    @Singular
     @ElementCollection
-    @lombok.Builder.Default
     @CollectionTable(name = "banmod_playerdata_ips")
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 
