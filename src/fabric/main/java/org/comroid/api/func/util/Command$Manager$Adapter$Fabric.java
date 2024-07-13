@@ -29,7 +29,6 @@ import org.comroid.api.data.seri.type.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -64,6 +63,21 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         return Text.Serializer.fromJson(gson().serialize(component));
     }
 
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else {
+            var message = Text.of("Command parsing error");
+            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
+        }
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
+    }
+
     @Override
     public void initialize() {
         CommandRegistrationCallback.EVENT.register(this);
@@ -78,21 +92,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .distinct()
                 .forEach(dispatcher::register);
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else {
-            var message = Text.of("Command parsing error");
-            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
-        }
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
     }
 
     @Override
@@ -293,6 +292,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
 
     @Value
     public static class ArgumentConverter {
+        public static final Map<Class<?>, ArgumentConverter> CACHE = new ConcurrentHashMap<>();
         public static final ArgumentConverter BOOLEAN = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
         public static final ArgumentConverter DOUBLE = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
         public static final ArgumentConverter FLOAT = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
@@ -302,8 +302,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         public static final ArgumentConverter STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
         public static final ArgumentConverter GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
         public static final ArgumentConverter UUID = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
-        private static final Map<Class<?>, ArgumentConverter> $cache = new ConcurrentHashMap<>();
-        public static final Map<Class<?>, ArgumentConverter> CACHE = Collections.unmodifiableMap($cache);
         ValueType<?> valueType;
         Supplier<ArgumentType<?>> supplier;
 
@@ -311,13 +309,13 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             this.valueType = valueType;
             this.supplier = supplier;
 
-            $cache.put(valueType.getTargetClass(), this);
+            CACHE.put(valueType.getTargetClass(), this);
         }
 
         public static <T> ArgumentConverter blob(Command.Node.Parameter parameter) {
             var type = parameter.getParam().getType();
             return type.isEnum()
-                    ? $cache.computeIfAbsent(type, k -> new ArgumentConverter(Polyfill
+                    ? CACHE.computeIfAbsent(type, k -> new ArgumentConverter(Polyfill
                     .<ValueType<T>>uncheckedCast(EnumValueType.of(type)), StringArgumentType::word))
                     : StandardValueType.forClass(type)
                     .stream()
