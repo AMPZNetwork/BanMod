@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.spigot.adp.internal;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
 
@@ -76,5 +78,13 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
                 .toList());
         stack.setItemMeta(meta);
         banMod.getServer().getPlayer(playerId).openBook(stack);
+    }
+
+    @Override
+    public Stream<Player> getCurrentPlayers() {
+        return banMod.getServer()
+                .getOnlinePlayers().stream()
+                .map(player -> new Player(player.getUniqueId(), player.getName()))
+                .peek(player -> banMod.getEntityService().pingUsernameCache(player.getId(), player.getName()));
     }
 }

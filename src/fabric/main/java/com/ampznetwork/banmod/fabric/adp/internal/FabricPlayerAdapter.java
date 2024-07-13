@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
@@ -19,6 +20,7 @@ import org.comroid.api.func.util.Command;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
@@ -71,5 +73,13 @@ public class FabricPlayerAdapter implements PlayerAdapter {
         buf.writeItemStack(stack);
 
         ServerPlayNetworking.send(plr, new Identifier("minecraft", "book_open"), buf);
+    }
+
+    @Override
+    public Stream<Player> getCurrentPlayers() {
+        return banMod.getServer().getPlayerManager()
+                .getPlayerList().stream()
+                .map(player -> new Player(player.getUuid(), player.getName().getString()))
+                .peek(player -> banMod.getEntityService().pingUsernameCache(player.getId(), player.getName()));
     }
 }

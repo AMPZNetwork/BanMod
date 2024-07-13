@@ -232,8 +232,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter impl
                                     : node.getName(),
                             node -> of(node)
                                     .flatMap(cast(Command.Node.Parameter.class))
-                                    .flatMap(Command.Node.Parameter::nodes)
-                                    .map(Command.Node::getName)))
+                                    .flatMap(param -> param.autoFill(usage, "", null))))
                     .map(str -> new Suggestion(range, str))
                     .toList();
         }).thenApply(ls -> new Suggestions(range, ls));

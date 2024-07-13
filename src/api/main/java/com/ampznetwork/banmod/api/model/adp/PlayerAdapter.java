@@ -2,10 +2,12 @@ package com.ampznetwork.banmod.api.model.adp;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
+import com.ampznetwork.banmod.api.model.mc.Player;
 import org.comroid.api.net.REST;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 public interface PlayerAdapter {
     private static void cache(BanMod banMod, UUID id, String name) {
@@ -48,4 +50,6 @@ public interface PlayerAdapter {
     void kick(UUID playerId, String reason);
 
     void openBook(UUID playerId, BookAdapter book);
+
+    Stream<Player> getCurrentPlayers();
 }

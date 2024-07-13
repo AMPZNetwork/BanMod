@@ -5,7 +5,7 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
-import com.ampznetwork.banmod.core.BanModCommands;
+import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
