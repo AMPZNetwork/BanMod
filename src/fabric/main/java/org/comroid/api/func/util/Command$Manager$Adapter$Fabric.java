@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestion;
@@ -34,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.mojang.brigadier.context.StringRange.at;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Stream.of;
 import static java.util.stream.Stream.*;
@@ -167,8 +167,12 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
                                                          SuggestionsBuilder builder) {
-        final var input = context.getInput().substring(1); // strip leading slash
-        final var range = at(input.length());
+        var input = context.getInput().substring(1); // strip leading slash
+        var inLen = input.length() + 1;
+        var split = input.split(" ");
+        var lsWrd = split.length <= input.chars().filter(c -> c == ' ').count() ? "" : split[split.length - 1];
+        var lwLen = lsWrd.length();
+        var range = new StringRange(inLen - lwLen, inLen);
         return CompletableFuture.supplyAsync(() -> {
                     var fullCommand = input.split(" ");
                     var usage = cmdr.createUsageBase(this, fullCommand, this);
@@ -176,16 +180,14 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                     return usage.getNode().nodes()
                             .flatMap(n0 -> n0 instanceof Command.Node.Callable callable
                                     ? callable.nodes()
-                                    .flatMap(expand(
-                                            node -> node instanceof Command.Node.Parameter
-                                                    ? "<%s>".formatted(node.getName())
-                                                    : node.getName(),
-                                            node -> of(node)
-                                                    .flatMap(cast(Command.Node.Parameter.class))
-                                                    .flatMap(param -> param.autoFill(usage, "", null))))
+                                    .map(node -> node instanceof Command.Node.Parameter parameter
+                                            ? "<%s>".formatted(parameter.getName())
+                                            : node.getName())
                                     : of(n0)
                                     .flatMap(cast(Command.AutoFillProvider.class))
                                     .flatMap(provider -> provider.autoFill(usage, "", null)))
+                            .map(String::trim)
+                            .filter(str -> str.startsWith(lsWrd))
                             .map(str -> new Suggestion(range, str))
                             .toList();
                 })
