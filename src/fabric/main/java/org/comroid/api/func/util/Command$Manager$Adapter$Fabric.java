@@ -12,7 +12,11 @@ import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -247,7 +251,11 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         final var parameter = parameters[level];
 
         // find argument type minecraft representation
-        var argType = ArgumentConverter.blob(parameter);
+        var argType = (switch (parameter.getAttribute().stringMode()) {
+            case NORMAL -> ArgumentConverter.blob(parameter);
+            case GREEDY -> ArgumentConverter.GREEDY_STRING;
+            case SINGLE_WORD -> ArgumentConverter.WORD;
+        }).supplier.get();
         var arg = argument(parameter.name(), argType).suggests(this);
         if (isDebug()) System.out.printf("%s Argument '%s: %s'\n", pad, argType, parameter.name());
 
@@ -308,7 +316,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                     .flatMap(type -> ArgumentConverter.VALUES.stream()
                             .filter(conv -> conv.valueType.equals(type)))
                     .findAny()
-                    .map(conv -> conv.supplier.get())
                     .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
         }
     }

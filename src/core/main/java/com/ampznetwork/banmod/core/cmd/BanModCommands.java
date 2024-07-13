@@ -14,6 +14,7 @@ import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
+import org.comroid.api.text.StringMode;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,7 +145,7 @@ public class BanModCommands {
                             UUID issuer,
                             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                             @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String category,
-                            @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
@@ -175,7 +176,7 @@ public class BanModCommands {
                               UUID issuer,
                               @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                               @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                              @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                              @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
@@ -196,7 +197,7 @@ public class BanModCommands {
     public Component mute(BanMod banMod,
                           UUID issuer,
                           @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                          @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                          @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
@@ -228,7 +229,7 @@ public class BanModCommands {
     public Component kick(BanMod banMod,
                           UUID issuer,
                           @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                          @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                          @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
@@ -251,7 +252,7 @@ public class BanModCommands {
                              UUID issuer,
                              @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
                              @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                             @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                             @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
@@ -273,7 +274,7 @@ public class BanModCommands {
     public Component ban(BanMod banMod,
                          UUID issuer,
                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                         @Nullable @Default("") @Arg(value = "reason", required = false) String reason) {
+                         @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
