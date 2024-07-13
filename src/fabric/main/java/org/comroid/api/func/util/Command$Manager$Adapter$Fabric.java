@@ -180,17 +180,18 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                     return usage.getNode().nodes()
                             .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
                             .limit(1)
-                            .flatMap(n0 -> n0 instanceof Command.Node.Callable callable
+                            .flatMap(n0 -> (n0 instanceof Command.Node.Callable callable
                                     ? callable.nodes()
                                     .map(node -> node instanceof Command.Node.Parameter parameter
                                             ? "<%s>".formatted(parameter.getName())
                                             : node.getName())
                                     : n0 instanceof Command.AutoFillProvider provider
                                     ? provider.autoFill(usage, n0.getName(), lsWrd)
-                                    : empty())
-                            .map(String::trim)
-                            .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
-                            .map(str -> new Suggestion(range, str))
+                                    : Stream.<String>empty())
+                                    .map(String::trim)
+                                    .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
+                                    .map(str -> new Suggestion(range, str,
+                                            Text.of(n0.getName() + ": " + n0.getDescription()))))
                             .toList();
                 })
                 .thenApply(ls -> new Suggestions(range, ls))
