@@ -122,11 +122,21 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
 
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        var fullCommand = context.getInput()
-                .substring(1) // strip leading slash
-                .split(" ");
+        var fullCommand = context.getInput().split(" ");
         var adp = Command$Manager$Adapter$Fabric.this;
-        var usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
+        Command.Usage usage;
+        try {
+            usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
+        } catch (Throwable t) {
+            log.warn("An internal error occurred during command preparation", t);
+            var result = handleThrowable(t);
+            handleResponse(Command.Usage.builder()
+                    .manager(cmdr)
+                    .fullCommand(fullCommand)
+                    .source(this)
+                    .build(), result, context);
+            return 0;
+        }
         try {
             usage.advanceFull();
             var call = getCall(usage);

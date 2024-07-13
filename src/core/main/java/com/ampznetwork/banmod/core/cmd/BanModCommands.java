@@ -395,7 +395,7 @@ public class BanModCommands {
         @Command
         @Alias("update")
         public Component create(BanMod banMod,
-                                @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name,
+                                @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
                                 @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
                                 @Nullable @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
             var duration = parseDuration(baseDuration);
@@ -423,7 +423,7 @@ public class BanModCommands {
         }
 
         @Command
-        public Component delete(BanMod banMod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayerNames.class) String name) {
+        public Component delete(BanMod banMod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name) {
             var service = banMod.getEntityService();
             var cat = service.findCategory(name);
             return service.delete(cat) > 0
