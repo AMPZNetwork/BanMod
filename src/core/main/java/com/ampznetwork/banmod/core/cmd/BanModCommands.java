@@ -10,6 +10,7 @@ import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
+import org.comroid.api.attr.Named;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.text.StringMode;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
@@ -38,23 +39,23 @@ public class BanModCommands {
     }
 
     @Command
-    public Component cleanup(BanMod banMod, @NotNull @Arg(value = "method", autoFill = {"infractions", "playerdata", "*"}) String method) {
+    public Component cleanup(BanMod banMod, @NotNull @Arg(value = "method") CleanupMethod method) {
         final var service = banMod.getEntityService();
         var text = text();
         int c;
         switch (method) {
-            case "*":
-            case "infractions":
+            case everything:
+            case infractions:
                 c = service.delete(service.getInfractions()
                         .filter(Infraction.IS_IN_EFFECT.negate())
                         .toArray());
                 text.append(text("Removed ")
                         .append(text(c).color(GREEN))
                         .append(text(" expired infractions")));
-                if (!"*".equals(method))
+                if (method != CleanupMethod.everything)
                     break;
                 else text.append(text("\n"));
-            case "playerdata":
+            case playerdata:
                 var affected = service.getPlayerData()
                         .filter(data -> data.getKnownNames().size() > 1 || data.getKnownIPs().size() > 1)
                         .peek(data -> {
@@ -304,9 +305,16 @@ public class BanModCommands {
         return text("User " + name + " was unbanned").color(GREEN);
     }
 
+    public enum CleanupMethod implements Named {
+        infractions,
+        playerdata,
+        everything
+    }
+
     @Command
     @UtilityClass
     public class category {
+
         @Command
         public Component list(BanMod banMod) {
             // todo: use book adapter
@@ -361,19 +369,24 @@ public class BanModCommands {
                     ? text("Deleted category " + name).color(RED)
                     : text("Could not delete category " + name).color(DARK_RED);
         }
+
     }
 
     @UtilityClass
     @Command(value = "import", permission = "4")
     public class Import {
+
         @Command
-        public Component vanilla(BanMod mod) {
+        public Component vanilla(BanMod mod, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
             try (var importer = new VanillaBansImporter(mod)) {
                 var result = importer.run();
-                return text("Imported ")
+                var text = text("Imported ")
                         .append(text(result.banCount() + " Bans").color(RED))
-                        .append(text(" from Vanilla Minecraft\n"))
-                        .append(cleanup(mod, "*"));
+                        .append(text(" from Vanilla Minecraft"));
+                if (cleanup) text = text
+                        .append(text("\n"))
+                        .append(cleanup(mod, CleanupMethod.everything));
+                return text;
             } catch (Throwable t) {
                 var msg = "Could not import bans from Vanilla Minecraft";
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
@@ -382,17 +395,20 @@ public class BanModCommands {
         }
 
         @Command
-        public Component litebans(BanMod mod) {
+        public Component litebans(BanMod mod, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
             try (var importer = new LiteBansImporter(mod, mod.getDatabaseInfo())) {
                 var result = importer.run();
-                return text("Imported ")
+                var text = text("Imported ")
                         .append(text(result.muteCount() + " Mutes").color(YELLOW))
                         .append(text(", "))
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" and "))
                         .append(text(result.playerDataCount() + " Player Entries ").color(AQUA))
-                        .append(text(" from LiteBans\n"))
-                        .append(cleanup(mod, "*"));
+                        .append(text(" from LiteBans"));
+                if (cleanup) text = text
+                        .append(text("\n"))
+                        .append(cleanup(mod, CleanupMethod.everything));
+                return text;
             } catch (SchemaManagementException smex) {
                 var msg = "LiteBans Databases have an unexpected format. " + BanMod.Strings.PleaseCheckConsole;
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, smex);
@@ -402,5 +418,6 @@ public class BanModCommands {
                 throw new Command.Error("Could not import from LiteBans. " + BanMod.Strings.PleaseCheckConsole);
             }
         }
+
     }
 }
