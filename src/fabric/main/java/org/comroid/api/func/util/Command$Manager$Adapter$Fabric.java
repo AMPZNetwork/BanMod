@@ -59,30 +59,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         cmdr.addChildren(this);
     }
 
-    public static Text component2text(Component component) {
-        return Text.Serializer.fromJson(gson().serialize(component));
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else {
-            var message = Text.of("Command parsing error");
-            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
-        }
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
-    }
-
-    @Override
-    public void initialize() {
-        CommandRegistrationCallback.EVENT.register(this);
-    }
-
     @Override
     public void register(CommandDispatcher<ServerCommandSource> dispatcher,
                          CommandRegistryAccess registryAccess,
@@ -92,6 +68,10 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .distinct()
                 .forEach(dispatcher::register);
+    }
+
+    public static Text component2text(Component component) {
+        return Text.Serializer.fromJson(gson().serialize(component));
     }
 
     @Override
@@ -107,18 +87,19 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         }));
     }
 
-    @Override
-    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
-        if (response instanceof CompletableFuture<?> future) {
-            future.thenAccept(it -> handleResponse(command, it, args));
-            return;
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else {
+            var message = Text.of("Command parsing error");
+            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
         }
-        var source = Arrays.stream(args)
-                .flatMap(Streams.cast(ServerCommandSource.class))
-                .findAny().orElseThrow();
-        if (response instanceof Component component)
-            source.sendMessage(component2text(component));
-        else source.sendMessage(Text.of(String.valueOf(response)));
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
     }
 
     @Override
@@ -165,6 +146,11 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     }
 
     @Override
+    public void initialize() {
+        CommandRegistrationCallback.EVENT.register(this);
+    }
+
+    @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
                                                          SuggestionsBuilder builder) {
         var input = context.getInput().substring(1); // strip leading slash
@@ -196,6 +182,20 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 })
                 .thenApply(ls -> new Suggestions(range, ls))
                 .exceptionally(Polyfill.exceptionLogger());
+    }
+
+    @Override
+    public void handleResponse(Command.Usage command, @NotNull Object response, Object... args) {
+        if (response instanceof CompletableFuture<?> future) {
+            future.thenAccept(it -> handleResponse(command, it, args));
+            return;
+        }
+        var source = Arrays.stream(args)
+                .flatMap(Streams.cast(ServerCommandSource.class))
+                .findAny().orElseThrow();
+        if (response instanceof Component component)
+            source.sendMessage(component2text(component));
+        else source.sendMessage(Text.of(String.valueOf(response)));
     }
 
     private Stream<LiteralArgumentBuilder<ServerCommandSource>> convertNode(String pad, Command.Node node, int rec) {
