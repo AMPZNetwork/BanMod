@@ -147,10 +147,13 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                     var value = (Object) context.getArgument(key, param.getParam().getType());
                     args.put(key, value);
                 } catch (IllegalArgumentException iaex) {
-                    log.warn("Could not obtain argument " + key);
+                    log.warn("Could not obtain argument {}", key);
+                    var defaultValue = param.defaultValue();
+                    if (defaultValue != null)
+                        args.put(key, defaultValue);
                 }
             });
-            cmdr.execute(this, fullCommand, args, expandContext(context).distinct().toArray());
+            cmdr.execute(usage, args);
             return 1;
         } catch (CommandSyntaxException csex) {
             throw csex;

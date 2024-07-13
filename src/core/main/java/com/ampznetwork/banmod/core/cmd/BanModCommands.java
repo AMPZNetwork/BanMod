@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import org.comroid.annotations.Alias;
+import org.comroid.annotations.Default;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
@@ -161,7 +162,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component mutelist(BanMod banMod, @Nullable @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
+    public Component mutelist(BanMod banMod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
         return infractionList(banMod, page == null ? 1 : page, Punishment.Mute);
     }
 
@@ -241,7 +242,7 @@ public class BanModCommands {
     }
 
     @Command
-    public Component banlist(BanMod banMod, @Nullable @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
+    public Component banlist(BanMod banMod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
         return infractionList(banMod, page == null ? 1 : page, Punishment.Ban);
     }
 
@@ -397,7 +398,7 @@ public class BanModCommands {
         public Component create(BanMod banMod,
                                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
                                 @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
-                                @Nullable @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
+                                @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
             var duration = parseDuration(baseDuration);
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
