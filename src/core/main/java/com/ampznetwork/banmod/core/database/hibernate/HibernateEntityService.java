@@ -7,7 +7,6 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.extern.slf4j.Slf4j;
 import org.comroid.api.info.Constraint;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
@@ -19,16 +18,14 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-@Slf4j
 public class HibernateEntityService extends Container.Base implements EntityService {
-    private final BanMod banMod;
+    private final BanMod mod;
     private final EntityManager manager;
 
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
@@ -107,6 +104,20 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         }
     }
 
+    public HibernateEntityService(BanMod mod) {
+        this.mod = mod;
+        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
+        this.manager = unit.manager;
+        addChildren(unit);
+    }
+
+    @Override
+    public <T> T refresh(T it) {
+        Constraint.notNull(it, "entity");
+        manager.refresh(it);
+        return it;
+    }
+
     @Override
     public synchronized boolean save(Object... entities) {
         var transaction = manager.getTransaction();
@@ -119,18 +130,11 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 transaction.commit();
             } catch (Throwable t) {
                 transaction.rollback();
-                log.warn("Could not save all entities\n\tEntities: " + Arrays.toString(entities), t);
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not save all entities", t);
                 return false;
             }
         }
         return true;
-    }
-
-    @Override
-    public <T> T refresh(T it) {
-        Constraint.notNull(it, "entity");
-        manager.refresh(it);
-        return it;
     }
 
     @Override
@@ -148,17 +152,10 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 transaction.commit();
             } catch (Throwable t) {
                 transaction.rollback();
-                log.warn("Could not remove all entities\n\tEntities: " + Arrays.toString(infractions), t);
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not remove all entities", t);
             }
         }
         return c;
-    }
-
-    public HibernateEntityService(BanMod banMod) {
-        this.banMod = banMod;
-        var unit = buildPersistenceUnit(banMod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
-        this.manager = unit.manager;
-        addChildren(unit);
     }
 
     public static Unit buildPersistenceUnit(

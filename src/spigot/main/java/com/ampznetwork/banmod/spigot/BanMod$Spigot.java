@@ -13,6 +13,7 @@ import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
@@ -20,12 +21,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.stream.Stream;
 
 import static java.time.Duration.*;
 
 @Getter
+@Slf4j(topic = BanMod.Strings.AddonName)
 public class BanMod$Spigot extends JavaPlugin implements BanMod {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
@@ -43,7 +47,15 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     private EntityService entityService;
 
     @Override
+    public Logger log() {
+        return log;
+    }
+
+    @Override
     public void onLoad() {
+        if (!getServer().getOnlineMode())
+            log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
+
         saveDefaultConfig();
         this.config = super.getConfig();
 
@@ -92,6 +104,14 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         reloadConfig();
         config = getConfig();
         onEnable();
+    }
+
+    @Override
+    public @Nullable String getBanAppealUrl() {
+        var url = getConfig().get("banmod.appealUrl", null);
+        var txt = url == null ? null : url.toString();
+        if (txt != null && txt.isBlank()) txt = null;
+        return txt;
     }
 
     @Override

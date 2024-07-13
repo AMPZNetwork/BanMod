@@ -10,9 +10,10 @@ import org.comroid.api.attr.Named;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum Punishment implements Named {
-    Mute(false),
-    Kick(true),
-    Ban(false);
+    Mute(false, "muted"),
+    Kick(true, "kicked"),
+    Ban(false, "banned");
 
     boolean inherentlyTemporary;
+    String alternateName;
 }

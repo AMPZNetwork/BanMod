@@ -6,12 +6,15 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -20,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 @Value
 public class SpigotPlayerAdapter implements PlayerAdapter {
@@ -55,11 +59,28 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void kick(UUID playerId, String reason) {
+    public void kick(UUID playerId, TextComponent reason) {
         var player = Bukkit.getPlayer(playerId);
         if (player == null)
             return;
-        player.kickPlayer(reason);
+        var serialize = legacySection().serialize(reason);
+        player.kickPlayer(serialize);
+    }
+
+    @Override
+    public void send(UUID playerId, TextComponent component) {
+        var player = banMod.getServer().getPlayer(playerId);
+        if (player == null) return;
+        var serialize = get().serialize(component);
+        player.spigot().sendMessage(serialize);
+    }
+
+    @Override
+    public void broadcast(@Nullable String receiverPermission, Component component) {
+        final var serialize = get().serialize(component);
+        banMod.getServer().getOnlinePlayers().stream()
+                .filter(player -> receiverPermission == null || player.hasPermission(receiverPermission))
+                .forEach(player -> player.spigot().sendMessage(serialize));
     }
 
     @Override

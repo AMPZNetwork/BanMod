@@ -1,13 +1,13 @@
 package org.comroid.api.func.util;
 
+import com.ampznetwork.banmod.api.BanMod;
+import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.StringRange;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Stream.*;
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 import static org.comroid.api.func.util.Debug.isDebug;
 import static org.comroid.api.func.util.Streams.expand;
@@ -70,10 +69,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 .forEach(dispatcher::register);
     }
 
-    public static Text component2text(Component component) {
-        return Text.Serializer.fromJson(gson().serialize(component));
-    }
-
     @Override
     public Stream<Object> expandContext(Object... context) {
         return super.expandContext(context).collect(expandRecursive(it -> {
@@ -87,29 +82,26 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         }));
     }
 
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) throws CommandSyntaxException {
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
         Command.Node.Call call;
         if (usage.getNode() instanceof Command.Node.Group group)
             call = group.getDefaultCall();
         else if (usage.getNode() instanceof Command.Node.Call call0)
             call = call0;
-        else {
-            var message = Text.of("Command parsing error");
-            throw new CommandSyntaxException(new SimpleCommandExceptionType(message), message);
-        }
+        else throw new Command.Error("Command parsing error");
         if (call == null)
             throw new Command.Error("Not a command");
         return call;
     }
 
     @Override
-    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    public int run(CommandContext<ServerCommandSource> context) {
         var fullCommand = context.getInput().split(" ");
         Command.Usage usage;
         try {
             usage = cmdr.createUsageBase(this, fullCommand, context);
         } catch (Throwable t) {
-            log.warn("An internal error occurred during command preparation", t);
+            BanMod.Resources.printExceptionWithIssueReportUrl(log, "An internal error occurred during command preparation", t);
             var result = handleThrowable(t);
             handleResponse(Command.Usage.builder()
                     .manager(cmdr)
@@ -136,9 +128,8 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             });
             cmdr.execute(usage, args);
             return 1;
-        } catch (CommandSyntaxException csex) {
-            throw csex;
         } catch (Throwable t) {
+            BanMod.Resources.printExceptionWithIssueReportUrl(log, "An internal error occurred during command execution", t);
             var result = handleThrowable(t);
             handleResponse(usage, result);
             return 0;
@@ -194,7 +185,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 .flatMap(Streams.cast(ServerCommandSource.class))
                 .findAny().orElseThrow();
         if (response instanceof Component component)
-            source.sendMessage(component2text(component));
+            source.sendMessage(BanMod$Fabric.component2text(component));
         else source.sendMessage(Text.of(String.valueOf(response)));
     }
 

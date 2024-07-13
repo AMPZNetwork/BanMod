@@ -7,7 +7,7 @@ import io.wispforest.owo.config.annotation.Modmenu;
 import io.wispforest.owo.config.annotation.Nest;
 import io.wispforest.owo.config.annotation.RestartRequired;
 
-@Modmenu(modId = BanMod.AddonId)
+@Modmenu(modId = BanMod.Strings.AddonId)
 @SuppressWarnings({"FieldMayBeFinal", "unused"})
 @Config(name = "banMod-config", wrapperName = "Config")
 public class ConfigModel {
@@ -15,6 +15,7 @@ public class ConfigModel {
     public EntityService.Type entityService = EntityService.Type.DATABASE;
     @Nest
     public Database database = new Database();
+    public String banAppealUrl = null;
 
     public static class Database {
         public EntityService.DatabaseType type = EntityService.DatabaseType.h2;

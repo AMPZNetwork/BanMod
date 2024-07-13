@@ -1,10 +1,10 @@
 package com.ampznetwork.banmod.fabric.adp.internal;
 
 import com.ampznetwork.banmod.api.BanMod;
+import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import lombok.SneakyThrows;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
@@ -14,14 +14,14 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerLoginNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 
 import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static com.ampznetwork.banmod.fabric.BanMod$Fabric.component2text;
+
 @Value
-@Slf4j
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
     /**
      * half arsed regex to work around the shit connection api
@@ -48,27 +48,32 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var matcher = ConInfoPattern.matcher(info);
 
         if (!matcher.matches()) {
-            log.warn(("Could not parse connection info string. Please report this at %s" +
-                    "\n\tString: %s").formatted(BanMod.IssuesUrl, info));
+            mod.log().warn(("Could not parse connection info string. Please report this at %s" +
+                    "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
             return;
         }
 
-        var id = UUID.fromString(matcher.group("id"));
+        var playerId = UUID.fromString(matcher.group("id"));
         var ip = InetAddress.getByName(matcher.group("ip"));
-        var result = playerLogin(id, ip);
+        var result = playerLogin(playerId, ip);
 
         if (result.isBanned())
-            handler.disconnect(Text.of(result.reason()));
+            BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
+                var serialize = component2text(msg);
+                handler.disconnect(serialize);
+            });
     }
 
     @Override
     public boolean allowChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
-        var player = player(sender.getUuid());
-        var maySend = !player.isMuted();
-        if (!maySend) {
-            var reason = player.reason();
-            sender.sendMessage(Text.of("You are muted! " + (reason == null ? "" : "Reason: " + reason)));
-        }
+        var playerId = sender.getUuid();
+        var result = player(playerId);
+        var maySend = !result.isMuted();
+        if (!maySend)
+            BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {
+                var serialize = component2text(msg);
+                sender.sendMessage(serialize);
+            });
         return maySend;
     }
 }

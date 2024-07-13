@@ -6,16 +6,19 @@ import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.comroid.api.func.util.Command;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -36,12 +39,30 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void kick(UUID playerId, String reason) {
+    public void kick(UUID playerId, TextComponent reason) {
+        var serialize = BanMod$Fabric.component2text(reason);
         Optional.ofNullable(banMod.getServer().getPlayerManager()
                         .getPlayer(playerId))
                 .orElseThrow(() -> new Command.Error("Player not found"))
                 .networkHandler
-                .disconnect(Text.of(reason));
+                .disconnect(serialize);
+    }
+
+    @Override
+    public void send(UUID playerId, TextComponent component) {
+        var serialize = BanMod$Fabric.component2text(component);
+        var player = banMod.getServer().getPlayerManager().getPlayer(playerId);
+        if (player == null) return;
+        player.sendMessage(serialize);
+    }
+
+    @Override
+    public void broadcast(@Nullable String recieverPermission, Component component) {
+        var serialize = BanMod$Fabric.component2text(component);
+        banMod.getServer().getPlayerManager()
+                .getPlayerList().stream()
+                .filter(player -> recieverPermission == null || Permissions.check(player, recieverPermission))
+                .forEach(player -> player.sendMessage(serialize));
     }
 
     @Override

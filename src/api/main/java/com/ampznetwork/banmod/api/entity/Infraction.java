@@ -1,5 +1,7 @@
 package com.ampznetwork.banmod.api.entity;
 
+import com.ampznetwork.banmod.api.model.PlayerResult;
+import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -68,5 +70,14 @@ public class Infraction {
             case Kick -> "You were kicked";
             case Ban -> "You were banned";
         } : reason;
+    }
+
+    public PlayerResult toResult() {
+        return new PlayerResult(playerId,
+                category.getPunishment() == Punishment.Mute,
+                category.getPunishment() == Punishment.Ban,
+                reason,
+                timestamp,
+                expires);
     }
 }

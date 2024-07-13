@@ -7,24 +7,17 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentBuilder;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
 import org.comroid.api.func.util.Command;
-import org.comroid.api.func.util.Streams;
 import org.comroid.api.text.StringMode;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.stream.Collector;
 
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
@@ -35,11 +28,8 @@ import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
 
-@Slf4j
 @UtilityClass
 public class BanModCommands {
-    public static int ENTRIES_PER_PAGE = 8;
-
     @Command
     public Component reload(BanMod banMod) {
         banMod.reload();
@@ -80,7 +70,7 @@ public class BanModCommands {
                         })
                         .toArray();
                 if (!service.save(affected))
-                    throw couldNotSaveError();
+                    throw BanMod.Resources.couldNotSaveError();
                 text.append(text("Cleaned up ")
                         .append(text(affected.length).color(GREEN))
                         .append(text(" users")));
@@ -134,7 +124,7 @@ public class BanModCommands {
             text = text.append(text("\n- (none)").color(GRAY));
         else for (var infraction : infractions)
             text = text.append(text("\n- "))
-                    .append(textPunishment(infraction.getCategory().getPunishment()))
+                    .append(BanMod.Displays.textPunishment(infraction.getCategory().getPunishment()))
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
                             ? "Server"
@@ -154,24 +144,31 @@ public class BanModCommands {
         var tgt = banMod.getPlayerAdapter().getId(name);
         var cat = banMod.getEntityService().findCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
-        var infraction = standardInfraction(banMod, cat, tgt, issuer, reason)
+        var infraction = BanMod.Resources.standardInfraction(banMod, cat, tgt, issuer, reason)
                 .build();
 
         // save infraction
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
+            throw BanMod.Resources.couldNotSaveError();
 
         // apply infraction
+        var result = infraction.toResult();
         var punishment = infraction.getCategory().getPunishment();
         if (punishment != Punishment.Mute)
-            banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
+            banMod.getPlayerAdapter().kick(tgt, switch (punishment) {
+                //case Mute -> ;
+                case Kick -> BanMod.Displays.kickedTextUser(result);
+                case Ban -> BanMod.Displays.bannedTextUser(banMod, result);
+                default -> throw new IllegalStateException("Unexpected value: " + punishment);
+            });
+        else banMod.getPlayerAdapter().send(tgt, BanMod.Displays.mutedTextUser(result));
 
-        return textPunishmentFull(banMod, infraction);
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
     public Component mutelist(BanMod banMod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
-        return infractionList(banMod, page == null ? 1 : page, Punishment.Mute);
+        return BanMod.Displays.infractionList(banMod, page == null ? 1 : page, Punishment.Mute);
     }
 
     @Command
@@ -187,13 +184,13 @@ public class BanModCommands {
             return text("User " + name + " is already muted").color(YELLOW);
         var now = now();
         var duration = parseDuration(durationText);
-        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason)
+        var infraction = BanMod.Resources.standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason)
                 .timestamp(now)
                 .expires(now.plus(duration))
                 .build();
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
-        return textPunishmentFull(banMod, infraction);
+            throw BanMod.Resources.couldNotSaveError();
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -206,10 +203,10 @@ public class BanModCommands {
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
-        var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
+        var infraction = BanMod.Resources.standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
-        return textPunishmentFull(banMod, infraction);
+            throw BanMod.Resources.couldNotSaveError();
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -224,7 +221,7 @@ public class BanModCommands {
                 .orElseThrow(() -> new Command.Error("User is not muted"));
         infraction.setRevoker(issuer);
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
+            throw BanMod.Resources.couldNotSaveError();
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
@@ -236,18 +233,19 @@ public class BanModCommands {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = banMod.getPlayerAdapter().getId(name);
-        var infraction = standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
+        var infraction = BanMod.Resources.standardInfraction(banMod, banMod.getKickCategory(), tgt, issuer, reason)
                 .expires(null)
                 .build();
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
-        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(banMod, infraction);
+            throw BanMod.Resources.couldNotSaveError();
+        var text = BanMod.Displays.kickedTextUser(infraction.toResult());
+        banMod.getPlayerAdapter().kick(tgt, text);
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
     public Component banlist(BanMod banMod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
-        return infractionList(banMod, page == null ? 1 : page, Punishment.Ban);
+        return BanMod.Displays.infractionList(banMod, page == null ? 1 : page, Punishment.Ban);
     }
 
     @Command
@@ -263,14 +261,14 @@ public class BanModCommands {
             return text("User " + name + " is already banned").color(YELLOW);
         var now = now();
         var duration = parseDuration(durationText);
-        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason)
+        var infraction = BanMod.Resources.standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason)
                 .timestamp(now)
                 .expires(now.plus(duration))
                 .build();
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
-        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(banMod, infraction);
+            throw BanMod.Resources.couldNotSaveError();
+        banMod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(banMod, infraction.toResult()));
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -283,11 +281,11 @@ public class BanModCommands {
         var tgt = banMod.getPlayerAdapter().getId(name);
         if (banMod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
-        var infraction = standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
+        var infraction = BanMod.Resources.standardInfraction(banMod, banMod.getBanCategory(), tgt, issuer, reason).expires(null).build();
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
-        banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(banMod, infraction);
+            throw BanMod.Resources.couldNotSaveError();
+        banMod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(banMod, infraction.toResult()));
+        return BanMod.Displays.textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -302,89 +300,8 @@ public class BanModCommands {
                 .orElseThrow(() -> new Command.Error("User is not banned"));
         infraction.setRevoker(issuer);
         if (!banMod.getEntityService().save(infraction))
-            throw couldNotSaveError();
+            throw BanMod.Resources.couldNotSaveError();
         return text("User " + name + " was unbanned").color(GREEN);
-    }
-
-    private Component infractionList(BanMod banMod, int page, Punishment punishment) {
-        final var infractions = banMod.getEntityService().getInfractions()
-                .filter(Infraction.IS_IN_EFFECT)
-                .filter(i -> i.getCategory().getPunishment() == punishment)
-                .toList();
-        final var pageCount = Math.ceil(1d * infractions.size() / ENTRIES_PER_PAGE);
-        // todo: use book adapter here
-        return infractions.stream()
-                .skip((page - 1L) * ENTRIES_PER_PAGE)
-                .limit(ENTRIES_PER_PAGE)
-                .map(infraction -> text("\n- ")
-                        .append(textPunishmentFull(banMod, infraction)))
-                .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
-                        .append(text("(none)").color(GRAY))))
-                .collect(Collector.of(() -> text()
-                                .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, (int) pageCount))),
-                        ComponentBuilder::append,
-                        (l, r) -> {
-                            l.append(r);
-                            return l;
-                        },
-                        ComponentBuilder::build));
-    }
-
-    private Infraction.Builder standardInfraction(BanMod banMod,
-                                                  PunishmentCategory category,
-                                                  UUID target,
-                                                  @Nullable UUID issuer,
-                                                  @Nullable String reason) {
-        var rep = banMod.getEntityService().findRepetition(target, category);
-        var now = now();
-        return Infraction.builder()
-                .playerId(target)
-                .category(category)
-                .issuer(issuer)
-                .reason(reason)
-                .timestamp(now)
-                .expires(now.plus(category.calculateDuration(rep)));
-    }
-
-    private Component textPunishmentFull(BanMod banMod, Infraction infraction) {
-        var username = banMod.getPlayerAdapter().getName(infraction.getPlayerId());
-        var text = text("User ")
-                .append(text(username).color(AQUA))
-                .append(text(" has been "))
-                .append(textPunishment(infraction.getCategory().getPunishment()));
-
-        var reason = infraction.getReason();
-        if (reason != null)
-            text = text.append(text(": "))
-                    .append(text(reason).color(LIGHT_PURPLE));
-
-        var expiry = infraction.getExpires();
-        if (expiry != null && !expiry.isBefore(Infraction.TOO_EARLY)) {
-            var dateTime = LocalDateTime.ofInstant(infraction.getExpires(), ZoneId.systemDefault());
-            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            text = text.append(text(" (until "))
-                    .append(text(dateTime.format(formatter)).color(GREEN))
-                    .append(text(")"));
-        } else text = text.append(text(" ("))
-                .append(text("permanently").color(RED))
-                .append(text(")"));
-        return text;
-    }
-
-    private Component textPunishment(Punishment punishment) {
-        return text(switch (punishment) {
-            case Mute -> "muted";
-            case Kick -> "kicked";
-            case Ban -> "banned";
-        }).color(switch (punishment) {
-            case Mute -> YELLOW;
-            case Kick -> RED;
-            case Ban -> DARK_RED;
-        });
-    }
-
-    private static Command.@NotNull Error couldNotSaveError() {
-        return new Command.Error("Could not save changes");
     }
 
     @Command
@@ -428,7 +345,7 @@ public class BanModCommands {
                     .repetitionExpBase(repetitionBase)
                     .build();
             if (!banMod.getEntityService().save(category))
-                throw couldNotSaveError();
+                throw BanMod.Resources.couldNotSaveError();
             return text("Category ")
                     .append(text(name).color(AQUA))
                     .append(text(" was "))
@@ -447,7 +364,7 @@ public class BanModCommands {
     }
 
     @UtilityClass
-    @Command("import")
+    @Command(value = "import", permission = "4")
     public class Import {
         @Command
         public Component vanilla(BanMod banMod) {
@@ -457,13 +374,13 @@ public class BanModCommands {
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" from Vanilla Minecraft"));
             } catch (Throwable t) {
-                throw new Command.Error("Could not import from Vanilla Minecraft: " + t);
+                throw new Command.Error("Could not import from Vanilla Minecraft. " + BanMod.Strings.PleaseCheckConsole);
             }
         }
 
         @Command
-        public Component litebans(BanMod banMod) {
-            try (var importer = new LiteBansImporter(banMod, banMod.getDatabaseInfo())) {
+        public Component litebans(BanMod mod) {
+            try (var importer = new LiteBansImporter(mod, mod.getDatabaseInfo())) {
                 var result = importer.run();
                 return text("Imported ")
                         .append(text(result.muteCount() + " Mutes").color(YELLOW))
@@ -471,12 +388,12 @@ public class BanModCommands {
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" from LiteBans"));
             } catch (SchemaManagementException smex) {
-                var str = "LiteBans Databases were in an incorrect format.";
-                log.warn("{} Please report this at " + BanMod.IssuesUrl, str, smex);
+                var str = "LiteBans Databases have an unexpected format";
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, str, smex);
                 return text(str).color(YELLOW);
             } catch (Throwable t) {
-                log.error("Could not import from LiteBans. Please report this at " + BanMod.IssuesUrl, t);
-                throw new Command.Error("Could not import from LiteBans. Please check console for further information.");
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not import from LiteBans", t);
+                throw new Command.Error("Could not import from LiteBans." + BanMod.Strings.PleaseCheckConsole);
             }
         }
     }

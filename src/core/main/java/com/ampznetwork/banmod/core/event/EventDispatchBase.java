@@ -16,15 +16,15 @@ import java.util.UUID;
 @Value
 @NonFinal
 public abstract class EventDispatchBase {
-    BanMod banMod;
+    protected BanMod mod;
 
     protected PlayerResult player(UUID playerId) {
-        return banMod.getEntityService().queuePlayer(playerId);
+        return mod.getEntityService().queuePlayer(playerId);
     }
 
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
-        final var service = banMod.getEntityService();
-        final var name = banMod.getPlayerAdapter().getName(playerId);
+        final var service = mod.getEntityService();
+        final var name = mod.getPlayerAdapter().getName(playerId);
         final var now = Instant.now();
 
         // push player data cache
@@ -48,4 +48,5 @@ public abstract class EventDispatchBase {
         // queue player
         return player(playerId);
     }
+
 }

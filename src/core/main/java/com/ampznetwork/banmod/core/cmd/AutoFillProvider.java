@@ -40,7 +40,7 @@ public class AutoFillProvider {
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getCategory().getPunishment() == punishment)
                     .toList();
-            var pageCount = (int) Math.ceil(1d * infractions.size() / BanModCommands.ENTRIES_PER_PAGE);
+            var pageCount = (int) Math.ceil(1d * infractions.size() / BanMod.Resources.ENTRIES_PER_PAGE);
             return IntStream.range(1, pageCount + 1)
                     .mapToObj(String::valueOf);
         }

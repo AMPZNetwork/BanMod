@@ -12,23 +12,26 @@ import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.kyori.adventure.text.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.stream.Stream;
 
 import static java.time.Duration.*;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
 @Getter
+@Slf4j(topic = BanMod.Strings.AddonName)
 public class BanMod$Fabric implements ModInitializer, BanMod {
-    public static final Logger LOGGER = LoggerFactory.getLogger(BanMod.AddonName);
-
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
@@ -44,9 +47,38 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     private PunishmentCategory kickCategory;
     private PunishmentCategory banCategory;
 
+    public static Text component2text(Component component) {
+        return Text.Serializer.fromJson(gson().serialize(component));
+    }
+
+    @Override
+    public Logger log() {
+        return log;
+    }
+
+    @Override
+    public DatabaseInfo getDatabaseInfo() {
+        return new DatabaseInfo(
+                config.entityService(),
+                config.database.type(),
+                config.database.url(),
+                config.database.username(),
+                config.database.password());
+    }
+
+    @Override
+    public void reload() {
+        config = Config.createAndLoad();
+    }
+
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTING.register(server -> this.server = server);
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            this.server = server;
+
+            if (!server.isOnlineMode())
+                log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
+        });
 
         this.cmdr = new Command.Manager() {{
             this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
@@ -73,17 +105,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     }
 
     @Override
-    public DatabaseInfo getDatabaseInfo() {
-        return new DatabaseInfo(
-                config.entityService(),
-                config.database.type(),
-                config.database.url(),
-                config.database.username(),
-                config.database.password());
-    }
-
-    @Override
-    public void reload() {
-        config = Config.createAndLoad();
+    public @Nullable String getBanAppealUrl() {
+        return config.banAppealUrl();
     }
 }

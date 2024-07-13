@@ -16,6 +16,7 @@ import org.hibernate.dialect.MariaDBDialect;
 import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Contract;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,9 +51,12 @@ public interface EntityService extends LifeCycle {
                 .map(i -> new PlayerResult(playerId,
                         i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Mute,
                         i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Ban,
-                        i.getReason()))
+                        i.getReason(), i.getTimestamp(), i.getExpires()))
                 .findFirst()
-                .orElseGet(() -> new PlayerResult(playerId, false, false, null));
+                .orElseGet(() -> {
+                    var now = Instant.now();
+                    return new PlayerResult(playerId, false, false, null, now, now);
+                });
     }
 
     void pingUsernameCache(UUID id, String name);
