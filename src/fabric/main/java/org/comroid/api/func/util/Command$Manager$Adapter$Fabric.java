@@ -117,7 +117,13 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             call.getParameters().forEach(param -> {
                 var key = param.getName();
                 try {
-                    var value = (Object) context.getArgument(key, param.getParam().getType());
+                    Class<?> origin, type = origin = param.getParam().getType();
+                    if (type.isEnum()) type = String.class;
+                    var value = (Object) context.getArgument(key, type);
+                    if (!origin.isInstance(value)) {
+                        var valueType = ValueType.of(origin);
+                        value = valueType.parse(String.valueOf(value));
+                    }
                     args.put(key, value);
                 } catch (IllegalArgumentException iaex) {
                     log.warn("Could not obtain argument {}", key);
@@ -284,7 +290,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
 
     @Value
     public static class ArgumentConverter {
-        public static final Map<Class<?>, ArgumentConverter> CACHE = new ConcurrentHashMap<>();
+        public static final Map<Class<?>, ArgumentConverter> cache = new ConcurrentHashMap<>();
         public static final ArgumentConverter BOOLEAN = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
         public static final ArgumentConverter DOUBLE = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
         public static final ArgumentConverter FLOAT = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
@@ -301,20 +307,24 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             this.valueType = valueType;
             this.supplier = supplier;
 
-            CACHE.put(valueType.getTargetClass(), this);
+            //CACHE.put(valueType.getTargetClass(), this);
         }
 
         public static <T> ArgumentConverter blob(Command.Node.Parameter parameter) {
             var type = parameter.getParam().getType();
-            return type.isEnum()
-                    ? CACHE.computeIfAbsent(type, k -> new ArgumentConverter(Polyfill
-                    .<ValueType<T>>uncheckedCast(EnumValueType.of(type)), StringArgumentType::word))
-                    : StandardValueType.forClass(type)
+            if (type.isEnum()) {
+                if (cache.containsKey(type))
+                    return cache.get(type);
+                var evt = new ArgumentConverter(EnumValueType.of(type), StringArgumentType::word);
+                cache.put(type, evt);
+                return evt;
+            }
+            return StandardValueType.forClass(type)
                     .stream()
-                    .flatMap(t0 -> ArgumentConverter.CACHE.values().stream()
+                    .flatMap(t0 -> ArgumentConverter.cache.values().stream()
                             .filter(conv -> conv.valueType.equals(t0)))
                     .findAny()
-                    .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
+                    .orElse(STRING);
         }
     }
 }
