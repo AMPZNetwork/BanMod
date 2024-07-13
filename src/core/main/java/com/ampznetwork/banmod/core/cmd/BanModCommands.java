@@ -19,6 +19,9 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collector;
@@ -163,7 +166,7 @@ public class BanModCommands {
         if (punishment != Punishment.Mute)
             banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
 
-        return textPunishmentFull(name, punishment, reason);
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -190,7 +193,7 @@ public class BanModCommands {
                 .build();
         if (!banMod.getEntityService().save(infraction))
             throw couldNotSaveError();
-        return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -206,7 +209,7 @@ public class BanModCommands {
         var infraction = standardInfraction(banMod, banMod.getMuteCategory(), tgt, issuer, reason).expires(null).build();
         if (!banMod.getEntityService().save(infraction))
             throw couldNotSaveError();
-        return textPunishmentFull(name, Punishment.Mute, infraction.getReason());
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -239,7 +242,7 @@ public class BanModCommands {
         if (!banMod.getEntityService().save(infraction))
             throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Kick, infraction.getReason());
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -267,7 +270,7 @@ public class BanModCommands {
         if (!banMod.getEntityService().save(infraction))
             throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -284,7 +287,7 @@ public class BanModCommands {
         if (!banMod.getEntityService().save(infraction))
             throw couldNotSaveError();
         banMod.getPlayerAdapter().kick(tgt, infraction.getReason());
-        return textPunishmentFull(name, Punishment.Ban, infraction.getReason());
+        return textPunishmentFull(banMod, infraction);
     }
 
     @Command
@@ -313,10 +316,8 @@ public class BanModCommands {
         return infractions.stream()
                 .skip((page - 1L) * ENTRIES_PER_PAGE)
                 .limit(ENTRIES_PER_PAGE)
-                .map(i -> text("\n- ")
-                        .append(textPunishmentFull(banMod.getPlayerAdapter().getName(i.getPlayerId()),
-                                i.getCategory().getPunishment(),
-                                i.getReason())))
+                .map(infraction -> text("\n- ")
+                        .append(textPunishmentFull(banMod, infraction)))
                 .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                         .append(text("(none)").color(GRAY))))
                 .collect(Collector.of(() -> text()
@@ -345,14 +346,28 @@ public class BanModCommands {
                 .expires(now.plus(category.calculateDuration(rep)));
     }
 
-    private Component textPunishmentFull(String username, Punishment punishment, @Nullable String reason) {
+    private Component textPunishmentFull(BanMod banMod, Infraction infraction) {
+        var username = banMod.getPlayerAdapter().getName(infraction.getPlayerId());
         var text = text("User ")
                 .append(text(username).color(AQUA))
                 .append(text(" has been "))
-                .append(textPunishment(punishment));
+                .append(textPunishment(infraction.getCategory().getPunishment()));
+
+        var reason = infraction.getReason();
         if (reason != null)
             text = text.append(text(": "))
                     .append(text(reason).color(LIGHT_PURPLE));
+
+        var expiry = infraction.getExpires();
+        if (expiry != null && !expiry.isBefore(Infraction.TOO_EARLY)) {
+            var dateTime = LocalDateTime.ofInstant(infraction.getExpires(), ZoneId.systemDefault());
+            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            text = text.append(text(" (until "))
+                    .append(text(dateTime.format(formatter)).color(GREEN))
+                    .append(text(")"));
+        } else text = text.append(text(" ("))
+                .append(text("permanently").color(RED))
+                .append(text(")"));
         return text;
     }
 
