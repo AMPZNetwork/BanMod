@@ -9,7 +9,6 @@ import com.ampznetwork.banmod.api.model.mc.Player;
 import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
 import org.comroid.api.func.util.Command;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -24,7 +23,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, @Nullable String currentValue) {
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -47,7 +46,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, @Nullable String currentValue) {
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -64,7 +63,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, @Nullable String currentValue) {
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
             return usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .flatMap(mod -> mod.getEntityService().getCategories())

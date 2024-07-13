@@ -36,12 +36,12 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
-import static java.util.stream.Stream.of;
 import static java.util.stream.Stream.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static net.minecraft.server.command.CommandManager.*;
 import static org.comroid.api.func.util.Debug.isDebug;
-import static org.comroid.api.func.util.Streams.*;
+import static org.comroid.api.func.util.Streams.expand;
+import static org.comroid.api.func.util.Streams.expandRecursive;
 
 @Value
 @Slf4j
@@ -123,10 +123,9 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         var fullCommand = context.getInput().split(" ");
-        var adp = Command$Manager$Adapter$Fabric.this;
         Command.Usage usage;
         try {
-            usage = cmdr.createUsageBase(adp, fullCommand, adp, context.getSource());
+            usage = cmdr.createUsageBase(this, fullCommand, context);
         } catch (Throwable t) {
             log.warn("An internal error occurred during command preparation", t);
             var result = handleThrowable(t);
@@ -175,19 +174,21 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         var range = new StringRange(inLen - lwLen, inLen);
         return CompletableFuture.supplyAsync(() -> {
                     var fullCommand = input.split(" ");
-                    var usage = cmdr.createUsageBase(this, fullCommand, this);
+                    var usage = cmdr.createUsageBase(this, fullCommand, context);
                     usage.advanceFull();
                     return usage.getNode().nodes()
+                            .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
+                            .limit(1)
                             .flatMap(n0 -> n0 instanceof Command.Node.Callable callable
                                     ? callable.nodes()
                                     .map(node -> node instanceof Command.Node.Parameter parameter
                                             ? "<%s>".formatted(parameter.getName())
                                             : node.getName())
-                                    : of(n0)
-                                    .flatMap(cast(Command.AutoFillProvider.class))
-                                    .flatMap(provider -> provider.autoFill(usage, "", null)))
+                                    : n0 instanceof Command.AutoFillProvider provider
+                                    ? provider.autoFill(usage, n0.getName(), lsWrd)
+                                    : empty())
                             .map(String::trim)
-                            .filter(str -> str.startsWith(lsWrd))
+                            .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
                             .map(str -> new Suggestion(range, str))
                             .toList();
                 })
