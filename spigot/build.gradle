@@ -37,6 +37,14 @@ tasks.register('dlArclightServerJar', Download).configure {
     }
 }
 
+tasks.register('dlLuckPermsJar', Download).configure {
+    src 'https://download.luckperms.net/1552/bukkit/loader/LuckPerms-Bukkit-5.4.137.jar'
+    dest "$projectDir/run/plugins/LuckPerms.jar"
+    outputs.upToDateWhen {
+        file("$projectDir/run/plugins/LuckPerms.jar").exists()
+    }
+}
+
 shadowJar {
     dependsOn project(':api').simplifyArtifact
 }

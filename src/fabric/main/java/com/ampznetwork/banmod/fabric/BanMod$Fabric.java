@@ -78,6 +78,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
 
         this.cmdr = new Command.Manager() {{
             this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
+            this.addChild(Command.PermissionChecker.minecraft(playerAdapter));
         }};
         this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
         cmdr.register(BanModCommands.class);

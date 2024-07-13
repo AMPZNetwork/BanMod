@@ -39,10 +39,14 @@ subprojects {
         if (!project.name.endsWith('api'))
             api project(':api')
 
-        if (project.name != 'japi')
+        if (project.name != 'japi') {
             if (findProject(':japi') != null)
                 api project(':japi')
             else api 'org.comroid:japi:+'
+
+            // soft dependencies
+            compileOnly 'net.luckperms:api:5.4'
+        }
 
         // utility
         compileOnly 'org.projectlombok:lombok:+'

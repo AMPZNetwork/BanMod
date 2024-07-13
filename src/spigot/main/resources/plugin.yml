@@ -1,10 +1,45 @@
 name: BanMod
 version: '0.1.0'
+author: Kaleidox
 description: Cross-Server Punishment modification
-main: com.ampznetwork.banmod.spigot.BanMod$Spigot
-api-version: '1.18'
-load: STARTUP
 website: https://github.com/AMPZNetwork/BanMod
+main: com.ampznetwork.banmod.spigot.BanMod$Spigot
+default-permission: op
+api-version: '1.18'
+database: true
+load: STARTUP
+softdepend:
+  - LibMod
+  - LuckPerms
+libraries:
+  - com.fasterxml.jackson.core:jackson-databind:2.17.2
+  - javax.persistence:javax.persistence-api:2.2
+  - org.hibernate:hibernate-core:5.6.0.Final
+  - org.jboss:jandex:2.4.5.Final
+  - com.zaxxer:HikariCP:4.0.3
+  - net.kyori:adventure-api:4.14.0
+permissions:
+  banmod.bypass.*:
+    description: A tree of permission nodes to bypass certain punishments
+    children:
+      banmod.bypass.kick:
+        description: /kick has no effect on you
+      banmod.bypass.mute:
+        description: /mute and /tempmute have no effect on you
+      banmod.bypass.ban:
+        description: /ban and /tempban have no effect on you
+  banmod.notify.*:
+    description: A tree of permission nodes to control notifications in the
+    children:
+      banmod.notify.kick:
+        default: true
+        description: Get notified when someone gets kicked
+      banmod.notify.mute:
+        default: true
+        description: Get notified when someone gets muted
+      banmod.notify.ban:
+        default: true
+        description: Get notified when someone gets banned
 commands:
   reload:
     description: Reloads Configuration Files
@@ -12,12 +47,6 @@ commands:
   cleanup:
     description: Cleanup Database
     permission: banmod.cleanup
-  import:
-    description: Import Data from other sources
-    permission: banmod.import
-  category:
-    description: Modify Punishment Categories
-    permission: banmod.category
   lookup:
     description: Lookup User Entry
     permission: banmod.lookup
@@ -51,3 +80,9 @@ commands:
   unban:
     description: Unban User
     permission: banmod.unban
+  category:
+    description: Modify Punishment Categories
+    permission: banmod.category
+  import:
+    description: Import Data from other sources
+    permission: banmod.import

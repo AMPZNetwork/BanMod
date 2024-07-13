@@ -8,6 +8,7 @@ import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.util.TriState;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -59,11 +60,38 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void kick(UUID playerId, TextComponent reason) {
+    public boolean checkOpLevel(UUID playerId, int $) {
+        if ($ > 1) banMod.log().warn("Spigot API does not properly support validating a certain OP level.");
+        var player = banMod.getServer().getPlayer(playerId);
+        return player != null && player.isOp();
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String _key, boolean explicit) {
+        var key = _key.endsWith(".*") ? _key.substring(0, _key.length() - 1) : _key;
+        var player = banMod.getServer().getPlayer(playerId);
+        if (player == null)
+            return TriState.NOT_SET;
+        if (explicit)
+            return player.getEffectivePermissions().stream()
+                    .filter(info -> info.getPermission().toLowerCase()
+                            .startsWith(key.toLowerCase()))
+                    .map(info -> info.getValue() ? TriState.TRUE : TriState.FALSE)
+                    .findAny()
+                    .orElse(TriState.NOT_SET);
+        return player.hasPermission(key)
+                ? TriState.TRUE
+                : player.isPermissionSet(key)
+                ? TriState.FALSE
+                : TriState.NOT_SET;
+    }
+
+    @Override
+    public void kick(UUID playerId, TextComponent component) {
         var player = Bukkit.getPlayer(playerId);
         if (player == null)
             return;
-        var serialize = legacySection().serialize(reason);
+        var serialize = legacySection().serialize(component);
         player.kickPlayer(serialize);
     }
 

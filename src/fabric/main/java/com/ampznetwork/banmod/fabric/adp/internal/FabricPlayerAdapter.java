@@ -10,14 +10,17 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.util.TriState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import org.comroid.api.func.util.Command;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -36,6 +39,24 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     public boolean isOnline(UUID playerId) {
         return banMod.getServer().getPlayerManager()
                 .getPlayer(playerId) != null;
+    }
+
+    @Override
+    public boolean checkOpLevel(UUID playerId, @MagicConstant(intValues = {0, 1, 2, 3, 4}) int minimum) {
+        return Optional.of(banMod.getServer())
+                .map(MinecraftServer::getPlayerManager)
+                .map(pm -> pm.getPlayer(playerId))
+                .filter(spe -> spe.hasPermissionLevel(minimum))
+                .isPresent();
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
+        return switch (Permissions.getPermissionValue(playerId, key).join()) {
+            case FALSE -> TriState.FALSE;
+            case DEFAULT -> TriState.NOT_SET;
+            case TRUE -> TriState.TRUE;
+        };
     }
 
     @Override

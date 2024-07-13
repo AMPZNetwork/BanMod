@@ -56,6 +56,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
         this.cmdr = new Command.Manager() {{
             this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Spigot.this));
+            this.addChild(Command.PermissionChecker.minecraft(playerAdapter));
         }};
         this.adapter = cmdr.new Adapter$Spigot(this);
         cmdr.register(BanModCommands.class);

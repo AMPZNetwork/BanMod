@@ -34,6 +34,6 @@
     "fabric-api": "*"
   },
   "suggests": {
-    "another-mod": "*"
+    "luckperms": ">=5.4"
   }
 }

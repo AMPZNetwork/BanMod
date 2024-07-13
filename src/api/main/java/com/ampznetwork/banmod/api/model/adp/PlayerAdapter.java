@@ -5,6 +5,7 @@ import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
 import com.ampznetwork.banmod.api.model.mc.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import org.comroid.api.func.util.Command;
 import org.comroid.api.net.REST;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,12 +13,10 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public interface PlayerAdapter {
-    BanMod getBanMod();
+public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
     private static void cache(BanMod banMod, UUID id, String name) {
         banMod.getEntityService().pingUsernameCache(id, name);
     }
-
     static CompletableFuture<UUID> fetchId(BanMod banMod, String name) {
         var fetch = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
                 .thenApply(REST.Response::validate2xxOK)
@@ -40,6 +39,8 @@ public interface PlayerAdapter {
         return fetch;
     }
 
+    BanMod getBanMod();
+
     default UUID getId(String name) {
         return fetchId(getBanMod(), name).join();
     }
@@ -51,9 +52,7 @@ public interface PlayerAdapter {
     boolean isOnline(UUID playerId);
 
     void kick(UUID playerId, TextComponent reason);
-
     void send(UUID playerId, TextComponent component);
-
     void broadcast(@Nullable String recieverPermission, Component component);
 
     void openBook(UUID playerId, BookAdapter book);
