@@ -15,7 +15,7 @@ public class ConfigModel {
     public EntityService.Type entityService = EntityService.Type.DATABASE;
     @Nest
     public Database database = new Database();
-    public String banAppealUrl = null;
+    public String banAppealUrl = "";
 
     public static class Database {
         public EntityService.DatabaseType type = EntityService.DatabaseType.h2;

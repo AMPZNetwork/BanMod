@@ -251,10 +251,10 @@ public interface BanMod {
                             .color(RED).decorate(BOLD, UNDERLINED))
                     .append(text("\n\n"));
             if (result.reason() != null)
-                text.append(text("Reason:\n")
+                text.append(text("Reason:\n\n")
                                 .color(AQUA).decorate(UNDERLINED))
                         .append(text(result.reason()).color(YELLOW))
-                        .append(text("\n"));
+                        .append(text("\n\n\n"));
 
             text.append(text("This punishment ").color(RED));
             if (result.expires() == null || result.expires().isBefore(Infraction.TOO_EARLY))
