@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,11 +27,13 @@ public class PlayerData {
     @Convert(converter = UuidBinary16Converter.class)
     UUID id;
     @ElementCollection
+    @lombok.Builder.Default
     @CollectionTable(name = "banmod_playerdata_names")
-    Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames;
+    Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
     @ElementCollection
+    @lombok.Builder.Default
     @CollectionTable(name = "banmod_playerdata_ips")
-    Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs;
+    Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 
     @Basic
     @Nullable
