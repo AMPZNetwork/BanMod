@@ -27,6 +27,7 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.openUrl;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
 
@@ -92,8 +93,9 @@ public class BanModCommands {
         var target = banMod.getPlayerAdapter().getId(name);
         var data = banMod.getEntityService().getPlayerData(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
-        var text = text("Player ")
-                .append(text(name).color(AQUA))
+        var text = text("")
+                .append(text("Player ").decorate(UNDERLINED))
+                .append(text(name).color(AQUA).decorate(UNDERLINED))
                 .append(text("\n"))
                 .append(text("ID: "))
                 .append(text(target.toString())
@@ -109,7 +111,12 @@ public class BanModCommands {
                             .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Known IPs:"));
-        for (var knownIp : data.getKnownIPs().entrySet())
+        var knownIPs = data.getKnownIPs();
+        if (knownIPs.isEmpty())
+            text = text.append(text("\n- ")
+                            .append(text("(none)").color(GRAY)))
+                    .append(text("\n"));
+        else for (var knownIp : knownIPs.entrySet())
             text = text.append(text("\n- "))
                     .append(text(knownIp.getKey())
                             .hoverEvent(showText(text("Last seen: " + knownIp.getValue())))
