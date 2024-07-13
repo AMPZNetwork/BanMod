@@ -101,7 +101,7 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             if (it instanceof ServerCommandSource scs)
                 return of(scs.getPlayer());
             if (it instanceof ServerPlayerEntity player)
-                return of(player.getId());
+                return of(player.getUuid());
             return empty();
         }));
     }
