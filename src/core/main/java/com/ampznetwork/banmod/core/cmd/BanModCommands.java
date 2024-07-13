@@ -112,7 +112,7 @@ public class BanModCommands {
         text = text.append(text("Known IPs:"));
         for (var knownIp : data.getKnownIPs().entrySet())
             text = text.append(text("\n- "))
-                    .append(text(knownIp.toString())
+                    .append(text(knownIp.getKey())
                             .hoverEvent(showText(text("Last seen: " + knownIp.getValue())))
                             .color(YELLOW))
                     .append(text("\n"));
