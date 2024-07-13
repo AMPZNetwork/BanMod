@@ -247,7 +247,11 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         final var parameter = parameters[level];
 
         // find argument type minecraft representation
-        var argType = ArgumentConverter.blob(parameter);
+        var argType = (switch (parameter.getAttribute().stringMode()) {
+            case NORMAL -> ArgumentConverter.blob(parameter);
+            case GREEDY -> ArgumentConverter.GREEDY_STRING;
+            case SINGLE_WORD -> ArgumentConverter.WORD;
+        }).supplier.get();
         var arg = argument(parameter.name(), argType).suggests(this);
         if (isDebug()) System.out.printf("%s Argument '%s: %s'\n", pad, argType, parameter.name());
 
@@ -293,7 +297,9 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         public static final ArgumentConverter<Float> FLOAT = new ArgumentConverter<>(StandardValueType.FLOAT, FloatArgumentType::floatArg);
         public static final ArgumentConverter<Integer> INTEGER = new ArgumentConverter<>(StandardValueType.INTEGER, IntegerArgumentType::integer);
         public static final ArgumentConverter<Long> LONG = new ArgumentConverter<>(StandardValueType.LONG, LongArgumentType::longArg);
+        public static final ArgumentConverter<String> WORD = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::word);
         public static final ArgumentConverter<String> STRING = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::string);
+        public static final ArgumentConverter<String> GREEDY_STRING = new ArgumentConverter<>(StandardValueType.STRING, StringArgumentType::greedyString);
         public static final ArgumentConverter<java.util.UUID> UUID = new ArgumentConverter<>(StandardValueType.UUID, UuidArgumentType::uuid);
         ValueType<T> valueType;
         Supplier<ArgumentType<T>> supplier;
@@ -302,13 +308,12 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             VALUES.add(this);
         }
 
-        public static ArgumentType<?> blob(Command.Node.Parameter parameter) {
+        public static ArgumentConverter<?> blob(Command.Node.Parameter parameter) {
             return StandardValueType.forClass(parameter.getParam().getType())
                     .stream()
                     .flatMap(type -> ArgumentConverter.VALUES.stream()
                             .filter(conv -> conv.valueType.equals(type)))
                     .findAny()
-                    .map(conv -> conv.supplier.get())
                     .orElseGet(() -> Polyfill.uncheckedCast(StringArgumentType.string()));
         }
     }
