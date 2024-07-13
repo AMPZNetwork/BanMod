@@ -38,7 +38,7 @@ public class AutoFillProvider {
             };
             var infractions = mod.getEntityService().getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
-                    .filter(i -> i.getCategory().getPunishment() == punishment)
+                    .filter(i -> i.getPunishment() == punishment)
                     .toList();
             var pageCount = (int) Math.ceil(1d * infractions.size() / BanMod.Resources.ENTRIES_PER_PAGE);
             return IntStream.range(1, pageCount + 1)
@@ -85,7 +85,7 @@ public class AutoFillProvider {
                     .flatMap(key -> mod.getEntityService()
                             .getInfractions()
                             .filter(Infraction.IS_IN_EFFECT)
-                            .filter(infr -> infr.getCategory().getPunishment() == key)
+                            .filter(infr -> infr.getPunishment() == key)
                             .map(infr -> mod.getPlayerAdapter().getName(infr.getPlayerId())));
         }
     }

@@ -17,7 +17,6 @@ import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Contract;
 
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -40,17 +39,17 @@ public interface EntityService extends LifeCycle {
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
-                .filter(i -> i.getCategory().equals(category))
+                .filter(i -> i.getCategory().equals(category) && i.getPunishment() != Punishment.Kick)
                 .count();
     }
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
                 .filter(Infraction.IS_IN_EFFECT)
-                .sorted(Comparator.<Infraction>comparingInt(i -> i.getCategory().getPunishment().ordinal()).reversed())
+                .sorted(Infraction.BY_SEVERITY)
                 .map(i -> new PlayerResult(playerId,
-                        i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Mute,
-                        i.getRevoker() == null && i.getCategory().getPunishment() == Punishment.Ban,
+                        i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
+                        i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
                         i.getReason(), i.getTimestamp(), i.getExpires()))
                 .findFirst()
                 .orElseGet(() -> {
@@ -67,6 +66,13 @@ public interface EntityService extends LifeCycle {
     <T> T refresh(T it);
 
     int delete(Object... objects);
+
+    default PunishmentCategory defaultCategory() {
+        var category = findCategory("default")
+                .orElseGet(() -> PunishmentCategory.standard("default").build());
+        save(category);
+        return category;
+    }
 
     @Getter
     @AllArgsConstructor

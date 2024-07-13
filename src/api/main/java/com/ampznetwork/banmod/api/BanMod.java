@@ -41,11 +41,7 @@ public interface BanMod {
 
     DatabaseInfo getDatabaseInfo();
 
-    PunishmentCategory getMuteCategory();
-
-    PunishmentCategory getKickCategory();
-
-    PunishmentCategory getBanCategory();
+    PunishmentCategory getDefaultCategory();
 
     PlayerAdapter getPlayerAdapter();
 
@@ -72,14 +68,17 @@ public interface BanMod {
                                                             @Nullable UUID issuer,
                                                             @Nullable String reason) {
             var rep = mod.getEntityService().findRepetition(target, category);
+            var punish = category.calculatePunishment(rep).orElse(Punishment.Kick);
             var now = now();
+            var expire = category.calculateDuration(rep);
             return Infraction.builder()
                     .playerId(target)
                     .category(category)
+                    .punishment(punish)
                     .issuer(issuer)
                     .reason(reason)
                     .timestamp(now)
-                    .expires(now.plus(category.calculateDuration(rep)));
+                    .expires(now.plus(expire));
         }
 
         public static void notify(BanMod mod, UUID playerId, Punishment punishment, PlayerResult result, BiConsumer<UUID, Component> forwarder) {
@@ -141,7 +140,7 @@ public interface BanMod {
         public Component infractionList(BanMod banMod, int page, Punishment punishment) {
             final var infractions = banMod.getEntityService().getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
-                    .filter(i -> i.getCategory().getPunishment() == punishment)
+                    .filter(i -> i.getPunishment() == punishment)
                     .toList();
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
             // todo: use book adapter here
@@ -163,15 +162,13 @@ public interface BanMod {
         }
 
         public Component textPunishment(Punishment punishment) {
-            return text(switch (punishment) {
-                case Mute -> "muted";
-                case Kick -> "kicked";
-                case Ban -> "banned";
-            }).color(switch (punishment) {
-                case Mute -> YELLOW;
-                case Kick -> RED;
-                case Ban -> DARK_RED;
-            });
+            return text(punishment.getAdverb())
+                    .color(switch (punishment) {
+                        case Mute -> YELLOW;
+                        case Kick -> RED;
+                        case Debuff -> LIGHT_PURPLE;
+                        case Ban -> DARK_RED;
+                    });
         }
 
         public Component textPunishmentFull(BanMod banMod, Infraction infraction) {
@@ -179,7 +176,7 @@ public interface BanMod {
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))
-                    .append(textPunishment(infraction.getCategory().getPunishment()));
+                    .append(textPunishment(infraction.getPunishment()));
 
             var reason = infraction.getReason();
             if (reason != null)

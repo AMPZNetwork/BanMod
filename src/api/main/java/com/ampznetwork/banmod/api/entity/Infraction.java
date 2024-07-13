@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.api.entity;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
+import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.persistence.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
 import static java.time.Instant.now;
+import static java.util.function.Predicate.not;
 import static lombok.Builder.Default;
 
 @Data
@@ -28,10 +32,16 @@ import static lombok.Builder.Default;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
     public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
-    public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getCategory().getPunishment().isInherentlyTemporary()
+    public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
             && (i.getRevoker() == null
             && (i.getExpires() == null || i.getExpires().isAfter(now())
             || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
+    public static Comparator<Infraction> BY_SEVERITY = Comparator.<Infraction>comparingInt(i ->
+            i.getPunishment().ordinal()).reversed();
+    public static Comparator<Infraction> BY_NEWEST = Comparator.<Infraction>comparingLong(i ->
+            i.timestamp.toEpochMilli()).reversed();
+    public static Comparator<Infraction> BY_SHORTEST = Comparator.<Infraction>comparingLong(i ->
+            i.expires == null ? Long.MIN_VALUE : i.expires.toEpochMilli()).reversed();
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
@@ -45,8 +55,10 @@ public class Infraction {
     @ManyToOne
     PunishmentCategory category;
     @NotNull
+    Punishment punishment;
+    @NotNull
     @Default
-    Instant timestamp = Instant.now();
+    Instant timestamp = now();
     @Nullable
     @Default
     Instant expires = null;
@@ -65,17 +77,20 @@ public class Infraction {
     UUID revoker = null;
 
     public @Nullable String getReason() {
-        return reason == null ? switch (category.getPunishment()) {
-            case Mute -> "You were muted";
-            case Kick -> "You were kicked";
-            case Ban -> "You were banned";
-        } : reason;
+        return Optional.ofNullable(reason)
+                .or(() -> Optional.of(category)
+                        .map(DefaultReason::getDefaultReason)
+                        .filter(not(String::isBlank)))
+                .or(() -> Optional.of(punishment)
+                        .map(DefaultReason::getDefaultReason)
+                        .filter(not(String::isBlank)))
+                .orElseGet(() -> "You were " + punishment.getAdverb());
     }
 
     public PlayerResult toResult() {
         return new PlayerResult(playerId,
-                category.getPunishment() == Punishment.Mute,
-                category.getPunishment() == Punishment.Ban,
+                punishment == Punishment.Mute,
+                punishment == Punishment.Ban,
                 reason,
                 timestamp,
                 expires);

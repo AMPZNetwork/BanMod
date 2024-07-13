@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.spigot;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
@@ -26,8 +25,6 @@ import org.slf4j.Logger;
 
 import java.util.stream.Stream;
 
-import static java.time.Duration.*;
-
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
 public class BanMod$Spigot extends JavaPlugin implements BanMod {
@@ -37,14 +34,12 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
     private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
-    private PunishmentCategory muteCategory;
-    private PunishmentCategory kickCategory;
-    private PunishmentCategory banCategory;
     private FileConfiguration config;
     private Command.Manager cmdr;
     @Delegate(types = {TabCompleter.class, CommandExecutor.class})
     private Command.Manager.Adapter$Spigot adapter;
     private EntityService entityService;
+    private PunishmentCategory defaultCategory;
 
     @Override
     public Logger log() {
@@ -77,14 +72,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
             case DATABASE -> new HibernateEntityService(this);
         };
 
-        // default categories
-        muteCategory = entityService.findCategory("mute")
-                .orElseGet(() -> new PunishmentCategory("mute", Punishment.Mute, ofHours(1), 3));
-        kickCategory = entityService.findCategory("kick")
-                .orElseGet(() -> new PunishmentCategory("kick", Punishment.Kick, ofSeconds(0), 1));
-        banCategory = entityService.findCategory("ban")
-                .orElseGet(() -> new PunishmentCategory("ban", Punishment.Ban, ofDays(1), 3));
-        entityService.save(muteCategory, kickCategory, banCategory);
+        defaultCategory = entityService.defaultCategory();
 
         Bukkit.getPluginManager().registerEvents(eventDispatch, this);
     }

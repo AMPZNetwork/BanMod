@@ -30,7 +30,7 @@ public class VanillaBansImporter implements Importer {
             mapper.readValues(mapper.createParser(banFile), Ban.class)
                     .forEachRemaining(ban -> list.add(Infraction.builder()
                             .playerId(ban.getUuid())
-                            .category(banMod.getBanCategory())
+                            .category(banMod.getDefaultCategory())
                             .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))
                             .reason(ban.getReason())
                             .build()));

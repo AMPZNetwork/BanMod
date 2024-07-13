@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.fabric;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
@@ -26,7 +25,6 @@ import org.slf4j.Logger;
 
 import java.util.stream.Stream;
 
-import static java.time.Duration.*;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
 @Getter
@@ -43,9 +41,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     private Command.Manager cmdr;
     private Command$Manager$Adapter$Fabric adapter;
     private EntityService entityService;
-    private PunishmentCategory muteCategory;
-    private PunishmentCategory kickCategory;
-    private PunishmentCategory banCategory;
+    private PunishmentCategory defaultCategory;
 
     public static Text component2text(Component component) {
         return Text.Serializer.fromJson(gson().serialize(component));
@@ -94,14 +90,7 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
             case DATABASE -> new HibernateEntityService(this);
         };
 
-        // default categories
-        muteCategory = entityService.findCategory("mute")
-                .orElseGet(() -> new PunishmentCategory("mute", Punishment.Mute, ofHours(1), 3));
-        kickCategory = entityService.findCategory("kick")
-                .orElseGet(() -> new PunishmentCategory("kick", Punishment.Kick, ofSeconds(0), 1));
-        banCategory = entityService.findCategory("ban")
-                .orElseGet(() -> new PunishmentCategory("ban", Punishment.Ban, ofDays(1), 2));
-        entityService.save(muteCategory, kickCategory, banCategory);
+        defaultCategory = entityService.defaultCategory();
     }
 
     @Override

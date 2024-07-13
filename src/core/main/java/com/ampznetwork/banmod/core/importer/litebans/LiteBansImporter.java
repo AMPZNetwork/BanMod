@@ -3,7 +3,7 @@ package com.ampznetwork.banmod.core.importer.litebans;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.core.importer.ImportResult;
@@ -13,7 +13,6 @@ import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
 import lombok.Value;
 
 import java.time.Instant;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -38,22 +37,24 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                 .map(it -> {
                     // todo: handle ip bans
                     // for ip bans, we need to assign player entries based on known ips
-                    PunishmentCategory category;
+                    Punishment punishment;
                     if (it instanceof Mute) {
-                        category = mod.getMuteCategory();
+                        punishment = Punishment.Mute;
                         count[0] += 1;
                     } else if (it instanceof Ban) {
-                        category = mod.getBanCategory();
+                        punishment = Punishment.Ban;
                         count[1] += 1;
                     } else throw new AssertionError("invalid entity type");
-                    return new Infraction(UUID.randomUUID(),
-                            it.getUuid(),
-                            category,
-                            Instant.ofEpochMilli(it.getTime()),
-                            Instant.ofEpochMilli(it.getUntil()),
-                            it.getReason(),
-                            it.getBannedByUuid(),
-                            it.getRemovedByUuid());
+                    return Infraction.builder()
+                            .playerId(it.getUuid())
+                            .category(mod.getDefaultCategory())
+                            .punishment(punishment)
+                            .issuer(it.getBannedByUuid())
+                            .revoker(it.getRemovedByUuid())
+                            .timestamp(Instant.ofEpochMilli(it.getTime()))
+                            .expires(Instant.ofEpochMilli(it.getUntil()))
+                            .reason(it.getReason())
+                            .build();
                 }).toArray();
         var service = mod.getEntityService();
         service.save(convert0);
