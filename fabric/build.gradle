@@ -3,7 +3,7 @@ import net.fabricmc.loom.task.RemapJarTask
 plugins {
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id "de.undercouch.download" version "5.5.0"
-	id 'fabric-loom' version '1.5-SNAPSHOT'
+	id 'fabric-loom' version '1.6-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -57,6 +57,7 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
 	maven { url 'https://maven.wispforest.io/releases' }
+	mavenCentral()
 }
 
 loom {
@@ -84,6 +85,7 @@ dependencies {
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
+	include(modImplementation('me.lucko:fabric-permissions-api:0.3.1'))
 
 	// banMod
 	if (findProject(':japi') != null)
