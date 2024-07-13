@@ -10,11 +10,13 @@ import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
 import org.comroid.api.func.util.Command;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
 import static org.comroid.api.func.util.Streams.cast;
 
 @UtilityClass
@@ -64,6 +66,8 @@ public class AutoFillProvider {
 
         @Override
         public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            if (Arrays.asList(usage.getFullCommand()).contains("create"))
+                return empty();
             return usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .flatMap(mod -> mod.getEntityService().getCategories())
