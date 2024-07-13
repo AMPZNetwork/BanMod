@@ -367,14 +367,17 @@ public class BanModCommands {
     @Command(value = "import", permission = "4")
     public class Import {
         @Command
-        public Component vanilla(BanMod banMod) {
-            try (var importer = new VanillaBansImporter(banMod)) {
+        public Component vanilla(BanMod mod) {
+            try (var importer = new VanillaBansImporter(mod)) {
                 var result = importer.run();
                 return text("Imported ")
                         .append(text(result.banCount() + " Bans").color(RED))
-                        .append(text(" from Vanilla Minecraft"));
+                        .append(text(" from Vanilla Minecraft\n"))
+                        .append(cleanup(mod, "*"));
             } catch (Throwable t) {
-                throw new Command.Error("Could not import from Vanilla Minecraft. " + BanMod.Strings.PleaseCheckConsole);
+                var msg = "Could not import bans from Vanilla Minecraft";
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
+                throw new Command.Error(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
         }
 
@@ -384,16 +387,16 @@ public class BanModCommands {
                 var result = importer.run();
                 return text("Imported ")
                         .append(text(result.muteCount() + " Mutes").color(YELLOW))
-                        .append(text(" and "))
+                        .append(text(", "))
                         .append(text(result.banCount() + " Bans").color(RED))
                         .append(text(" from LiteBans"));
             } catch (SchemaManagementException smex) {
-                var str = "LiteBans Databases have an unexpected format";
-                BanMod.Resources.printExceptionWithIssueReportUrl(mod, str, smex);
-                return text(str).color(YELLOW);
+                var msg = "LiteBans Databases have an unexpected format. " + BanMod.Strings.PleaseCheckConsole;
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, smex);
+                return text(msg).color(YELLOW);
             } catch (Throwable t) {
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not import from LiteBans", t);
-                throw new Command.Error("Could not import from LiteBans." + BanMod.Strings.PleaseCheckConsole);
+                throw new Command.Error("Could not import from LiteBans. " + BanMod.Strings.PleaseCheckConsole);
             }
         }
     }
