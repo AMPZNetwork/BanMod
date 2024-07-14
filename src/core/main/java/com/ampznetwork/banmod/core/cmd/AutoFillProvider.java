@@ -30,11 +30,11 @@ public class AutoFillProvider {
             var punishment = switch (usage.getFullCommand()[0]) {
                 case "mutelist" -> Punishment.Mute;
                 case "banlist" -> Punishment.Ban;
-                default -> throw new IllegalStateException("Unexpected value: " + usage.getFullCommand()[0]);
+                default -> null;
             };
             var infractions = mod.getEntityService().getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
-                    .filter(i -> i.getPunishment() == punishment)
+                    .filter(i -> punishment == null || i.getPunishment() == punishment)
                     .toList();
             var pageCount = (int) Math.ceil(1d * infractions.size() / BanMod.Resources.ENTRIES_PER_PAGE);
             return IntStream.range(1, pageCount + 1)
