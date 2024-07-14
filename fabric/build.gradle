@@ -88,12 +88,12 @@ dependencies {
 	include(modImplementation('me.lucko:fabric-permissions-api:0.3.1'))
 
 	// banMod
-	if (findProject(':japi') != null)
-		include project(':japi')
+	if (findProject("$prefix:japi") != null)
+		include project("$prefix:japi")
 	else include 'org.comroid:japi:+'
-	include project(':api')
-	implementation project(':core')
-	include project(':core')
+	include project("$prefix:api")
+	implementation project("$prefix:core")
+	include project("$prefix:core")
 	include 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
 	include 'javax.persistence:javax.persistence-api:2.2'
 	include 'net.kyori:adventure-api:4.14.0'
@@ -208,7 +208,7 @@ publishing {
 }
 
 shadowJar {
-	dependsOn project(':api').simplifyArtifact
+	dependsOn project("$prefix:api").simplifyArtifact
 }
 
 task simplifyArtifact(type: Copy) {

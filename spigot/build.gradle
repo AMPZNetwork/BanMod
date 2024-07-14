@@ -54,7 +54,7 @@ tasks.register('dlSparkJar', Download).configure {
 }
 
 shadowJar {
-    dependsOn project(':api').simplifyArtifact
+    dependsOn project("$prefix:api").simplifyArtifact
 
     configurations = [project.configurations.runtimeClasspath]
 
@@ -64,7 +64,7 @@ shadowJar {
         include(dependency(':core'))
     }
 
-    //from(project(':subProject').sourceSets.main.output)
+    //from(project("$prefix:subProject").sourceSets.main.output)
 }
 
 tasks.register('testPlugin', Copy) {
@@ -108,7 +108,7 @@ dependencies {
     implementation 'net.kyori:adventure-platform-bungeecord:4.3.3'
 
     // banMod api
-    implementation project(':core')
+    implementation project("$prefix:core")
 
     // placeholderapi
     compileOnly 'me.clip:placeholderapi:2.9.+'
