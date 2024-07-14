@@ -152,6 +152,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             try {
                 transaction.begin();
                 for (Object each : infractions) {
+                    each = manager.merge(each);
                     manager.remove(each);
                     c += 1;
                 }
