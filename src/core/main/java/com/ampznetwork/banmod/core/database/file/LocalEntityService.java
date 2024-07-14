@@ -8,6 +8,7 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Value;
 import org.comroid.api.func.util.AlmostComplete;
 
+import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -20,7 +21,10 @@ public class LocalEntityService implements EntityService {
         PlayerData.CACHE_NAME = this::pingUsernameCache;
     }
 
-    // todo
+    public LocalEntityService(BanMod banMod) {
+        throw new UnsupportedOperationException("unimplemented");
+    }
+// todo
 
     @Override
     public Stream<PlayerData> getPlayerData() {
@@ -53,7 +57,17 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
+    public void pingIdCache(UUID id) {
+
+    }
+
+    @Override
     public void pingUsernameCache(UUID id, String name) {
+
+    }
+
+    @Override
+    public void pingIpCache(UUID uuid, InetAddress ip) {
 
     }
 

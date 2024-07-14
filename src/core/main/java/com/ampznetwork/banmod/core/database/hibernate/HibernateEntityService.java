@@ -13,18 +13,23 @@ import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
+import java.net.InetAddress;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static java.time.Instant.now;
+import static org.comroid.api.func.util.Debug.isDebug;
 
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
@@ -52,7 +57,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 "hibernate.connection.username", info.user(),
                 "hibernate.connection.password", info.pass(),
                 "hibernate.dialect", info.type().getDialectClass().getCanonicalName(),
-                //"hibernate.show_sql", String.valueOf(isDebug()),
+                "hibernate.show_sql", String.valueOf(isDebug()),
                 "hibernate.hbm2ddl.auto", hbm2ddl
         );
         var dataSource = new HikariDataSource() {{
@@ -109,45 +114,59 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
+    public void pingIdCache(UUID id) {
+        wrapQuery(Query::executeUpdate,
+                manager.createQuery("""
+                                select count(pd) > 0
+                                from PlayerData pd
+                                where pd.id = :id
+                                """, Boolean.class)
+                        .setParameter("id", id),
+                manager.createNativeQuery("insert into banmod_playerdata (id) values (:id)")
+                        .setParameter("id", id));
+    }
+
+    @Override
     public void pingUsernameCache(UUID uuid, String name) {
-        var transaction = manager.getTransaction();
+        pingIdCache(uuid);
+        wrapQuery(Query::executeUpdate,
+                manager.createQuery("""
+                                select count(pd) > 0
+                                from PlayerData pd
+                                join pd.knownNames kn
+                                where pd.id = :id and key(kn) = :name
+                                """, Boolean.class)
+                        .setParameter("id", uuid)
+                        .setParameter("name", name),
+                manager.createNativeQuery("""
+                                insert into banmod_playerdata_names (PlayerData_id, knownNames, knownNames_KEY)
+                                values (:id, :lastSeen, :name);
+                                """)
+                        .setParameter("id", uuid)
+                        .setParameter("lastSeen", Timestamp.from(now()))
+                        .setParameter("name", name)
+        );
+    }
 
-        synchronized (transaction) {
-            boolean nameExists = manager.createQuery("""
-                            select count(pd) > 0
-                            from PlayerData pd
-                            join pd.knownNames kn
-                            where pd.id = :uuid and key(kn) = :name
-                            """, Boolean.class)
-                    .setParameter("uuid", uuid)
-                    .setParameter("name", name)
-                    .getSingleResult();
-
-            try {
-                transaction.begin();
-
-                if (!nameExists) {
-                    manager.createNativeQuery("insert into banmod_playerdata (id) values (:uuid)")
-                            .setParameter("uuid", uuid)
-                            .executeUpdate();
-                    manager.createNativeQuery("""
-                                    insert into banmod_playerdata_names (PlayerData_id, knownNames, knownNames_KEY)
-                                    values (:uuid, :lastSeen, :name);
-                                    """)
-                            .setParameter("uuid", uuid)
-                            .setParameter("lastSeen", Timestamp.from(Instant.now()))  // or whatever timestamp you want to use
-                            .setParameter("name", name)
-                            .executeUpdate();
-                }
-
-                transaction.commit();
-            } catch (Exception e) {
-                if (transaction.isActive()) {
-                    transaction.rollback();
-                }
-                throw e;
-            }
-        }
+    @Override
+    public void pingIpCache(UUID uuid, InetAddress ip) {
+        pingIdCache(uuid);
+        wrapQuery(Query::executeUpdate,
+                manager.createQuery("""
+                                select count(pd) > 0
+                                from PlayerData pd
+                                join pd.knownIPs kip
+                                where pd.id = :id and key(kip) = :ip
+                                """, Boolean.class)
+                        .setParameter("id", uuid)
+                        .setParameter("ip", ip.toString().substring(1)),
+                manager.createNativeQuery("""
+                                insert into banmod_playerdata_ips (PlayerData_id, knownIPs, knownIPs_KEY)
+                                values (:id, :lastSeen, :ip);
+                                """)
+                        .setParameter("id", uuid)
+                        .setParameter("lastSeen", Timestamp.from(now()))
+                        .setParameter("ip", ip.toString().substring(1)));
     }
 
     @Override
@@ -195,6 +214,31 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             }
         }
         return c;
+    }
+
+    private <R> R wrapQuery(Function<Query, R> executor, @Nullable Query condition, Query query) {
+        if (condition != null)
+            try {
+                if ((boolean) condition.getSingleResult())
+                    return null;
+            } catch (Throwable t) {
+                mod.log().warn("Could not execute condition " + condition, t);
+                throw t;
+            }
+        var transaction = manager.getTransaction();
+        synchronized (transaction) {
+            transaction.begin();
+            try {
+                var result = executor.apply(query);
+                transaction.commit();
+                return result;
+            } catch (Throwable t) {
+                mod.log().warn("Could not execute query " + query, t);
+                if (transaction.isActive())
+                    transaction.rollback();
+                throw t;
+            }
+        }
     }
 
     public record Unit(HikariDataSource dataSource, EntityManager manager) implements UncheckedCloseable {
