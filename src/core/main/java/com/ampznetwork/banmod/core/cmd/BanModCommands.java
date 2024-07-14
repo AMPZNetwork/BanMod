@@ -128,7 +128,7 @@ public class BanModCommands {
             text = text.append(text("\n- (none)").color(GRAY));
         else for (var infraction : infractions)
             text = text.append(text("\n- "))
-                    .append(BanMod.Displays.textPunishment(infraction.getPunishment()))
+                    .append(infraction.getPunishment().toComponent())
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
                             ? "Server"

@@ -161,22 +161,12 @@ public interface BanMod {
                             ComponentBuilder::build));
         }
 
-        public Component textPunishment(Punishment punishment) {
-            return text(punishment.getAdverb())
-                    .color(switch (punishment) {
-                        case Mute -> YELLOW;
-                        case Kick -> RED;
-                        case Debuff -> LIGHT_PURPLE;
-                        case Ban -> DARK_RED;
-                    });
-        }
-
         public Component textPunishmentFull(BanMod banMod, Infraction infraction) {
             var username = banMod.getPlayerAdapter().getName(infraction.getPlayerId());
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))
-                    .append(textPunishment(infraction.getPunishment()));
+                    .append(infraction.getPunishment().toComponent());
 
             var reason = infraction.getReason();
             if (reason != null)
