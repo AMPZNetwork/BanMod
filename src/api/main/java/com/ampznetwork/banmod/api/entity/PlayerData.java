@@ -31,7 +31,7 @@ import static org.comroid.api.net.REST.Method.GET;
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData {
-    private static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+    public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @Id
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
@@ -40,11 +40,11 @@ public class PlayerData {
     @lombok.Builder.Default
     Instant lastSeen = null;
     @Singular
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_playerdata_names")
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
     @Singular
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_playerdata_ips")
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 

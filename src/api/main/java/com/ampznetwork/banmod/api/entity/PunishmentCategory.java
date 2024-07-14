@@ -36,7 +36,7 @@ public class PunishmentCategory implements Named, Described, DefaultReason {
     @lombok.Builder.Default
     double repetitionExpBase = 3;
     @Singular
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_categories_thresholds")
     Map<@NotNull Integer, Punishment> punishmentThresholds;
 
