@@ -7,14 +7,18 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
 import org.comroid.api.net.REST;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
+import java.net.InetAddress;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
+import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
+import static java.time.Instant.now;
 import static org.comroid.api.net.REST.Method.GET;
 
 @Data
@@ -65,6 +69,18 @@ public class PlayerData {
             log.warn("Could not retrieve Minecraft Username; returning 'Steve' for ID {}", id, t);
             return "Steve";
         });
+    }
+
+    @Contract(value = "!null->this", pure = true)
+    public PlayerData pushKnownName(String name) {
+        getKnownNames().compute(name, ($0, $1) -> now());
+        return this;
+    }
+
+    @Contract(value = "!null->this", pure = true)
+    public PlayerData pushKnownIp(InetAddress ip) {
+        getKnownIPs().compute(ip2string(ip), ($0, $1) -> now());
+        return this;
     }
 
     public Optional<String> getLastKnownName() {

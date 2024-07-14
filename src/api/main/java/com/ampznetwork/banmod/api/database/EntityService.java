@@ -36,28 +36,6 @@ public interface EntityService extends LifeCycle {
 
     GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId);
 
-    void pushPlayerId(UUID id);
-
-    void pushPlayerName(UUID id, String name);
-
-    default void pushPlayerIp(UUID uuid, InetAddress address) {
-        pushPlayerIp(uuid, ip2string(address));
-    }
-
-    void pushPlayerIp(UUID uuid, String ip);
-
-    default void pushPlayer(UUID id, String name, InetAddress address) {
-        pushPlayerName(id, name);
-        pushPlayerIp(id, address);
-    }
-
-    default PlayerData push(PlayerData data) {
-        var id = data.getId();
-        data.getLastKnownName().ifPresent(name -> pushPlayerName(id, name));
-        data.getLastKnownIp().ifPresent(ip -> pushPlayerIp(id, ip));
-        return data;
-    }
-
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
                 .filter(Infraction.IS_IN_EFFECT)
@@ -83,8 +61,6 @@ public interface EntityService extends LifeCycle {
 
     GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
-    PunishmentCategory push(PunishmentCategory category);
-
     default PunishmentCategory defaultCategory() {
         return push(findCategory("default")
                 .orElseGet(() -> PunishmentCategory.standard("default").build()));
@@ -104,7 +80,7 @@ public interface EntityService extends LifeCycle {
 
     void revokeInfraction(UUID id, UUID revoker);
 
-    Infraction push(Infraction infraction);
+    <T> T push(T object);
 
     int delete(Object... objects);
 

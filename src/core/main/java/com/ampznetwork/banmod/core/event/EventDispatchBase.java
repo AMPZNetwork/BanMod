@@ -17,6 +17,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
+import static java.time.Instant.now;
 import static org.comroid.api.java.StackTraceUtils.lessSimpleDetailedName;
 
 @Log
@@ -30,11 +32,17 @@ public abstract class EventDispatchBase {
     }
 
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
-        final var service = mod.getEntityService();
-        final var name = mod.getPlayerAdapter().getName(playerId);
-
-        service.pushPlayerName(playerId, name);
-        service.pushPlayerIp(playerId, address);
+        var service = mod.getEntityService();
+        var name = mod.getPlayerAdapter().getName(playerId);
+        var data = service.getOrCreatePlayerData(playerId)
+                .setUpdateOriginal(original -> original
+                        .setLastSeen(now())
+                        .pushKnownName(name)
+                        .pushKnownIp(address))
+                .complete(builder -> builder.lastSeen(now())
+                        .knownName(name, now())
+                        .knownIP(ip2string(address), now()));
+        service.push(data);
 
         // queue player
         return player(playerId);

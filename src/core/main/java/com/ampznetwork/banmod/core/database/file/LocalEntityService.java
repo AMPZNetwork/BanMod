@@ -14,9 +14,7 @@ import java.util.stream.Stream;
 
 @Value
 public class LocalEntityService implements EntityService {
-    public LocalEntityService(BanMod banMod) {
-        throw new UnsupportedOperationException("unimplemented");
-    }
+    BanMod mod;
 
     @Override
     public Stream<PlayerData> getPlayerData() {
@@ -34,32 +32,12 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public void pushPlayerId(UUID id) {
-
-    }
-
-    @Override
-    public void pushPlayerName(UUID id, String name) {
-
-    }
-
-    @Override
-    public void pushPlayerIp(UUID uuid, String ip) {
-
-    }
-
-    @Override
     public Stream<PunishmentCategory> getCategories() {
         return Stream.empty();
     }
 
     @Override
     public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
-        return null;
-    }
-
-    @Override
-    public PunishmentCategory push(PunishmentCategory category) {
         return null;
     }
 
@@ -84,7 +62,7 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public Infraction push(Infraction infraction) {
+    public <T> T push(T object) {
         return null;
     }
 

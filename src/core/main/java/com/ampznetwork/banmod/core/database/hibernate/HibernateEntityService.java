@@ -12,29 +12,26 @@ import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
-import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
 import static org.comroid.api.func.util.Debug.isDebug;
 
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
+    private static final Logger log = LoggerFactory.getLogger(HibernateEntityService.class);
     private final BanMod mod;
     private final EntityManager manager;
-
-    {
-        PlayerData.CACHE_NAME = this::pushPlayerName;
-    }
 
     public HibernateEntityService(BanMod mod) {
         this.mod = mod;
@@ -86,7 +83,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new GetOrCreate<>(
                 () -> getPlayerData(playerId).orElse(null),
                 () -> PlayerData.builder().id(playerId),
-                builder -> push(builder.build()));
+                PlayerData.Builder::build,
+                this::push);
     }
 
     @Override
@@ -102,25 +100,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                         .filter(cat -> name.equals(cat.getName()))
                         .findAny().orElse(null),
                 () -> PunishmentCategory.builder().name(name),
-                builder -> push(builder.build()));
-    }
-
-    @Override
-    public PunishmentCategory push(PunishmentCategory category) {
-        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                        update banmod_categories cat
-                        set cat.description = :description,
-                            cat.defaultReason = :defaultReason,
-                            cat.baseDuration = :baseDuration,
-                            cat.repetitionExpBase = :repetitionExpBase
-                        where cat.name = :name
-                        """)
-                .setParameter("name", category.getName())
-                .setParameter("description", category.getDescription())
-                .setParameter("defaultReason", category.getDefaultReason())
-                .setParameter("baseDuration", category.getBaseDuration())
-                .setParameter("repetitionExpBase", category.getRepetitionExpBase()));
-        return category;
+                PunishmentCategory.Builder::build,
+                this::push);
     }
 
     @Override
@@ -138,7 +119,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, builder -> push(builder.build()));
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::push);
     }
 
     @Override
@@ -151,74 +132,16 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public Infraction push(Infraction infraction) {
-        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                        update banmod_infractions i
-                        set i.expires = :expires,
-                            i.issuer = :issuer,
-                            i.category_name = :categoryName,
-                            i.punishment = :punishment,
-                            i.reason = :reason,
-                            i.revoker = :revoker
-                        where i.id = :id
-                        """)
-                .setParameter("id", infraction.getId())
-                .setParameter("expires", infraction.getExpires())
-                .setParameter("issuer", infraction.getIssuer())
-                .setParameter("categoryName", infraction.getCategory().getName())
-                .setParameter("punishment", infraction.getPunishment())
-                .setParameter("reason", infraction.getReason())
-                .setParameter("revoker", infraction.getRevoker()));
-        return infraction;
-    }
-
-    @Override
-    public void pushPlayerId(UUID id) {
-        if (id == null) return;
-        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                if (
-                    select count(pd.id)
-                    from banmod_playerdata pd
-                    where pd.id = :id
-                ) then
-                    update banmod_playerdata pd
-                    set pd.lastSeen = NOW()
-                    where pd.id = :id;
-                else
-                    insert into banmod_playerdata (id) values (:id);
-                end if;
-                """).setParameter("id", id));
-    }
-
-    @Override
-    public void pushPlayerName(UUID uuid, String name) {
-        pushPlayerId(uuid);
-        wrapQuery(Query::executeUpdate,
-                manager.createNativeQuery("""
-                                update banmod_playerdata_names names
-                                set names.knownNames_KEY = :name,
-                                    names.knownNames = :seen
-                                where names.PlayerData_id = :id
-                                """)
-                        .setParameter("id", uuid)
-                        .setParameter("name", name)
-                        .setParameter("seen", Timestamp.from(now()))
-        );
-    }
-
-    @Override
-    public void pushPlayerIp(UUID uuid, String ip) {
-        pushPlayerId(uuid);
-        wrapQuery(Query::executeUpdate,
-                manager.createNativeQuery("""
-                                update banmod_playerdata_ips ip
-                                set ip.knownIPs_KEY = :ip,
-                                    ip.knownIPs = :seen
-                                where ip.PlayerData_id = :id
-                                """)
-                        .setParameter("id", uuid)
-                        .setParameter("ip", ip.substring(1))
-                        .setParameter("seen", Timestamp.from(now())));
+    public <T> T push(T object) {
+        wrapTransaction(() -> {
+            try {
+                manager.persist(object);
+            } catch (Throwable t) {
+                log.debug("persist() failed for " + object, t);
+                manager.merge(object);
+            }
+        });
+        return object;
     }
 
     @Override
@@ -242,16 +165,34 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return c;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private <R> R wrapQuery(Function<Query, R> executor, Query query) {
+        var wrapper = new Runnable() {
+            R result;
+
+            @Override
+            public void run() {
+                result = executor.apply(query);
+            }
+
+            @Override
+            public String toString() {
+                return query.toString();
+            }
+        };
+        wrapTransaction(wrapper);
+        return wrapper.result;
+    }
+
+    private void wrapTransaction(Runnable task) {
         var transaction = manager.getTransaction();
         synchronized (transaction) {
             transaction.begin();
             try {
-                var result = executor.apply(query);
+                task.run();
                 transaction.commit();
-                return result;
             } catch (Throwable t) {
-                mod.log().warn("Could not execute query " + query, t);
+                mod.log().warn("Could not execute task " + task, t);
                 if (transaction.isActive())
                     transaction.rollback();
                 throw t;
