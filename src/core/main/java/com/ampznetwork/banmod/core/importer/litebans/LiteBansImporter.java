@@ -30,7 +30,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
     public ImportResult run() {
         int[] count = new int[]{0, 0, 0};
         var service = mod.getEntityService();
-        var convert0 = Stream.concat(
+        Stream.concat(
                         unit.manager().createQuery("select m from Mute m", Mute.class)
                                 .getResultStream(),
                         unit.manager().createQuery("select b from Ban b", Ban.class)
@@ -47,7 +47,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                         count[1] += 1;
                     } else throw new AssertionError("invalid entity type");
                     return Infraction.builder()
-                            .player(service.getOrCreatePlayerData(it.getUuid()).get())
+                            .player(service.getOrCreatePlayerData(it.getUuid()).requireNonNull())
                             .category(mod.getDefaultCategory())
                             .punishment(punishment)
                             .issuer(it.getBannedByUuid())
@@ -56,10 +56,9 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                             .expires(Instant.ofEpochMilli(it.getUntil()))
                             .reason(it.getReason())
                             .build();
-                }).toArray();
-        service.save(convert0);
+                }).forEach(service::push);
 
-        var convert1 = unit.manager()
+        unit.manager()
                 .createQuery("select h from History h", History.class)
                 .getResultStream()
                 .map(hist -> {
@@ -70,8 +69,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                     data.getKnownIPs().put(hist.getIp(), now);
                     count[2] += 1;
                     return data;
-                }).toArray();
-        service.save(convert1);
+                }).forEach(service::push);
 
         return new ImportResult(count[0], count[1], count[2]);
     }

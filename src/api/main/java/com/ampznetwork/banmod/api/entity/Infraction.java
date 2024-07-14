@@ -90,7 +90,7 @@ public class Infraction {
         return new PlayerResult(player.getId(),
                 punishment == Punishment.Mute,
                 punishment == Punishment.Ban,
-                reason,
+                false, reason,
                 timestamp,
                 expires);
     }

@@ -8,6 +8,7 @@ import lombok.extern.java.Log;
 
 import java.net.InetAddress;
 import java.util.UUID;
+import java.util.logging.Level;
 
 @Log
 @Value
@@ -20,13 +21,19 @@ public abstract class EventDispatchBase {
     }
 
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
-        final var service = mod.getEntityService();
-        final var name = mod.getPlayerAdapter().getName(playerId);
+        try {
+            final var service = mod.getEntityService();
+            final var name = mod.getPlayerAdapter().getName(playerId);
 
-        service.pingUsernameCache(playerId, name);
-        service.pingIpCache(playerId, address);
+            service.pushPlayerName(playerId, name);
+            service.pushPlayerIp(playerId, address);
 
-        // queue player
-        return player(playerId);
+            // queue player
+            return player(playerId);
+        } catch (Throwable t) {
+            log.log(Level.SEVERE, "Could not check player status on join", t);
+            return new PlayerResult(playerId, false, false, true,
+                    "An internal error ocurred. Please contact your server administrator", null, null);
+        }
     }
 }

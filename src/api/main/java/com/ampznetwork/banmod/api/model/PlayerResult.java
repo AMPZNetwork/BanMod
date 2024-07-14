@@ -9,6 +9,7 @@ public record PlayerResult(
         UUID playerId,
         boolean isMuted,
         boolean isBanned,
+        boolean forceDeny,
         @Nullable String reason,
         @Nullable Instant timestamp,
         @Nullable Instant expires

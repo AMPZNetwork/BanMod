@@ -10,41 +10,52 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
-import org.comroid.api.func.util.AlmostComplete;
+import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.tree.LifeCycle;
+import org.h2.Driver;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.MariaDBDialect;
 import org.hibernate.dialect.MySQL57Dialect;
-import org.jetbrains.annotations.Contract;
 
 import java.net.InetAddress;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static java.time.Instant.now;
+
+@SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {
-    Stream<PlayerData> getPlayerData();
-    Optional<PlayerData> getPlayerData(UUID playerId);
-
-    AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId);
-
-    Stream<PunishmentCategory> getCategories();
-
-    default Optional<PunishmentCategory> findCategory(String name) {
-        return getCategories()
-                .filter(cat -> cat.getName().equals(name))
-                .findAny();
+    static String ip2string(InetAddress ip) {
+        return ip.toString().substring(1);
     }
 
-    Stream<Infraction> getInfractions();
+    Stream<PlayerData> getPlayerData();
 
-    Stream<Infraction> getInfractions(UUID playerId);
+    Optional<PlayerData> getPlayerData(UUID playerId);
 
-    default int findRepetition(UUID playerId, PunishmentCategory category) {
-        return (int) getInfractions(playerId)
-                .filter(i -> i.getCategory().equals(category) && i.getPunishment() != Punishment.Kick)
-                .count();
+    GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId);
+
+    void pushPlayerId(UUID id);
+
+    void pushPlayerName(UUID id, String name);
+
+    default void pushPlayerIp(UUID uuid, InetAddress address) {
+        pushPlayerIp(uuid, ip2string(address));
+    }
+
+    void pushPlayerIp(UUID uuid, String ip);
+
+    default void pushPlayer(UUID id, String name, InetAddress address) {
+        pushPlayerName(id, name);
+        pushPlayerIp(id, address);
+    }
+
+    default PlayerData push(PlayerData data) {
+        var id = data.getId();
+        data.getLastKnownName().ifPresent(name -> pushPlayerName(id, name));
+        data.getLastKnownIp().ifPresent(ip -> pushPlayerIp(id, ip));
+        return data;
     }
 
     default PlayerResult queuePlayer(UUID playerId) {
@@ -54,33 +65,48 @@ public interface EntityService extends LifeCycle {
                 .map(i -> new PlayerResult(playerId,
                         i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
                         i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
-                        i.getReason(), i.getTimestamp(), i.getExpires()))
+                        false, i.getReason(), i.getTimestamp(), i.getExpires()))
                 .findFirst()
                 .orElseGet(() -> {
-                    var now = Instant.now();
-                    return new PlayerResult(playerId, false, false, null, now, now);
+                    var now = now();
+                    return new PlayerResult(playerId, false, false, false, null, now, now);
                 });
     }
 
-    void pingIdCache(UUID id);
+    Stream<PunishmentCategory> getCategories();
 
-    void pingUsernameCache(UUID id, String name);
+    default Optional<PunishmentCategory> findCategory(String name) {
+        return getCategories()
+                .filter(cat -> cat.getName().equals(name))
+                .findAny();
+    }
 
-    void pingIpCache(UUID uuid, InetAddress ip);
+    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
-    boolean save(Object... it);
-
-    @Contract("!null -> param1")
-    <T> T refresh(T it);
-
-    int delete(Object... objects);
+    PunishmentCategory push(PunishmentCategory category);
 
     default PunishmentCategory defaultCategory() {
-        var category = findCategory("default")
-                .orElseGet(() -> PunishmentCategory.standard("default").build());
-        save(category);
-        return category;
+        return push(findCategory("default")
+                .orElseGet(() -> PunishmentCategory.standard("default").build()));
     }
+
+    default int findRepetition(UUID playerId, PunishmentCategory category) {
+        return (int) getInfractions(playerId)
+                .filter(i -> i.getCategory().equals(category) && i.getPunishment() != Punishment.Kick)
+                .count();
+    }
+
+    Stream<Infraction> getInfractions();
+
+    Stream<Infraction> getInfractions(UUID playerId);
+
+    GetOrCreate<Infraction, Infraction.Builder> createInfraction();
+
+    void revokeInfraction(UUID id, UUID revoker);
+
+    Infraction push(Infraction infraction);
+
+    int delete(Object... objects);
 
     @Getter
     @AllArgsConstructor
@@ -94,11 +120,12 @@ public interface EntityService extends LifeCycle {
     @AllArgsConstructor
     @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
     enum DatabaseType implements Named {
-        h2(org.h2.Driver.class, H2Dialect.class),
+        h2(Driver.class, H2Dialect.class),
         MySQL(com.mysql.jdbc.Driver.class, MySQL57Dialect.class),
         MariaDB(org.mariadb.jdbc.Driver.class, MariaDBDialect.class);
 
         Class<?> driverClass;
         Class<?> dialectClass;
     }
+
 }

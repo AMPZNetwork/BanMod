@@ -43,11 +43,13 @@ public class PlayerData {
     public static BiConsumer<UUID, String> CACHE_NAME = null;
 
     public static CompletableFuture<UUID> fetchId(String name) {
-        return REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
+        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
                 .thenApply(REST.Response::validate2xxOK)
                 .thenApply(rsp -> rsp.getBody().get("id").asString())
                 .thenApply(UuidVarchar36Converter::fillDashes)
                 .thenApply(UUID::fromString);
+        future.thenAccept(id -> CACHE_NAME.accept(id, name));
+        return future;
     }
 
     public static CompletableFuture<String> fetchUsername(UUID id) {
@@ -72,11 +74,9 @@ public class PlayerData {
                 .orElseGet(() -> fetchUsername(id));
     }
 
-    @Basic
-    public String getLastKnownIp() {
+    public Optional<String> getLastKnownIp() {
         return knownIPs.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
-                .map(Map.Entry::getKey)
-                .orElse(null);
+                .map(Map.Entry::getKey);
     }
 }

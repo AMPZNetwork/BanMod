@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 
 @Value
 public class VanillaBansImporter implements Importer {
@@ -21,7 +20,7 @@ public class VanillaBansImporter implements Importer {
 
     @Override
     public ImportResult run() {
-        var list = new ArrayList<Infraction>();
+        var c = new int[]{0};
         var mapper = new ObjectMapper();
         try (
                 var banFile = new FileInputStream("banned-players.json");
@@ -29,8 +28,8 @@ public class VanillaBansImporter implements Importer {
         ) {
             var service = mod.getEntityService();
             mapper.readValues(mapper.createParser(banFile), Ban.class)
-                    .forEachRemaining(ban -> list.add(Infraction.builder()
-                            .player(service.getOrCreatePlayerData(ban.getUuid()).get())
+                    .forEachRemaining(ban -> service.push(Infraction.builder()
+                            .player(service.getOrCreatePlayerData(ban.getUuid()).requireNonNull())
                             .category(mod.getDefaultCategory())
                             .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))
                             .reason(ban.getReason())
@@ -38,8 +37,7 @@ public class VanillaBansImporter implements Importer {
 
             // todo: ip bans
 
-            service.save(list.toArray());
-            return new ImportResult(0, list.size(), 0);
+            return new ImportResult(0, c[0], 0);
         } catch (FileNotFoundException e) {
             return ImportResult.ZERO;
         } catch (IOException e) {

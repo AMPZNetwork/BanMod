@@ -133,7 +133,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
         var service = banMod.getEntityService();
         return banMod.getServer()
                 .getOnlinePlayers().stream()
-                .peek(player -> service.pingUsernameCache(player.getUniqueId(), player.getName()))
+                .peek(player -> service.pushPlayerName(player.getUniqueId(), player.getName()))
                 .flatMap(player -> service.getOrCreatePlayerData(player.getUniqueId()).stream());
     }
 }

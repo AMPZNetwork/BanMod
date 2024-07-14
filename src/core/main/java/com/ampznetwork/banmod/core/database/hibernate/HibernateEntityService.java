@@ -7,8 +7,7 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
-import org.comroid.api.func.util.AlmostComplete;
-import org.comroid.api.info.Constraint;
+import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.jpa.HibernatePersistenceProvider;
@@ -19,9 +18,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
-import java.net.InetAddress;
 import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,7 +34,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     private final EntityManager manager;
 
     {
-        PlayerData.CACHE_NAME = this::pingUsernameCache;
+        PlayerData.CACHE_NAME = this::pushPlayerName;
     }
 
     public HibernateEntityService(BanMod mod) {
@@ -86,18 +83,45 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId) {
-        return new AlmostComplete<>(
-                () -> getPlayerData(playerId)
-                        .orElseGet(() -> new PlayerData(playerId, new HashMap<>(), new HashMap<>())),
-                this::save
-        );
+    public GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId) {
+        return new GetOrCreate<>(
+                () -> getPlayerData(playerId).orElse(null),
+                () -> PlayerData.builder().id(playerId),
+                builder -> push(builder.build()));
     }
 
     @Override
     public Stream<PunishmentCategory> getCategories() {
         return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
                 .getResultStream();
+    }
+
+    @Override
+    public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
+        return new GetOrCreate<>(
+                () -> getCategories()
+                        .filter(cat -> name.equals(cat.getName()))
+                        .findAny().orElse(null),
+                () -> PunishmentCategory.builder().name(name),
+                builder -> push(builder.build()));
+    }
+
+    @Override
+    public PunishmentCategory push(PunishmentCategory category) {
+        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+                        update banmod_categories cat
+                        set cat.description = :description,
+                            cat.defaultReason = :defaultReason,
+                            cat.baseDuration = :baseDuration,
+                            cat.repetitionExpBase = :repetitionExpBase
+                        where cat.name = :name
+                        """)
+                .setParameter("name", category.getName())
+                .setParameter("description", category.getDescription())
+                .setParameter("defaultReason", category.getDefaultReason())
+                .setParameter("baseDuration", category.getBaseDuration())
+                .setParameter("repetitionExpBase", category.getRepetitionExpBase()));
+        return category;
     }
 
     @Override
@@ -114,10 +138,46 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public void pingIdCache(UUID id) {
+    public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
+        return new GetOrCreate<>(null, Infraction::builder, builder -> push(builder.build()));
+    }
+
+    @Override
+    public void revokeInfraction(UUID id, UUID revoker) {
+        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+                        update banmod_infractions i set i.revoker = :revoker where i.id = :id
+                        """)
+                .setParameter("id", id)
+                .setParameter("revoker", revoker));
+    }
+
+    @Override
+    public Infraction push(Infraction infraction) {
+        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+                        update banmod_infractions i
+                        set i.expires = :expires,
+                            i.issuer = :issuer,
+                            i.category_name = :categoryName,
+                            i.punishment = :punishment,
+                            i.reason = :reason,
+                            i.revoker = :revoker
+                        where i.id = :id
+                        """)
+                .setParameter("id", infraction.getId())
+                .setParameter("expires", infraction.getExpires())
+                .setParameter("issuer", infraction.getIssuer())
+                .setParameter("categoryName", infraction.getCategory().getName())
+                .setParameter("punishment", infraction.getPunishment())
+                .setParameter("reason", infraction.getReason())
+                .setParameter("revoker", infraction.getRevoker()));
+        return infraction;
+    }
+
+    @Override
+    public void pushPlayerId(UUID id) {
         wrapQuery(Query::executeUpdate,
                 manager.createQuery("""
-                                select count(pd) > 0
+                                select count(pd) = 0
                                 from PlayerData pd
                                 where pd.id = :id
                                 """, Boolean.class)
@@ -127,72 +187,34 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public void pingUsernameCache(UUID uuid, String name) {
-        pingIdCache(uuid);
-        wrapQuery(Query::executeUpdate,
-                manager.createQuery("""
-                                select count(pd) > 0
-                                from PlayerData pd
-                                join pd.knownNames kn
-                                where pd.id = :id and key(kn) = :name
-                                """, Boolean.class)
-                        .setParameter("id", uuid)
-                        .setParameter("name", name),
+    public void pushPlayerName(UUID uuid, String name) {
+        pushPlayerId(uuid);
+        wrapQuery(Query::executeUpdate, null,
                 manager.createNativeQuery("""
-                                insert into banmod_playerdata_names (PlayerData_id, knownNames, knownNames_KEY)
-                                values (:id, :lastSeen, :name);
+                                update banmod_playerdata_names names
+                                set names.knownNames_KEY = :name,
+                                    names.knownNames = :seen
+                                where names.PlayerData_id = :id
                                 """)
                         .setParameter("id", uuid)
-                        .setParameter("lastSeen", Timestamp.from(now()))
                         .setParameter("name", name)
+                        .setParameter("seen", Timestamp.from(now()))
         );
     }
 
     @Override
-    public void pingIpCache(UUID uuid, InetAddress ip) {
-        pingIdCache(uuid);
-        wrapQuery(Query::executeUpdate,
-                manager.createQuery("""
-                                select count(pd) > 0
-                                from PlayerData pd
-                                join pd.knownIPs kip
-                                where pd.id = :id and key(kip) = :ip
-                                """, Boolean.class)
-                        .setParameter("id", uuid)
-                        .setParameter("ip", ip.toString().substring(1)),
+    public void pushPlayerIp(UUID uuid, String ip) {
+        pushPlayerId(uuid);
+        wrapQuery(Query::executeUpdate, null,
                 manager.createNativeQuery("""
-                                insert into banmod_playerdata_ips (PlayerData_id, knownIPs, knownIPs_KEY)
-                                values (:id, :lastSeen, :ip);
+                                update banmod_playerdata_ips ip
+                                set ip.knownIPs_KEY = :ip,
+                                    ip.knownIPs = :seen
+                                where ip.PlayerData_id = :id
                                 """)
                         .setParameter("id", uuid)
-                        .setParameter("lastSeen", Timestamp.from(now()))
-                        .setParameter("ip", ip.toString().substring(1)));
-    }
-
-    @Override
-    public <T> T refresh(T it) {
-        Constraint.notNull(it, "entity");
-        manager.refresh(it);
-        return it;
-    }
-
-    @Override
-    public synchronized boolean save(Object... entities) {
-        var transaction = manager.getTransaction();
-        synchronized (transaction) {
-            try {
-                transaction.begin();
-                for (Object each : entities)
-                    manager.persist(each);
-                manager.flush();
-                transaction.commit();
-            } catch (Throwable t) {
-                transaction.rollback();
-                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not save all entities", t);
-                return false;
-            }
-        }
-        return true;
+                        .setParameter("ip", ip.substring(1))
+                        .setParameter("seen", Timestamp.from(now())));
     }
 
     @Override

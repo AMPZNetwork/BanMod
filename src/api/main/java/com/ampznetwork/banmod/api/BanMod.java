@@ -28,7 +28,6 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
-import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
@@ -64,32 +63,22 @@ public interface BanMod {
     final class Resources {
         public static final int ENTRIES_PER_PAGE = 8;
 
-        public static Infraction.Builder standardInfraction(BanMod mod,
-                                                            PunishmentCategory category,
-                                                            UUID playerId,
-                                                            @Nullable UUID issuer,
-                                                            @Nullable String reason) {
-            var rep = mod.getEntityService().findRepetition(playerId, category);
-            var punish = category.calculatePunishment(rep).orElse(Punishment.Kick);
-            var now = now();
-            var expire = category.calculateDuration(rep);
-            var target = mod.getEntityService().getOrCreatePlayerData(playerId).get();
-            return Infraction.builder()
-                    .player(target)
-                    .category(category)
-                    .punishment(punish)
-                    .issuer(issuer)
-                    .reason(reason)
-                    .timestamp(now)
-                    .expires(now.plus(expire));
-        }
-
-        public static void notify(BanMod mod, UUID playerId, Punishment punishment, PlayerResult result, BiConsumer<UUID, Component> forwarder) {
+        public static void notify(BanMod mod, UUID playerId, @Nullable Punishment punishment, PlayerResult result, BiConsumer<UUID, Component> forwarder) {
             var playerAdapter = mod.getPlayerAdapter();
             var name = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
-            String permission;
-            switch (punishment) {
+            String permission = Permission.PluginErrorNotification;
+            if (punishment == null) {
+                msgUser = text("""
+                        An internal server error occurred.
+                        Please contact your server administrator and try again later.
+
+                        %s""".formatted(result.reason())).color(RED);
+                msgNotify = text("An internal error is causing issues for players and they cannot join.").color(RED)
+                        .append(text("To allow connecting anyway, please enable "))
+                        .append(text("banmod.allowUnsafeConnections").color(AQUA))
+                        .append(text(" in the plugin configuration."));
+            } else switch (punishment) {
                 case Mute:
                     msgUser = Displays.mutedTextUser(result);
                     msgNotify = Displays.mutedTextNotify(name);
@@ -111,7 +100,9 @@ public interface BanMod {
 
             forwarder.accept(playerId, msgUser);
             playerAdapter.broadcast(permission, msgNotify);
-            mod.log().info("User %s is %#s (%s)".formatted(name, punishment, Displays.formatTimestamp(result.expires())));
+            mod.log().info("User %s is %s (%s)".formatted(name,
+                    punishment == null ? "" : punishment.getAdverb(),
+                    Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
@@ -136,12 +127,15 @@ public interface BanMod {
         public static final String PlayerJoinDeniedNotification = "banmod.notify.join";
         public static final String PlayerChatDeniedNotification = "banmod.notify.chat";
         public static final String PlayerKickedNotification = "banmod.notify.kick";
+        public static final String PluginErrorNotification = "banmod.notify.error";
     }
 
     @UtilityClass
     final class Displays {
         @NotNull
         public static String formatTimestamp(Instant expiry) {
+            if (expiry == null)
+                return "permanent";
             var dateTime = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
             var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             return dateTime.format(formatter);
@@ -149,6 +143,8 @@ public interface BanMod {
 
         @NotNull
         public static String formatDuration(Duration duration) {
+            if (duration == null)
+                return "permanent";
             return Polyfill.durationString(duration);
         }
 

@@ -122,7 +122,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
         var service = banMod.getEntityService();
         return banMod.getServer().getPlayerManager()
                 .getPlayerList().stream()
-                .peek(player -> service.pingUsernameCache(player.getUuid(), player.getName().getString()))
+                .peek(player -> service.pushPlayerName(player.getUuid(), player.getName().getString()))
                 .flatMap(player -> service.getOrCreatePlayerData(player.getUuid()).stream());
     }
 }

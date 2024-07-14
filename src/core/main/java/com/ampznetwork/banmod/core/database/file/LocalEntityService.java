@@ -6,25 +6,17 @@ import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Value;
-import org.comroid.api.func.util.AlmostComplete;
+import org.comroid.api.func.util.GetOrCreate;
 
-import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 @Value
 public class LocalEntityService implements EntityService {
-    BanMod banMod;
-
-    {
-        PlayerData.CACHE_NAME = this::pingUsernameCache;
-    }
-
     public LocalEntityService(BanMod banMod) {
         throw new UnsupportedOperationException("unimplemented");
     }
-// todo
 
     @Override
     public Stream<PlayerData> getPlayerData() {
@@ -37,13 +29,38 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId) {
+    public GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId) {
         return null;
+    }
+
+    @Override
+    public void pushPlayerId(UUID id) {
+
+    }
+
+    @Override
+    public void pushPlayerName(UUID id, String name) {
+
+    }
+
+    @Override
+    public void pushPlayerIp(UUID uuid, String ip) {
+
     }
 
     @Override
     public Stream<PunishmentCategory> getCategories() {
         return Stream.empty();
+    }
+
+    @Override
+    public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
+        return null;
+    }
+
+    @Override
+    public PunishmentCategory push(PunishmentCategory category) {
+        return null;
     }
 
     @Override
@@ -57,32 +74,22 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public void pingIdCache(UUID id) {
-
-    }
-
-    @Override
-    public void pingUsernameCache(UUID id, String name) {
-
-    }
-
-    @Override
-    public void pingIpCache(UUID uuid, InetAddress ip) {
-
-    }
-
-    @Override
-    public boolean save(Object... entities) {
-        return false;
-    }
-
-    @Override
-    public <T> T refresh(T it) {
+    public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
         return null;
     }
 
     @Override
-    public int delete(Object... infractions) {
+    public void revokeInfraction(UUID id, UUID revoker) {
+
+    }
+
+    @Override
+    public Infraction push(Infraction infraction) {
+        return null;
+    }
+
+    @Override
+    public int delete(Object... objects) {
         return 0;
     }
 }

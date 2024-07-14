@@ -14,7 +14,12 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerLoginNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import org.comroid.api.func.util.DelegateStream;
+import org.comroid.api.java.StackTraceUtils;
 
+import java.io.PrintStream;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -43,6 +48,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
                              MinecraftServer server,
                              PacketSender sender,
                              ServerLoginNetworking.LoginSynchronizer synchronizer) {
+        try {
         // thank you fabric devs for this very useful and reasonable method
         var info = handler.getConnectionInfo();
         var matcher = ConInfoPattern.matcher(info);
@@ -57,11 +63,22 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var ip = InetAddress.getByName(matcher.group("ip"));
         var result = playerLogin(playerId, ip);
 
-        if (result.isBanned())
+            if (result.forceDeny())
+                BanMod.Resources.notify(mod, playerId, null, result, (id, msg) -> {
+                    var serialize = component2text(msg);
+                    handler.disconnect(serialize);
+                });
+            else if (result.isBanned())
             BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
                 var serialize = component2text(msg);
                 handler.disconnect(serialize);
             });
+        } catch (Throwable t) {
+            var writer = new StringWriter();
+            var printer = new PrintStream(new DelegateStream.IO.Output(writer));
+            StackTraceUtils.writeFilteredStacktrace(t, printer);
+            handler.disconnect(Text.of("Internal error: " + writer.getBuffer()));
+        }
     }
 
     @Override

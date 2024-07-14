@@ -11,17 +11,18 @@ import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
 import org.comroid.api.attr.Named;
+import org.comroid.api.func.util.Bitmask;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.text.StringMode;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.base;
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.openUrl;
@@ -80,27 +81,15 @@ public class BanModCommands {
                 if (method != CleanupMethod.everything)
                     break;
                 else text.append(text("\n"));
-            case playerdata:
-                // remove outdated playerdata
-                var affected = service.getPlayerData()
-                        .filter(data -> data.getKnownNames().size() > 1 || data.getKnownIPs().size() > 1)
-                        .peek(data -> {
-                            var knownName = data.getOrFetchUsername().join();
-                            var knownIp = data.getLastKnownIp();
-                            var now = now();
-                            data.setKnownNames(new HashMap<>() {{
-                                put(knownName, now);
-                            }});
-                            data.setKnownIPs(new HashMap<>() {{
-                                put(knownIp, now);
-                            }});
-                        })
-                        .toArray();
-                if (!service.save(affected))
-                    throw BanMod.Resources.couldNotSaveError();
-                text.append(text("Cleaned up ")
-                        .append(text(affected.length).color(GREEN))
-                        .append(text(" users")));
+            case players:
+            case playernames:
+                // todo
+
+                if (method != CleanupMethod.everything)
+                    break;
+                else text.append(text("\n"));
+            case playerips:
+                // todo
                 break;
             default:
                 throw new Command.Error("Unexpected value: " + method);
@@ -171,12 +160,10 @@ public class BanModCommands {
         var tgt = mod.getPlayerAdapter().getId(name);
         var cat = mod.getEntityService().findCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
-        var infraction = BanMod.Resources.standardInfraction(mod, cat, tgt, issuer, reason)
-                .build();
-
-        // save infraction
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, cat, issuer)
+                        .reason(reason)
+                        .build());
 
         // apply infraction
         var result = infraction.toResult();
@@ -209,14 +196,11 @@ public class BanModCommands {
         var tgt = mod.getPlayerAdapter().getId(name);
         if (mod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
-        var now = now();
-        var duration = parseDuration(durationText);
-        var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason)
-                .timestamp(now)
-                .expires(now.plus(duration))
-                .build();
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, Punishment.Mute, issuer)
+                        .duration(parseDuration(durationText))
+                        .reason(reason)
+                        .build());
         return BanMod.Displays.textPunishmentFull(infraction);
     }
 
@@ -230,9 +214,11 @@ public class BanModCommands {
         var tgt = mod.getPlayerAdapter().getId(name);
         if (mod.getEntityService().queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
-        var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason).expires(null).build();
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, Punishment.Mute, issuer)
+                        .permanent(true)
+                        .reason(reason)
+                        .build());
         return BanMod.Displays.textPunishmentFull(infraction);
     }
 
@@ -246,9 +232,7 @@ public class BanModCommands {
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
-        infraction.setRevoker(issuer);
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
@@ -260,12 +244,11 @@ public class BanModCommands {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
-        var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason)
-                .punishment(Punishment.Kick)
-                .expires(null)
-                .build();
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, Punishment.Kick, issuer)
+                        .reason(reason)
+                        .build());
+        
         var text = BanMod.Displays.kickedTextUser(infraction.toResult());
         mod.getPlayerAdapter().kick(tgt, text);
         return BanMod.Displays.textPunishmentFull(infraction);
@@ -287,15 +270,11 @@ public class BanModCommands {
         var tgt = mod.getPlayerAdapter().getId(name);
         if (mod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
-        var now = now();
-        var duration = parseDuration(durationText);
-        var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason)
-                .punishment(Punishment.Ban)
-                .timestamp(now)
-                .expires(now.plus(duration))
-                .build();
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, Punishment.Ban, issuer)
+                        .duration(parseDuration(durationText))
+                        .reason(reason)
+                        .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
         return BanMod.Displays.textPunishmentFull(infraction);
     }
@@ -310,12 +289,11 @@ public class BanModCommands {
         var tgt = mod.getPlayerAdapter().getId(name);
         if (mod.getEntityService().queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
-        var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason)
-                .punishment(Punishment.Ban)
-                .expires(null)
-                .build();
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        var infraction = mod.getEntityService().createInfraction()
+                .complete(base(mod, tgt, Punishment.Ban, issuer)
+                        .permanent(true)
+                        .reason(reason)
+                        .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
         return BanMod.Displays.textPunishmentFull(infraction);
     }
@@ -330,16 +308,12 @@ public class BanModCommands {
                 .filter(i -> i.getPunishment() == Punishment.Ban)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not banned"));
-        infraction.setRevoker(issuer);
-        if (!mod.getEntityService().save(infraction))
-            throw BanMod.Resources.couldNotSaveError();
+        mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unbanned").color(GREEN);
     }
 
-    public enum CleanupMethod implements Named {
-        infractions,
-        playerdata,
-        everything
+    public enum CleanupMethod implements Named, Bitmask.Attribute<CleanupMethod> {
+        infractions, players, playernames, playerips, everything
     }
 
     @Command
@@ -460,8 +434,7 @@ public class BanModCommands {
                     .baseDuration(duration)
                     .repetitionExpBase(repetitionBase)
                     .build();
-            if (!mod.getEntityService().save(category))
-                throw BanMod.Resources.couldNotSaveError();
+            mod.getEntityService().push(category);
             return text("Category ")
                     .append(text(name).color(AQUA))
                     .append(text(" was "))
