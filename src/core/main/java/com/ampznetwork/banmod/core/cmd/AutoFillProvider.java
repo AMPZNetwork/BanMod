@@ -50,6 +50,19 @@ public class AutoFillProvider {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
+            return mod.getEntityService().getPlayerData()
+                    .flatMap(player -> player.getLastKnownName().stream());
+        }
+    }
+
+    enum OnlinePlayers implements Command.AutoFillProvider {
+        @Instance INSTANCE;
+
+        @Override
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            var mod = usage.getContext().stream()
+                    .flatMap(cast(BanMod.class))
+                    .findAny().orElseThrow();
             return mod.getPlayerAdapter().getCurrentPlayers()
                     .flatMap(data -> data.getLastKnownName().stream())
                     .distinct();
