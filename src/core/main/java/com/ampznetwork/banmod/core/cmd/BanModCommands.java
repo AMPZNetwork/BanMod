@@ -75,7 +75,7 @@ public class BanModCommands {
                 text.append(text("\nRemoved ")
                         .append(text(c).color(GREEN))
                         .append(text(" duplicate infractions")));
-                if (c < expired.length)
+                if (c < duplicates.length)
                     text.append(text("\nWarning: Not all duplicate elements could be deleted").color(YELLOW));
 
                 if (method != CleanupMethod.everything)
