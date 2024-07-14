@@ -169,7 +169,8 @@ public interface BanMod {
                     .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                             .append(text("(none)").color(GRAY))))
                     .collect(Collector.of(() -> text()
-                                    .append(text(punishment.name() + "list (Page %d of %d)".formatted(page, (int) pageCount))),
+                                    .append(text(punishment.name() + "list (Page %d of %d)".formatted(
+                                            pageCount == 0 ? 0 : Math.max(1, page), (int) pageCount))),
                             ComponentBuilder::append,
                             (l, r) -> {
                                 l.append(r);
