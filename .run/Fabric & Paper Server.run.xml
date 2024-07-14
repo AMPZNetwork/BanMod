@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Fabric &amp; Paper Server" type="CompoundRunConfigurationType">
+        <toRun name="Fabric Test Server" type="JarApplication"/>
+        <toRun name="Paper Test Server" type="JarApplication"/>
+        <method v="2"/>
+    </configuration>
+</component>
