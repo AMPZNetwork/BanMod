@@ -88,6 +88,10 @@ commands:
   unban:
     description: Unban User
     permission: banmod.unban
+  infraction:
+    aliases: punishment
+    description: Interact with and manage Infractions
+    permission: banmod.unban
   category:
     description: Modify Punishment Categories
     permission: banmod.category

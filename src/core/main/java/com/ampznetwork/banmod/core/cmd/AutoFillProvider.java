@@ -96,4 +96,31 @@ public class AutoFillProvider {
                     .map(PunishmentCategory::getName);
         }
     }
+
+    enum InfractionQuery implements Command.AutoFillProvider {
+        @Instance INSTANCE;
+
+        @Override
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            return empty();
+        }
+    }
+
+    enum ObjectProperties implements Command.AutoFillProvider {
+        @Instance INSTANCE;
+
+        @Override
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            return empty();
+        }
+    }
+
+    enum ObjectPropertyValues implements Command.AutoFillProvider {
+        @Instance INSTANCE;
+
+        @Override
+        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+            return empty();
+        }
+    }
 }

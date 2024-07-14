@@ -344,7 +344,39 @@ public class BanModCommands {
 
     @Command
     @UtilityClass
+    @Alias("punishment")
+    public class infraction {
+        @Command
+        public static Component list(
+                BanMod mod,
+                @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false) String query,
+                @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page) {
+            if (query != null)
+                throw new Command.Error("query unimplemented");
+            return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
+        }
+
+        @Command
+        public static Component set(
+                BanMod mod,
+                @NotNull @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class) String query,
+                @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
+                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value) {
+            throw new Command.Error("unimplemented");
+        }
+    }
+
+    @Command
+    @UtilityClass
     public class category {
+        @Command
+        public static Component duration(
+                BanMod mod,
+                @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
+                @NotNull @Arg(value = "player", autoFillProvider = AutoFillProvider.Players.class) String playerName,
+                @Nullable @Arg(value = "repetition", required = false) Integer repetition) {
+            throw new Command.Error("unimplemented");
+        }
 
         @Command
         public Component list(BanMod mod) {
@@ -408,10 +440,11 @@ public class BanModCommands {
 
         @Command
         @Alias("update")
-        public Component create(BanMod mod,
-                                @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
-                                @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
-                                @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
+        public Component create(
+                BanMod mod,
+                @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
+                @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
+                @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
             var duration = parseDuration(baseDuration);
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
@@ -434,6 +467,15 @@ public class BanModCommands {
                     .append(text(" was "))
                     .append(text(update[0] ? "updated" : "created")
                             .color(update[0] ? GREEN : DARK_GREEN));
+        }
+
+        @Command
+        public static Component set(
+                BanMod mod,
+                @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
+                @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
+                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value) {
+            throw new Command.Error("unimplemented");
         }
 
         @Command
