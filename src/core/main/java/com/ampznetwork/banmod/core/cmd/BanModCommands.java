@@ -17,10 +17,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.time.Instant.now;
@@ -45,20 +42,42 @@ public class BanModCommands {
     public Component cleanup(BanMod mod, @NotNull @Arg(value = "method") CleanupMethod method) {
         final var service = mod.getEntityService();
         var text = text();
-        int c;
+        var c = 0;
         switch (method) {
             case everything:
             case infractions:
-                c = service.delete(service.getInfractions()
+                var infractions = service.getInfractions().toList();
+
+                // remove expired infractions
+                var expired = infractions.stream()
                         .filter(Infraction.IS_IN_EFFECT.negate())
-                        .toArray());
+                        .toArray();
+                c = service.delete(expired);
                 text.append(text("Removed ")
                         .append(text(c).color(GREEN))
                         .append(text(" expired infractions")));
+                if (c < expired.length)
+                    text.append(text("\nWarning: Not all expired elements could be deleted").color(YELLOW));
+
+                // remove duplicate infractions
+                var playerIds = new HashSet<UUID>();
+
+                var duplicates = infractions.stream()
+                        .sorted(Infraction.BY_NEWEST)
+                        .filter(infr -> !playerIds.add(infr.getPlayerId()))
+                        .toArray();
+                c = service.delete(duplicates);
+                text.append(text("\nRemoved ")
+                        .append(text(c).color(GREEN))
+                        .append(text(" duplicate infractions")));
+                if (c < expired.length)
+                    text.append(text("\nWarning: Not all duplicate elements could be deleted").color(YELLOW));
+
                 if (method != CleanupMethod.everything)
                     break;
                 else text.append(text("\n"));
             case playerdata:
+                // remove outdated playerdata
                 var affected = service.getPlayerData()
                         .filter(data -> data.getKnownNames().size() > 1 || data.getKnownIPs().size() > 1)
                         .peek(data -> {
