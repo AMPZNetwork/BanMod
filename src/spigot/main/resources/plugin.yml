@@ -40,14 +40,14 @@ permissions:
     description: A tree of permission nodes to control notifications in the
     children:
       banmod.notify.kick:
-        default: true
         description: Get notified when someone gets kicked
       banmod.notify.mute:
-        default: true
         description: Get notified when someone gets muted
       banmod.notify.ban:
-        default: true
         description: Get notified when someone gets banned
+      banmod.notify.error:
+        default: false
+        description: Get notified when the plugin gets a fatal error
 commands:
   reload:
     description: Reloads Configuration Files

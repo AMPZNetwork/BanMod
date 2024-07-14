@@ -104,6 +104,11 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     }
 
     @Override
+    public boolean allowUnsafeConnections() {
+        return config.getBoolean("banmod.allow-unsafe-connections", false);
+    }
+
+    @Override
     public DatabaseInfo getDatabaseInfo() {
         var dbImpl = EntityService.Type.valueOf(config.getString("banmod.entity-service", "database").toUpperCase());
         var dbType = EntityService.DatabaseType.valueOf(config.getString("banmod.database.type", "h2"));

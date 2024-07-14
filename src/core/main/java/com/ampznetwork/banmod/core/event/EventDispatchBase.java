@@ -5,14 +5,19 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
+import net.kyori.adventure.text.Component;
 import org.comroid.api.func.util.DelegateStream;
 import org.comroid.api.java.StackTraceUtils;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.UUID;
-import java.util.logging.Level;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static org.comroid.api.java.StackTraceUtils.lessSimpleDetailedName;
 
 @Log
 @Value
@@ -25,22 +30,38 @@ public abstract class EventDispatchBase {
     }
 
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
-        try {
-            final var service = mod.getEntityService();
-            final var name = mod.getPlayerAdapter().getName(playerId);
+        final var service = mod.getEntityService();
+        final var name = mod.getPlayerAdapter().getName(playerId);
 
-            service.pushPlayerName(playerId, name);
-            service.pushPlayerIp(playerId, address);
+        service.pushPlayerName(playerId, name);
+        service.pushPlayerIp(playerId, address);
 
-            // queue player
-            return player(playerId);
-        } catch (Throwable t) {
-            log.log(Level.SEVERE, "Could not check player status on join", t);
-            var writer = new StringWriter();
-            var printer = new PrintStream(new DelegateStream.IO.Output(writer));
+        // queue player
+        return player(playerId);
+    }
+
+    protected <C> void handleThrowable(UUID playerId,
+                                       Throwable t,
+                                       Function<Component, C> componentSerializer,
+                                       Consumer<C> forwardAndDisconnect) {
+        try (
+                var writer = new StringWriter();
+                var out = new DelegateStream.Output(writer);
+                var printer = new PrintStream(out);
+        ) {
             StackTraceUtils.writeFilteredStacktrace(t, printer);
-            return new PlayerResult(playerId, false, false, true,
-                    writer.getBuffer().toString(), null, null);
+            BanMod.Resources.notify(mod, playerId, null,
+                    new PlayerResult(playerId, false, false,
+                            "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
+                            null, null),
+                    (uuid, component) -> {
+                        var serialize = componentSerializer.apply(component);
+                        if (!mod.allowUnsafeConnections())
+                            forwardAndDisconnect.accept(serialize);
+                    });
+            mod.log().warn("An internal error occurred and is ");
+        } catch (IOException e) {
+            mod.log().error("Have you tried turning your machine off and back on again?", t);
         }
     }
 }

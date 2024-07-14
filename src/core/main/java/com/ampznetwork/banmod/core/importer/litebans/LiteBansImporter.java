@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import static java.time.Instant.now;
+
 @Value
 public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Importer {
     BanMod mod;
@@ -62,9 +64,10 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                 .createQuery("select h from History h", History.class)
                 .getResultStream()
                 .map(hist -> {
-                    var now = Instant.now();
+                    var now = now();
                     var data = service.getPlayerData(hist.getUuid())
-                            .orElseGet(() -> new PlayerData(hist.getUuid(), new ConcurrentHashMap<>(), new ConcurrentHashMap<>()));
+                            .orElseGet(() -> new PlayerData(hist.getUuid(), now(),
+                                    new ConcurrentHashMap<>(), new ConcurrentHashMap<>()));
                     data.getKnownNames().put(hist.getName(), now);
                     data.getKnownIPs().put(hist.getIp(), now);
                     count[2] += 1;

@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
 import org.comroid.api.net.REST;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.time.Instant;
@@ -31,6 +32,9 @@ public class PlayerData {
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
     UUID id;
+    @Nullable
+    @lombok.Builder.Default
+    Instant lastSeen = null;
     @Singular
     @ElementCollection
     @CollectionTable(name = "banmod_playerdata_names")

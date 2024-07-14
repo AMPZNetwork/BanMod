@@ -98,4 +98,9 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     public @Nullable String getBanAppealUrl() {
         return config.banAppealUrl();
     }
+
+    @Override
+    public boolean allowUnsafeConnections() {
+        return config.allowUnsafeConnections();
+    }
 }

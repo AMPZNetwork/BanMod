@@ -16,6 +16,7 @@ public class ConfigModel {
     @Nest
     public Database database = new Database();
     public String banAppealUrl = "";
+    public boolean allowUnsafeConnections = false;
 
     public static class Database {
         public EntityService.DatabaseType type = EntityService.DatabaseType.h2;

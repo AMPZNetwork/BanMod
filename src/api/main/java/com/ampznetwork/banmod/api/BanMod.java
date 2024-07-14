@@ -51,6 +51,8 @@ public interface BanMod {
     @Nullable
     String getBanAppealUrl();
 
+    boolean allowUnsafeConnections();
+
     @UtilityClass
     final class Strings {
         public static final String AddonName = "BanMod";
@@ -100,9 +102,9 @@ public interface BanMod {
 
             forwarder.accept(playerId, msgUser);
             playerAdapter.broadcast(permission, msgNotify);
-            mod.log().info("User %s is %s (%s)".formatted(name,
-                    punishment == null ? "" : punishment.getAdverb(),
-                    Displays.formatTimestamp(result.expires())));
+            if (punishment != null)
+                mod.log().info("User %s is %#s (%s)".formatted(name, punishment,
+                        Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
