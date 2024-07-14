@@ -62,7 +62,7 @@ public class LocalEntityService implements EntityService {
     }
 
     @Override
-    public <T> T push(T object) {
+    public <T> T save(T object) {
         return null;
     }
 

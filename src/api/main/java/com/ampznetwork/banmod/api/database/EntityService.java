@@ -62,7 +62,7 @@ public interface EntityService extends LifeCycle {
     GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
     default PunishmentCategory defaultCategory() {
-        return push(findCategory("default")
+        return save(findCategory("default")
                 .orElseGet(() -> PunishmentCategory.standard("default").build()));
     }
 
@@ -80,7 +80,7 @@ public interface EntityService extends LifeCycle {
 
     void revokeInfraction(UUID id, UUID revoker);
 
-    <T> T push(T object);
+    <T> T save(T object);
 
     int delete(Object... objects);
 

@@ -84,7 +84,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 () -> getPlayerData(playerId).orElse(null),
                 () -> PlayerData.builder().id(playerId),
                 PlayerData.Builder::build,
-                this::push);
+                this::save);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                         .findAny().orElse(null),
                 () -> PunishmentCategory.builder().name(name),
                 PunishmentCategory.Builder::build,
-                this::push);
+                this::save);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::push);
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public <T> T push(T object) {
+    public <T> T save(T object) {
         wrapTransaction(() -> {
             try {
                 manager.persist(object);

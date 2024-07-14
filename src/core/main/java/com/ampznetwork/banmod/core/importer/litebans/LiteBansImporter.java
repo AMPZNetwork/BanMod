@@ -58,7 +58,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                             .expires(Instant.ofEpochMilli(it.getUntil()))
                             .reason(it.getReason())
                             .build();
-                }).forEach(service::push);
+                }).forEach(service::save);
 
         unit.manager()
                 .createQuery("select h from History h", History.class)
@@ -72,7 +72,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                     data.getKnownIPs().put(hist.getIp(), now);
                     count[2] += 1;
                     return data;
-                }).forEach(service::push);
+                }).forEach(service::save);
 
         return new ImportResult(count[0], count[1], count[2]);
     }

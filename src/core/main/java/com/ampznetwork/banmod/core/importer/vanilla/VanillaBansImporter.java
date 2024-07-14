@@ -28,7 +28,7 @@ public class VanillaBansImporter implements Importer {
         ) {
             var service = mod.getEntityService();
             mapper.readValues(mapper.createParser(banFile), Ban.class)
-                    .forEachRemaining(ban -> service.push(Infraction.builder()
+                    .forEachRemaining(ban -> service.save(Infraction.builder()
                             .player(service.getOrCreatePlayerData(ban.getUuid()).requireNonNull())
                             .category(mod.getDefaultCategory())
                             .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))

@@ -110,7 +110,7 @@ public class BanModCommands {
                                 put(ip, now());
                             }});
                         })
-                        .peek(service::push)
+                        .peek(service::save)
                         .toArray();
 
                 text.append(text("\nCleaned up ")
@@ -464,7 +464,7 @@ public class BanModCommands {
                     .baseDuration(duration)
                     .repetitionExpBase(repetitionBase)
                     .build();
-            mod.getEntityService().push(category);
+            mod.getEntityService().save(category);
             return text("Category ")
                     .append(text(name).color(AQUA))
                     .append(text(" was "))

@@ -42,7 +42,7 @@ public abstract class EventDispatchBase {
                 .complete(builder -> builder.lastSeen(now())
                         .knownName(name, now())
                         .knownIP(ip2string(address), now()));
-        service.push(data);
+        service.save(data);
 
         // queue player
         return player(playerId);
