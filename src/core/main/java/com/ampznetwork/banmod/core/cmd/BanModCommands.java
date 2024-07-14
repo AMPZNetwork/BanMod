@@ -438,6 +438,8 @@ public class BanModCommands {
 
         @Command
         public Component delete(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name) {
+            if ("default".equals(name))
+                throw new Command.Error("Cannot delete the default category!");
             var service = mod.getEntityService();
             var cat = service.findCategory(name);
             return service.delete(cat) > 0
