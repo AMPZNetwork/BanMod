@@ -148,8 +148,7 @@ public class BanModCommands {
             text = text.append(text("\n- "))
                     .append(text(knownName.getKey())
                             .hoverEvent(showText(text("Last seen: " + BanMod.Displays.formatTimestamp(knownName.getValue()))))
-                            .color(YELLOW))
-                    .append(text("\n"));
+                            .color(YELLOW));
         text = text.append(text("Known IPs:"));
         var knownIPs = data.getKnownIPs();
         if (knownIPs.isEmpty())
@@ -160,8 +159,7 @@ public class BanModCommands {
             text = text.append(text("\n- "))
                     .append(text(knownIp.getKey())
                             .hoverEvent(showText(text("Last seen: " + BanMod.Displays.formatTimestamp(knownIp.getValue()))))
-                            .color(YELLOW))
-                    .append(text("\n"));
+                            .color(YELLOW));
         text = text.append(text("Active Infractions:"));
         var infractions = mod.getEntityService().getInfractions(target)
                 .filter(Infraction.IS_IN_EFFECT)
