@@ -536,8 +536,9 @@ public class BanModCommands {
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, smex);
                 return text(msg).color(YELLOW);
             } catch (Throwable t) {
-                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not import from LiteBans", t);
-                throw new Command.Error("Could not import from LiteBans. " + BanMod.Strings.PleaseCheckConsole);
+                var msg = "Could not import from LiteBans.";
+                BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
+                throw new Command.Error(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
         }
 
