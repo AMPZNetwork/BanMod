@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.core.cmd;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
@@ -18,6 +19,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
@@ -44,52 +46,80 @@ public class BanModCommands {
     }
 
     @Command
-    public Component cleanup(BanMod mod, @NotNull @Arg(value = "method") CleanupMethod method) {
+    public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
+        mod.getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
         var text = text();
         var c = 0;
+        Object[] buffer;
         switch (method) {
             case everything:
             case infractions:
                 var infractions = service.getInfractions().toList();
 
                 // remove expired infractions
-                var expired = infractions.stream()
+                buffer = infractions.stream()
                         .filter(Infraction.IS_IN_EFFECT.negate())
                         .toArray();
-                c = service.delete(expired);
-                text.append(text("Removed ")
+                c = service.delete(buffer);
+                text.append(text("\nRemoved ")
                         .append(text(c).color(GREEN))
                         .append(text(" expired infractions")));
-                if (c < expired.length)
+                if (c < buffer.length)
                     text.append(text("\nWarning: Not all expired elements could be deleted").color(YELLOW));
 
                 // remove duplicate infractions
                 var playerIds = new HashSet<UUID>();
 
-                var duplicates = infractions.stream()
+                buffer = infractions.stream()
                         .sorted(Infraction.BY_NEWEST)
                         .filter(infr -> !playerIds.add(infr.getPlayer().getId()))
                         .toArray();
-                c = service.delete(duplicates);
+                c = service.delete(buffer);
                 text.append(text("\nRemoved ")
                         .append(text(c).color(GREEN))
                         .append(text(" duplicate infractions")));
-                if (c < duplicates.length)
+                if (c < buffer.length)
                     text.append(text("\nWarning: Not all duplicate elements could be deleted").color(YELLOW));
 
                 if (method != CleanupMethod.everything)
                     break;
-                else text.append(text("\n"));
             case players:
-            case playernames:
-                // todo
+                var c0 = new int[]{0, 0};
+                buffer = service.getPlayerData()
+                        .filter(data -> {
+                            var name = data.getKnownNames().size() > 1;
+                            var ip = data.getKnownIPs().size() > 1;
+                            if (name) c0[0] += 1;
+                            if (ip) c0[1] += 1;
+                            return name || ip;
+                        })
+                        .peek(data -> {
+                            var name = data.getKnownNames().entrySet().stream()
+                                    .min(PlayerData.MOST_RECENTLY_SEEN)
+                                    .map(Map.Entry::getKey)
+                                    .orElseThrow();
+                            var ip = data.getKnownIPs().entrySet().stream()
+                                    .min(PlayerData.MOST_RECENTLY_SEEN)
+                                    .map(Map.Entry::getKey)
+                                    .orElseThrow();
+                            data.setKnownNames(new HashMap<>() {{
+                                put(name, now());
+                            }});
+                            data.setKnownIPs(new HashMap<>() {{
+                                put(ip, now());
+                            }});
+                        })
+                        .peek(service::push)
+                        .toArray();
 
-                if (method != CleanupMethod.everything)
-                    break;
-                else text.append(text("\n"));
-            case playerips:
-                // todo
+                text.append(text("\nCleaned up ")
+                        .append(text(buffer.length).color(GREEN))
+                        .append(text(" player data entries ("))
+                        .append(text(c0[0]).color(AQUA))
+                        .append(text(" Names; "))
+                        .append(text(c0[1]).color(AQUA))
+                        .append(text(" IPs)")));
                 break;
             default:
                 throw new Command.Error("Unexpected value: " + method);
@@ -313,7 +343,7 @@ public class BanModCommands {
     }
 
     public enum CleanupMethod implements Named, Bitmask.Attribute<CleanupMethod> {
-        infractions, players, playernames, playerips, everything
+        infractions, players, everything
     }
 
     @Command
@@ -469,7 +499,8 @@ public class BanModCommands {
     public class Import {
 
         @Command
-        public Component vanilla(BanMod mod, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+        public Component vanilla(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+            mod.getPlayerAdapter().send(playerId, text("Starting import process..."));
             try (var importer = new VanillaBansImporter(mod)) {
                 var result = importer.run();
                 var text = text("Imported ")
@@ -477,7 +508,7 @@ public class BanModCommands {
                         .append(text(" from Vanilla Minecraft"));
                 if (cleanup) text = text
                         .append(text("\n"))
-                        .append(cleanup(mod, CleanupMethod.everything));
+                        .append(cleanup(mod, playerId, CleanupMethod.everything));
                 return text;
             } catch (Throwable t) {
                 var msg = "Could not import bans from Vanilla Minecraft";
@@ -487,19 +518,18 @@ public class BanModCommands {
         }
 
         @Command
-        public Component litebans(BanMod mod, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+        public Component litebans(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+            mod.getPlayerAdapter().send(playerId, text("Starting import process..."));
             try (var importer = new LiteBansImporter(mod, mod.getDatabaseInfo())) {
                 var result = importer.run();
                 var text = text("Imported ")
-                        .append(text(result.muteCount() + " Mutes").color(YELLOW))
+                        .append(text(result.muteCount() + " Mutes").color(Punishment.Mute.getColor()))
                         .append(text(", "))
-                        .append(text(result.banCount() + " Bans").color(RED))
+                        .append(text(result.banCount() + " Bans").color(Punishment.Ban.getColor()))
                         .append(text(" and "))
                         .append(text(result.playerDataCount() + " Player Entries ").color(AQUA))
                         .append(text(" from LiteBans"));
-                if (cleanup) text = text
-                        .append(text("\n"))
-                        .append(cleanup(mod, CleanupMethod.everything));
+                if (cleanup) text = text.append(cleanup(mod, playerId, CleanupMethod.everything));
                 return text;
             } catch (SchemaManagementException smex) {
                 var msg = "LiteBans Databases have an unexpected format. " + BanMod.Strings.PleaseCheckConsole;
