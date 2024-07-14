@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static java.time.Instant.now;
 import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
@@ -133,7 +134,8 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
         var service = banMod.getEntityService();
         return banMod.getServer()
                 .getOnlinePlayers().stream()
-                //todo .peek(player -> service.pushPlayerName(player.getUniqueId(), player.getName()))
-                .flatMap(player -> service.getOrCreatePlayerData(player.getUniqueId()).stream());
+                .map(player -> service.getOrCreatePlayerData(player.getUniqueId())
+                        .setUpdateOriginal(original -> original.pushKnownName(player.getName()))
+                        .complete(builder -> builder.knownName(player.getName(), now())));
     }
 }

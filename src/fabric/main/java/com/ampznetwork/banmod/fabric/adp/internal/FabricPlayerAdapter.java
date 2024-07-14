@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
@@ -122,7 +123,11 @@ public class FabricPlayerAdapter implements PlayerAdapter {
         var service = banMod.getEntityService();
         return banMod.getServer().getPlayerManager()
                 .getPlayerList().stream()
-                .peek(player -> service.pushPlayerName(player.getUuid(), player.getName().getString()))
-                .flatMap(player -> service.getOrCreatePlayerData(player.getUuid()).stream());
+                .map(player -> {
+                    var name = player.getName().getString();
+                    return service.getOrCreatePlayerData(player.getUuid())
+                            .setUpdateOriginal(original -> original.pushKnownName(name))
+                            .complete(builder -> builder.knownName(name, now()));
+                });
     }
 }
