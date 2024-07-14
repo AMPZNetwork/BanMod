@@ -12,7 +12,6 @@ import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -108,7 +107,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public PunishmentCategory push(PunishmentCategory category) {
-        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
                         update banmod_categories cat
                         set cat.description = :description,
                             cat.defaultReason = :defaultReason,
@@ -144,7 +143,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public void revokeInfraction(UUID id, UUID revoker) {
-        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
                         update banmod_infractions i set i.revoker = :revoker where i.id = :id
                         """)
                 .setParameter("id", id)
@@ -153,7 +152,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public Infraction push(Infraction infraction) {
-        wrapQuery(Query::executeUpdate, null, manager.createNativeQuery("""
+        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
                         update banmod_infractions i
                         set i.expires = :expires,
                             i.issuer = :issuer,
@@ -175,21 +174,26 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public void pushPlayerId(UUID id) {
-        wrapQuery(Query::executeUpdate,
-                manager.createQuery("""
-                                select count(pd) = 0
-                                from PlayerData pd
-                                where pd.id = :id
-                                """, Boolean.class)
-                        .setParameter("id", id),
-                manager.createNativeQuery("insert into banmod_playerdata (id) values (:id)")
-                        .setParameter("id", id));
+        if (id == null) return;
+        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
+                if (
+                    select count(pd.id)
+                    from banmod_playerdata pd
+                    where pd.id = :id
+                ) then
+                    update banmod_playerdata pd
+                    set pd.lastSeen = NOW()
+                    where pd.id = :id;
+                else
+                    insert into banmod_playerdata (id) values (:id);
+                end if;
+                """).setParameter("id", id));
     }
 
     @Override
     public void pushPlayerName(UUID uuid, String name) {
         pushPlayerId(uuid);
-        wrapQuery(Query::executeUpdate, null,
+        wrapQuery(Query::executeUpdate,
                 manager.createNativeQuery("""
                                 update banmod_playerdata_names names
                                 set names.knownNames_KEY = :name,
@@ -205,7 +209,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     @Override
     public void pushPlayerIp(UUID uuid, String ip) {
         pushPlayerId(uuid);
-        wrapQuery(Query::executeUpdate, null,
+        wrapQuery(Query::executeUpdate,
                 manager.createNativeQuery("""
                                 update banmod_playerdata_ips ip
                                 set ip.knownIPs_KEY = :ip,
@@ -238,15 +242,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return c;
     }
 
-    private <R> R wrapQuery(Function<Query, R> executor, @Nullable Query condition, Query query) {
-        if (condition != null)
-            try {
-                if ((boolean) condition.getSingleResult())
-                    return null;
-            } catch (Throwable t) {
-                mod.log().warn("Could not execute condition " + condition, t);
-                throw t;
-            }
+    private <R> R wrapQuery(Function<Query, R> executor, Query query) {
         var transaction = manager.getTransaction();
         synchronized (transaction) {
             transaction.begin();
