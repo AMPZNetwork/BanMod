@@ -45,8 +45,26 @@ tasks.register('dlLuckPermsJar', Download).configure {
     }
 }
 
+tasks.register('dlSparkJar', Download).configure {
+    src 'https://ci.lucko.me/job/spark/419/artifact/spark-bukkit/build/libs/spark-1.10.74-bukkit.jar'
+    dest "$projectDir/run/plugins/spark.jar"
+    outputs.upToDateWhen {
+        file("$projectDir/run/plugins/spark.jar").exists()
+    }
+}
+
 shadowJar {
     dependsOn project(':api').simplifyArtifact
+
+    configurations = [project.configurations.runtimeClasspath]
+
+    dependencies {
+        include(dependency(':japi'))
+        include(dependency(':api'))
+        include(dependency(':core'))
+    }
+
+    //from(project(':subProject').sourceSets.main.output)
 }
 
 tasks.register('testPlugin', Copy) {
@@ -91,12 +109,6 @@ dependencies {
 
     // banMod api
     implementation project(':core')
-
-    // rabbit
-    runtimeOnly 'com.rabbitmq:amqp-client:5.+'
-
-    // logger
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
 
     // placeholderapi
     compileOnly 'me.clip:placeholderapi:2.9.+'
