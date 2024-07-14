@@ -5,7 +5,11 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
+import org.comroid.api.func.util.DelegateStream;
+import org.comroid.api.java.StackTraceUtils;
 
+import java.io.PrintStream;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -32,8 +36,11 @@ public abstract class EventDispatchBase {
             return player(playerId);
         } catch (Throwable t) {
             log.log(Level.SEVERE, "Could not check player status on join", t);
+            var writer = new StringWriter();
+            var printer = new PrintStream(new DelegateStream.IO.Output(writer));
+            StackTraceUtils.writeFilteredStacktrace(t, printer);
             return new PlayerResult(playerId, false, false, true,
-                    "An internal error ocurred. Please contact your server administrator", null, null);
+                    writer.getBuffer().toString(), null, null);
         }
     }
 }
