@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
@@ -27,15 +28,16 @@ import java.util.stream.Stream;
 
 import static org.comroid.api.func.util.Debug.isDebug;
 
+@Value
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
     private static final Logger log = LoggerFactory.getLogger(HibernateEntityService.class);
-    private final BanMod mod;
-    private final EntityManager manager;
+    BanMod banMod;
+    EntityManager manager;
 
-    public HibernateEntityService(BanMod mod) {
-        this.mod = mod;
-        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
+    public HibernateEntityService(BanMod banMod) {
+        this.banMod = banMod;
+        var unit = buildPersistenceUnit(banMod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
         this.manager = unit.manager;
         addChildren(unit);
     }
@@ -160,7 +162,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 transaction.commit();
             } catch (Throwable t) {
                 transaction.rollback();
-                BanMod.Resources.printExceptionWithIssueReportUrl(mod, "Could not remove all entities", t);
+                BanMod.Resources.printExceptionWithIssueReportUrl(banMod, "Could not remove all entities", t);
             }
         }
         return c;
@@ -193,7 +195,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 task.run();
                 transaction.commit();
             } catch (Throwable t) {
-                mod.log().warn("Could not execute task " + task, t);
+                banMod.log().warn("Could not execute task " + task, t);
                 if (transaction.isActive())
                     transaction.rollback();
                 throw t;

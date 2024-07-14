@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 @Value
 public class LocalEntityService implements EntityService {
-    BanMod mod;
+    BanMod banMod;
 
     @Override
     public Stream<PlayerData> getPlayerData() {

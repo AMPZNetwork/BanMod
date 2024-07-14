@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.api.database;
 
+import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -29,6 +30,8 @@ public interface EntityService extends LifeCycle {
     static String ip2string(InetAddress ip) {
         return ip.toString().substring(1);
     }
+
+    BanMod getBanMod();
 
     Stream<PlayerData> getPlayerData();
 
