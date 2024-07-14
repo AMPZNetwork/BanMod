@@ -145,7 +145,7 @@ public interface BanMod {
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
             // todo: use book adapter here
             return infractions.stream()
-                    .skip((page - 1L) * Resources.ENTRIES_PER_PAGE)
+                    .skip(Math.max(0, (page - 1L) * Resources.ENTRIES_PER_PAGE))
                     .limit(Resources.ENTRIES_PER_PAGE)
                     .map(infraction -> text("\n- ")
                             .append(textPunishmentFull(banMod, infraction)))
