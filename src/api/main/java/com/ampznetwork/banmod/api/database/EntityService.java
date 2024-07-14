@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
+import org.comroid.api.func.util.AlmostComplete;
 import org.comroid.api.tree.LifeCycle;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.MariaDBDialect;
@@ -24,6 +25,8 @@ import java.util.stream.Stream;
 public interface EntityService extends LifeCycle {
     Stream<PlayerData> getPlayerData();
     Optional<PlayerData> getPlayerData(UUID playerId);
+
+    AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId);
 
     Stream<PunishmentCategory> getCategories();
 

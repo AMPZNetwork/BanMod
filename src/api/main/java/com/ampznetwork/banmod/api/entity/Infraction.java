@@ -48,9 +48,8 @@ public class Infraction {
     @Convert(converter = UuidBinary16Converter.class)
     UUID id = UUID.randomUUID();
     @NotNull
-    @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UuidBinary16Converter.class)
-    UUID playerId;
+    @OneToOne
+    PlayerData player;
     @NotNull
     @ManyToOne
     PunishmentCategory category;
@@ -88,7 +87,7 @@ public class Infraction {
     }
 
     public PlayerResult toResult() {
-        return new PlayerResult(playerId,
+        return new PlayerResult(player.getId(),
                 punishment == Punishment.Mute,
                 punishment == Punishment.Ban,
                 reason,

@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
+import org.comroid.api.func.util.AlmostComplete;
 import org.comroid.api.info.Constraint;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
@@ -18,6 +19,7 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,10 +27,45 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class HibernateEntityService extends Container.Base implements EntityService {
+    private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
     private final BanMod mod;
     private final EntityManager manager;
 
-    private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
+    {
+        PlayerData.CACHE_NAME = this::pingUsernameCache;
+    }
+
+    public HibernateEntityService(BanMod mod) {
+        this.mod = mod;
+        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
+        this.manager = unit.manager;
+        addChildren(unit);
+    }
+
+    public static Unit buildPersistenceUnit(
+            DatabaseInfo info,
+            Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
+            @MagicConstant(stringValues = {"update", "validate"}) String hbm2ddl) {
+        var config = Map.of(
+                "hibernate.connection.driver_class", info.type().getDriverClass().getCanonicalName(),
+                "hibernate.connection.url", info.url(),
+                "hibernate.connection.username", info.user(),
+                "hibernate.connection.password", info.pass(),
+                "hibernate.dialect", info.type().getDialectClass().getCanonicalName(),
+                //"hibernate.show_sql", String.valueOf(isDebug()),
+                "hibernate.hbm2ddl.auto", hbm2ddl
+        );
+        var dataSource = new HikariDataSource() {{
+            setDriverClassName(info.type().getDriverClass().getCanonicalName());
+            setJdbcUrl(info.url());
+            setUsername(info.user());
+            setPassword(info.pass());
+        }};
+        var unit = unitProvider.apply(dataSource);
+        var factory = SPI.createContainerEntityManagerFactory(unit, config);
+        var manager = factory.createEntityManager();
+        return new Unit(dataSource, manager);
+    }
 
     @Override
     public Stream<PlayerData> getPlayerData() {
@@ -41,6 +78,15 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 .setParameter("playerId", playerId)
                 .getResultStream()
                 .findAny();
+    }
+
+    @Override
+    public AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId) {
+        return new AlmostComplete<>(
+                () -> getPlayerData(playerId)
+                        .orElseGet(() -> new PlayerData(playerId, new HashMap<>(), new HashMap<>())),
+                this::save
+        );
     }
 
     @Override
@@ -57,7 +103,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
-        return manager.createQuery("select i from Infraction i where i.playerId = :playerId", Infraction.class)
+        return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
                 .setParameter("playerId", playerId)
                 .getResultStream();
     }
@@ -67,15 +113,15 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         var transaction = manager.getTransaction();
 
         synchronized (transaction) {
-                boolean nameExists = manager.createQuery("""
-                                select count(pd) > 0
-                                from PlayerData pd
-                                join pd.knownNames kn
-                                where pd.id = :uuid and key(kn) = :name
-                                """, Boolean.class)
-                        .setParameter("uuid", uuid)
-                        .setParameter("name", name)
-                        .getSingleResult();
+            boolean nameExists = manager.createQuery("""
+                            select count(pd) > 0
+                            from PlayerData pd
+                            join pd.knownNames kn
+                            where pd.id = :uuid and key(kn) = :name
+                            """, Boolean.class)
+                    .setParameter("uuid", uuid)
+                    .setParameter("name", name)
+                    .getSingleResult();
 
             try {
                 transaction.begin();
@@ -102,13 +148,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 throw e;
             }
         }
-    }
-
-    public HibernateEntityService(BanMod mod) {
-        this.mod = mod;
-        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
-        this.manager = unit.manager;
-        addChildren(unit);
     }
 
     @Override
@@ -156,31 +195,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             }
         }
         return c;
-    }
-
-    public static Unit buildPersistenceUnit(
-            DatabaseInfo info,
-            Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
-            @MagicConstant(stringValues = {"update", "validate"}) String hbm2ddl) {
-        var config = Map.of(
-                "hibernate.connection.driver_class", info.type().getDriverClass().getCanonicalName(),
-                "hibernate.connection.url", info.url(),
-                "hibernate.connection.username", info.user(),
-                "hibernate.connection.password", info.pass(),
-                "hibernate.dialect", info.type().getDialectClass().getCanonicalName(),
-                //"hibernate.show_sql", String.valueOf(isDebug()),
-                "hibernate.hbm2ddl.auto", hbm2ddl
-        );
-        var dataSource = new HikariDataSource() {{
-            setDriverClassName(info.type().getDriverClass().getCanonicalName());
-            setJdbcUrl(info.url());
-            setUsername(info.user());
-            setPassword(info.pass());
-        }};
-        var unit = unitProvider.apply(dataSource);
-        var factory = SPI.createContainerEntityManagerFactory(unit, config);
-        var manager = factory.createEntityManager();
-        return new Unit(dataSource, manager);
     }
 
     public record Unit(HikariDataSource dataSource, EntityManager manager) implements UncheckedCloseable {

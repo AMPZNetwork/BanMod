@@ -29,6 +29,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
     @Override
     public ImportResult run() {
         int[] count = new int[]{0, 0, 0};
+        var service = mod.getEntityService();
         var convert0 = Stream.concat(
                         unit.manager().createQuery("select m from Mute m", Mute.class)
                                 .getResultStream(),
@@ -46,7 +47,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                         count[1] += 1;
                     } else throw new AssertionError("invalid entity type");
                     return Infraction.builder()
-                            .playerId(it.getUuid())
+                            .player(service.getOrCreatePlayerData(it.getUuid()).get())
                             .category(mod.getDefaultCategory())
                             .punishment(punishment)
                             .issuer(it.getBannedByUuid())
@@ -56,7 +57,6 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                             .reason(it.getReason())
                             .build();
                 }).toArray();
-        var service = mod.getEntityService();
         service.save(convert0);
 
         var convert1 = unit.manager()

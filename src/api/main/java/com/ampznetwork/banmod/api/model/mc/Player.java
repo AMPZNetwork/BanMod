@@ -19,6 +19,7 @@ import static org.comroid.api.net.REST.Method.GET;
 @Value
 @AllArgsConstructor
 @RequiredArgsConstructor
+@Deprecated(forRemoval = true)
 @Slf4j(topic = BanMod.Strings.AddonName)
 public class Player implements UUIDContainer, Named {
     UUID id;

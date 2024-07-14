@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 @Value
 public class VanillaBansImporter implements Importer {
-    BanMod banMod;
+    BanMod mod;
 
     @Override
     public ImportResult run() {
@@ -27,17 +27,18 @@ public class VanillaBansImporter implements Importer {
                 var banFile = new FileInputStream("banned-players.json");
                 //var ipBanFile = new FileInputStream("banned-ips.json")
         ) {
+            var service = mod.getEntityService();
             mapper.readValues(mapper.createParser(banFile), Ban.class)
                     .forEachRemaining(ban -> list.add(Infraction.builder()
-                            .playerId(ban.getUuid())
-                            .category(banMod.getDefaultCategory())
+                            .player(service.getOrCreatePlayerData(ban.getUuid()).get())
+                            .category(mod.getDefaultCategory())
                             .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))
                             .reason(ban.getReason())
                             .build()));
 
             // todo: ip bans
 
-            banMod.getEntityService().save(list.toArray());
+            service.save(list.toArray());
             return new ImportResult(0, list.size(), 0);
         } catch (FileNotFoundException e) {
             return ImportResult.ZERO;

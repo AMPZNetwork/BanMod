@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,7 +55,7 @@ public class PunishmentCategory implements Named, Described, DefaultReason {
     public Optional<Punishment> calculatePunishment(int rep) {
         return punishmentThresholds.entrySet().stream()
                 .filter(e -> e.getKey() < rep)
-                .min(Comparator.comparingInt(Map.Entry::getKey))
+                .min(Punishment.BY_SEVERITY)
                 .map(Map.Entry::getValue);
     }
 }

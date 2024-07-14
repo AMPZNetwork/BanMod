@@ -17,15 +17,19 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.UUID;
 
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.openUrl;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
+import static org.comroid.api.Polyfill.ordinal;
 import static org.comroid.api.Polyfill.parseDuration;
 import static org.comroid.api.func.util.Command.Arg;
 
@@ -64,7 +68,7 @@ public class BanModCommands {
 
                 var duplicates = infractions.stream()
                         .sorted(Infraction.BY_NEWEST)
-                        .filter(infr -> !playerIds.add(infr.getPlayerId()))
+                        .filter(infr -> !playerIds.add(infr.getPlayer().getId()))
                         .toArray();
                 c = service.delete(duplicates);
                 text.append(text("\nRemoved ")
@@ -81,7 +85,7 @@ public class BanModCommands {
                 var affected = service.getPlayerData()
                         .filter(data -> data.getKnownNames().size() > 1 || data.getKnownIPs().size() > 1)
                         .peek(data -> {
-                            var knownName = data.getLastKnownName();
+                            var knownName = data.getOrFetchUsername().join();
                             var knownIp = data.getLastKnownIp();
                             var now = now();
                             data.setKnownNames(new HashMap<>() {{
@@ -124,7 +128,7 @@ public class BanModCommands {
         for (var knownName : data.getKnownNames().entrySet())
             text = text.append(text("\n- "))
                     .append(text(knownName.getKey())
-                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.textExpiryTime(knownName.getValue()))))
+                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.formatTimestamp(knownName.getValue()))))
                             .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Known IPs:"));
@@ -136,7 +140,7 @@ public class BanModCommands {
         else for (var knownIp : knownIPs.entrySet())
             text = text.append(text("\n- "))
                     .append(text(knownIp.getKey())
-                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.textExpiryTime(knownIp.getValue()))))
+                            .hoverEvent(showText(text("Last seen: " + BanMod.Displays.formatTimestamp(knownIp.getValue()))))
                             .color(YELLOW))
                     .append(text("\n"));
         text = text.append(text("Active Infractions:"));
@@ -147,7 +151,7 @@ public class BanModCommands {
             text = text.append(text("\n- (none)").color(GRAY));
         else for (var infraction : infractions)
             text = text.append(text("\n- "))
-                    .append(infraction.getPunishment().toComponent())
+                    .append(infraction.getPunishment().toComponent(true))
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
                             ? "Server"
@@ -186,7 +190,7 @@ public class BanModCommands {
             });
         else mod.getPlayerAdapter().send(tgt, BanMod.Displays.mutedTextUser(result));
 
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -213,7 +217,7 @@ public class BanModCommands {
                 .build();
         if (!mod.getEntityService().save(infraction))
             throw BanMod.Resources.couldNotSaveError();
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -229,7 +233,7 @@ public class BanModCommands {
         var infraction = BanMod.Resources.standardInfraction(mod, mod.getDefaultCategory(), tgt, issuer, reason).expires(null).build();
         if (!mod.getEntityService().save(infraction))
             throw BanMod.Resources.couldNotSaveError();
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -264,7 +268,7 @@ public class BanModCommands {
             throw BanMod.Resources.couldNotSaveError();
         var text = BanMod.Displays.kickedTextUser(infraction.toResult());
         mod.getPlayerAdapter().kick(tgt, text);
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -293,7 +297,7 @@ public class BanModCommands {
         if (!mod.getEntityService().save(infraction))
             throw BanMod.Resources.couldNotSaveError();
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -313,7 +317,7 @@ public class BanModCommands {
         if (!mod.getEntityService().save(infraction))
             throw BanMod.Resources.couldNotSaveError();
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(mod, infraction);
+        return BanMod.Displays.textPunishmentFull(infraction);
     }
 
     @Command
@@ -345,22 +349,61 @@ public class BanModCommands {
         @Command
         public Component list(BanMod mod) {
             // todo: use book adapter
-            var text = text("Available Punishment categories:");
-            for (var category : mod.getEntityService().getCategories().toList())
-                text = text.append(text("\n"))
-                        .append(text(category.getName()).color(AQUA))
-                        .append(text(" punishes with "))
-                        .append(text(category.getPunishmentThresholds()
-                                .entrySet().stream()
-                                .sorted(Comparator.comparingInt(Map.Entry::getKey))
-                                .map(e -> "%dx %s".formatted(e.getKey(), e.getValue()))
-                                .collect(Collectors.joining(",")))
-                                .color(RED))
-                        .append(text("\n- Base Duration: "))
-                        .append(text(category.getBaseDuration().toString()).color(YELLOW))
+            var text = text().append(text("Available Punishment categories:").decorate(BOLD));
+            for (var category : mod.getEntityService().getCategories().toList()) {
+                text.append(text("\n"))
+                        .append(text(category.getName())
+                                .color(AQUA).decorate(UNDERLINED))
+                        .append(text(" punishes with: "));
+                var thresholds = category.getPunishmentThresholds()
+                        .entrySet().stream()
+                        .sorted(Punishment.BY_SEVERITY)
+                        .toList();
+                var fltpd = thresholds.stream()
+                        .filter(e -> !e.getValue().isInherentlyTemporary())
+                        .mapToInt(Map.Entry::getKey)
+                        .findFirst()
+                        .orElse(0) - 1;
+                for (int i = 0; i < thresholds.size(); i++) {
+                    var e = thresholds.get(i);
+                    var punishment = e.getValue();
+                    int startsAtRepetition = e.getKey();
+                    text.append(text("\n-> From the "))
+                            .append(text(startsAtRepetition == 0 ? "first"
+                                    : ordinal(startsAtRepetition + 1)).color(AQUA))
+                            .append(text(" time: "))
+                            .append(punishment.toComponent(false));
+                    if (!punishment.isInherentlyTemporary()) {
+                        if (i + 1 >= thresholds.size())
+                            text.append(text(" (at least "))
+                                    .append(text(BanMod.Displays.formatDuration(category
+                                            .calculateDuration(startsAtRepetition - fltpd - 1)))
+                                            .color(YELLOW))
+                                    .append(text(")"));
+                        else {
+                            text.append(text(" ("));
+                            var nextThreshold = thresholds.get(i + 1).getKey() - 1;
+                            for (var n = fltpd; n < nextThreshold; n++) {
+                                var repetition = n - fltpd;
+                                text.append(text(BanMod.Displays.formatDuration(category
+                                        .calculateDuration(repetition)))
+                                        .color(YELLOW));
+                                if (n >= 5 && i + 1 >= thresholds.size()) {
+                                    text.append(text("..."));
+                                    break;
+                                } else if (n + 1 < nextThreshold)
+                                    text.append(text("; "));
+                            }
+                            text.append(text(")"));
+                        }
+                    }
+                }
+                text.append(text("\n- Base Duration: "))
+                        .append(text(BanMod.Displays.formatDuration(category.getBaseDuration())).color(YELLOW))
                         .append(text("\n- Exponent Base: "))
                         .append(text(category.getRepetitionExpBase()).color(YELLOW));
-            return text;
+            }
+            return text.build();
         }
 
         @Command

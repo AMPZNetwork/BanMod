@@ -10,6 +10,10 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.comroid.api.attr.Named;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
+import java.util.Map;
 
 @Getter
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public enum Punishment implements Named, DefaultReason {
     Debuff(false, "debuffed", NamedTextColor.LIGHT_PURPLE),
     Ban(false, "banned", NamedTextColor.DARK_RED);
 
+    public static final Comparator<Map.Entry<@NotNull Integer, Punishment>> BY_SEVERITY = Comparator.comparingInt(Map.Entry::getKey);
     boolean inherentlyTemporary;
     String adverb;
     TextColor color;
@@ -38,7 +43,7 @@ public enum Punishment implements Named, DefaultReason {
         return name();
     }
 
-    public TextComponent toComponent() {
-        return Component.text(adverb).color(color);
+    public TextComponent toComponent(boolean useAdverb) {
+        return Component.text(useAdverb ? adverb : name()).color(color);
     }
 }

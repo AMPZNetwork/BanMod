@@ -12,12 +12,14 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
+import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -64,15 +66,16 @@ public interface BanMod {
 
         public static Infraction.Builder standardInfraction(BanMod mod,
                                                             PunishmentCategory category,
-                                                            UUID target,
+                                                            UUID playerId,
                                                             @Nullable UUID issuer,
                                                             @Nullable String reason) {
-            var rep = mod.getEntityService().findRepetition(target, category);
+            var rep = mod.getEntityService().findRepetition(playerId, category);
             var punish = category.calculatePunishment(rep).orElse(Punishment.Kick);
             var now = now();
             var expire = category.calculateDuration(rep);
+            var target = mod.getEntityService().getOrCreatePlayerData(playerId).get();
             return Infraction.builder()
-                    .playerId(target)
+                    .player(target)
                     .category(category)
                     .punishment(punish)
                     .issuer(issuer)
@@ -108,7 +111,7 @@ public interface BanMod {
 
             forwarder.accept(playerId, msgUser);
             playerAdapter.broadcast(permission, msgNotify);
-            mod.log().info("User %s is %#s (%s)".formatted(name, punishment, Displays.textExpiryTime(result.expires())));
+            mod.log().info("User %s is %#s (%s)".formatted(name, punishment, Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
@@ -137,18 +140,32 @@ public interface BanMod {
 
     @UtilityClass
     final class Displays {
+        @NotNull
+        public static String formatTimestamp(Instant expiry) {
+            var dateTime = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
+            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            return dateTime.format(formatter);
+        }
+
+        @NotNull
+        public static String formatDuration(Duration duration) {
+            return Polyfill.durationString(duration);
+        }
+
+        @NotNull
         public Component infractionList(BanMod banMod, int page, Punishment punishment) {
             final var infractions = banMod.getEntityService().getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
+                    .distinct()
                     .toList();
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
-            // todo: use book adapter here
             return infractions.stream()
+                    .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer().getLastKnownName().orElse("")))
                     .skip(Math.max(0, (page - 1L) * Resources.ENTRIES_PER_PAGE))
                     .limit(Resources.ENTRIES_PER_PAGE)
                     .map(infraction -> text("\n- ")
-                            .append(textPunishmentFull(banMod, infraction)))
+                            .append(textPunishmentFull(infraction)))
                     .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                             .append(text("(none)").color(GRAY))))
                     .collect(Collector.of(() -> text()
@@ -161,12 +178,13 @@ public interface BanMod {
                             ComponentBuilder::build));
         }
 
-        public Component textPunishmentFull(BanMod banMod, Infraction infraction) {
-            var username = banMod.getPlayerAdapter().getName(infraction.getPlayerId());
+        @NotNull
+        public Component textPunishmentFull(Infraction infraction) {
+            var username = infraction.getPlayer().getOrFetchUsername().join();
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))
-                    .append(infraction.getPunishment().toComponent());
+                    .append(infraction.getPunishment().toComponent(true));
 
             var reason = infraction.getReason();
             if (reason != null)
@@ -176,17 +194,12 @@ public interface BanMod {
             return text.append(textExpiry(infraction.getExpires()));
         }
 
-        public static @NotNull String textExpiryTime(Instant expiry) {
-            var dateTime = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
-            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            return dateTime.format(formatter);
-        }
-
-        public static @NotNull TextComponent textExpiry(Instant expiry) {
+        @NotNull
+        public static TextComponent textExpiry(Instant expiry) {
             var text = text();
             if (expiry != null && !expiry.isBefore(Infraction.TOO_EARLY)) {
                 text.append(text(" (until "))
-                        .append(text(textExpiryTime(expiry)).color(YELLOW))
+                        .append(text(formatTimestamp(expiry)).color(YELLOW))
                         .append(text(")"));
             } else text.append(text(" ("))
                     .append(text("permanently").color(RED))
@@ -250,7 +263,7 @@ public interface BanMod {
                                 .color(DARK_RED).decorate(BOLD))
                         .append(text(".").color(RED));
             else text.append(text("ends at ").color(RED))
-                    .append(text(textExpiryTime(result.expires()))
+                    .append(text(formatTimestamp(result.expires()))
                             .color(YELLOW))
                     .append(text(".").color(RED));
 

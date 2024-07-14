@@ -6,6 +6,7 @@ import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Value;
+import org.comroid.api.func.util.AlmostComplete;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,10 @@ import java.util.stream.Stream;
 @Value
 public class LocalEntityService implements EntityService {
     BanMod banMod;
+
+    {
+        PlayerData.CACHE_NAME = this::pingUsernameCache;
+    }
 
     // todo
 
@@ -25,6 +30,11 @@ public class LocalEntityService implements EntityService {
     @Override
     public Optional<PlayerData> getPlayerData(UUID playerId) {
         return Optional.empty();
+    }
+
+    @Override
+    public AlmostComplete<PlayerData> getOrCreatePlayerData(UUID playerId) {
+        return null;
     }
 
     @Override

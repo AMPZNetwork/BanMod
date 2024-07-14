@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.spigot.adp.internal;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
-import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
@@ -32,7 +31,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
 
     @Override
     public UUID getId(String name) {
-        final var fetch = PlayerAdapter.fetchId(banMod, name);
+        final var fetch = PlayerData.fetchId(name);
         return Arrays.stream(Bukkit.getOfflinePlayers())
                 .filter(player -> name.equals(player.getName()))
                 .findAny()
@@ -47,10 +46,10 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
 
     @Override
     public String getName(UUID playerId) {
-        final var fetch = PlayerAdapter.fetchName(banMod, playerId);
+        final var fetch = PlayerData.fetchUsername(playerId);
         return Optional.ofNullable(banMod.getServer().getOfflinePlayer(playerId).getName())
                 .or(() -> banMod.getEntityService().getPlayerData(playerId)
-                        .flatMap(pd -> Optional.ofNullable(pd.getLastKnownName())))
+                        .flatMap(PlayerData::getLastKnownName))
                 .orElseGet(fetch::join);
     }
 
@@ -130,10 +129,11 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Stream<Player> getCurrentPlayers() {
+    public Stream<PlayerData> getCurrentPlayers() {
+        var service = banMod.getEntityService();
         return banMod.getServer()
                 .getOnlinePlayers().stream()
-                .map(player -> new Player(player.getUniqueId(), player.getName()))
-                .peek(player -> banMod.getEntityService().pingUsernameCache(player.getId(), player.getName()));
+                .peek(player -> service.pingUsernameCache(player.getUniqueId(), player.getName()))
+                .flatMap(player -> service.getOrCreatePlayerData(player.getUniqueId()).stream());
     }
 }

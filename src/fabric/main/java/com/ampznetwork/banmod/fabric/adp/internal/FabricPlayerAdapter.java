@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.fabric.adp.internal;
 
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.adp.BookAdapter;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
-import com.ampznetwork.banmod.api.model.mc.Player;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
@@ -118,10 +118,11 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Stream<Player> getCurrentPlayers() {
+    public Stream<PlayerData> getCurrentPlayers() {
+        var service = banMod.getEntityService();
         return banMod.getServer().getPlayerManager()
                 .getPlayerList().stream()
-                .map(player -> new Player(player.getUuid(), player.getName().getString()))
-                .peek(player -> banMod.getEntityService().pingUsernameCache(player.getId(), player.getName()));
+                .peek(player -> service.pingUsernameCache(player.getUuid(), player.getName().getString()))
+                .flatMap(player -> service.getOrCreatePlayerData(player.getUuid()).stream());
     }
 }
