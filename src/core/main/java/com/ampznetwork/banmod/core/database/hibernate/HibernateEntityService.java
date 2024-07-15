@@ -225,7 +225,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @SuppressWarnings("UnusedReturnValue")
     public <T> T wrapQuery(Function<Query, T> executor, Query query) {
-        return wrapTransaction(new Supplier<T>() {
+        return wrapTransaction(new Supplier<>() {
             @Override
             public T get() {
                 return executor.apply(query);

@@ -33,10 +33,10 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
         // find recently used idents
         //noinspection unchecked
-        var occupied = service.wrapQuery(Query::getResultStream, manager.createQuery("""
+        var occupied = service.wrapQuery(Query::getResultStream, manager.createNativeQuery("""
                 select BIT_OR(ne.ident)
-                from NotifyEvent ne
-                group by ne.ident
+                from banmod_notify ne
+                group by ne.ident, ne.timestamp
                 order by ne.timestamp desc
                 limit 50
                 """, Long.class)).mapToLong(x -> (long) x).findAny().orElse(0);
