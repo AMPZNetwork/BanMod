@@ -2,12 +2,12 @@ package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.DbObject;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.banmod.core.database.PollingMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;
@@ -28,6 +28,9 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -43,17 +46,25 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     public               Cache<String, PunishmentCategory> Categories;
     BanMod           banMod;
     EntityManager    manager;
-    MessagingService messagingService;
+    ScheduledExecutorService scheduler;
+    PollingMessagingService  messagingService;
 
     public HibernateEntityService(BanMod mod) {
         this.banMod = mod;
         var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
         this.manager          = unit.manager;
-        this.messagingService = new MessagingService(mod);
-        addChildren(unit, messagingService);
+        this.scheduler        = Executors.newScheduledThreadPool(2);
+        this.messagingService = new PollingMessagingService(this);
+        addChildren(unit, scheduler, messagingService);
+
         this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
         this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
         this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
+        scheduler.scheduleAtFixedRate(() -> {
+            Players.clear();
+            Infractions.clear();
+            Categories.clear();
+        }, 5, 5, TimeUnit.MINUTES);
     }
 
     public static Unit buildPersistenceUnit(
@@ -82,21 +93,21 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new Unit(dataSource, manager);
     }
 
-    private Optional<PunishmentCategory> getCategory(String name) {
+    @Override public Optional<PunishmentCategory> getCategory(String name) {
         return manager.createQuery("select pc from PunishmentCategory  pc where pc.name = :name", PunishmentCategory.class)
                 .setParameter("name", name)
                 .getResultStream()
                 .findAny();
     }
 
-    private Optional<Infraction> getInfraction(UUID id) {
+    @Override public Optional<Infraction> getInfraction(UUID id) {
         return manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findAny();
     }
 
-    private void uncache(Object id, DbObject obj) {
+    @Override public void uncache(Object id, DbObject obj) {
     }
 
     @Override

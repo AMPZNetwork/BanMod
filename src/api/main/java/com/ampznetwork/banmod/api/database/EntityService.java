@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.BanMod;
+import com.ampznetwork.banmod.api.entity.DbObject;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -34,6 +35,14 @@ public interface EntityService extends LifeCycle {
     BanMod getBanMod();
 
     MessagingService getMessagingService();
+
+    java.util.concurrent.ScheduledExecutorService getScheduler();
+
+    Optional<PunishmentCategory> getCategory(String name);
+
+    Optional<Infraction> getInfraction(UUID id);
+
+    void uncache(Object id, DbObject obj);
 
     Stream<PlayerData> getPlayerData();
 
