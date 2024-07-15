@@ -1,7 +1,7 @@
-banmod:
-  database:
-    type: MariaDB
-    url: jdbc:mariadb://localhost:3306/dev
-    username: dev
-    password: dev
-  banAppealUrl: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+database:
+  type: MariaDB
+  url: jdbc:mariadb://localhost:3306/dev
+  username: dev
+  password: dev
+ban-appeal-url: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+allow-unsafe-connections: true
