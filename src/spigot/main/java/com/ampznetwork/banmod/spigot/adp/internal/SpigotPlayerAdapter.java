@@ -67,8 +67,8 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public TriState checkPermission(UUID playerId, String _key, boolean explicit) {
-        var key = _key.endsWith(".*") ? _key.substring(0, _key.length() - 1) : _key;
+    public TriState checkPermission(UUID playerId, String key0, boolean explicit) {
+        var key = key0.endsWith(".*") ? key0.substring(0, key0.length() - 1) : key0;
         var player = banMod.getServer().getPlayer(playerId);
         if (player == null)
             return TriState.NOT_SET;
