@@ -30,17 +30,18 @@ public class PollingMessagingService extends Component.Base implements Messaging
         this.service = service;
         this.manager = manager;
 
-        service.getScheduler().scheduleWithFixedDelay(this::pollNotifier, 5, interval.toMillis(), TimeUnit.MILLISECONDS);
+        service.getScheduler()
+                .scheduleWithFixedDelay(this::pollNotifier, 5, interval.toMillis(), TimeUnit.MILLISECONDS);
 
         // find recently used idents
         //noinspection unchecked
         var occupied = service.wrapQuery(Query::getResultList, manager.unwrap(Session.class)
                         .createSQLQuery("""
-                select BIT_OR(ne.ident)
-                from banmod_notify ne
-                group by ne.ident, ne.timestamp
-                order by ne.timestamp desc
-                limit 50
+                                select BIT_OR(ne.ident)
+                                from banmod_notify ne
+                                group by ne.ident, ne.timestamp
+                                order by ne.timestamp desc
+                                limit 50
                                 """))
                 .stream()
                 .mapToLong(x -> (long) x)
@@ -63,19 +64,27 @@ public class PollingMessagingService extends Component.Base implements Messaging
         var stopwatch = Stopwatch.start(this);
         var events = service.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
             var handle = Polyfill.<List<NotifyEvent>>uncheckedCast(manager.createNativeQuery("""
-                    select ne.*
-                    from banmod_notify ne
-                    where ne.ident != :me and (ne.acknowledge & :me) = 0
-                    order by ne.timestamp
-                    """, NotifyEvent.class).getResultList());
+                            select ne.*
+                            from banmod_notify ne
+                            where ne.ident != :me and (ne.acknowledge & :me) = 0
+                            order by ne.timestamp
+                            """, NotifyEvent.class)
+                    .setParameter("me", me)
+                    .getResultList());
             for (var event : handle.toArray(new NotifyEvent[0])) {
                 var ack = manager.createNativeQuery("""
-                        update banmod_notify ne
-                        set ne.acknowledge = (ne.acknowledge | :me)
-                        where ne.ident = :ident and ne.timestamp = :timestamp
-                        """).setParameter("me", me).setParameter("ident", event.getIdent()).setParameter("timestamp", event.getTimestamp()).executeUpdate();
+                                update banmod_notify ne
+                                set ne.acknowledge = (ne.acknowledge | :me)
+                                where ne.ident = :ident and ne.timestamp = :timestamp
+                                """)
+                        .setParameter("me", me)
+                        .setParameter("ident", event.getIdent())
+                        .setParameter("timestamp", event.getTimestamp())
+                        .executeUpdate();
                 if (ack != 1) {
-                    service.getBanMod().log().warn("Failed to acknowledge notification {}; ignoring it", event);
+                    service.getBanMod()
+                            .log()
+                            .warn("Failed to acknowledge notification {}; ignoring it", event);
                     handle.remove(event);
                 }
             }
@@ -92,12 +101,14 @@ public class PollingMessagingService extends Component.Base implements Messaging
                 .log()
                 .debug(msg);
 
-        service.getScheduler().execute(() -> dispatch(events));
+        service.getScheduler()
+                .execute(() -> dispatch(events));
     }
 
     @Override
     public AlmostComplete<NotifyEvent.Builder> push() {
-        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(me).build()));
+        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(me)
+                .build()));
     }
 
     private void dispatch(NotifyEvent... events) {
