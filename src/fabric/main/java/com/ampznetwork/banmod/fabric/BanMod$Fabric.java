@@ -5,13 +5,9 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
-import com.ampznetwork.banmod.core.cmd.PermissionAdapter;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
-import com.ampznetwork.banmod.fabric.adp.perm.FabricLuckPermsPermissionAdapter;
-import com.ampznetwork.banmod.fabric.adp.perm.FabricPermissionAdapter;
-import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
@@ -90,17 +86,8 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
                 log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
         });
 
-        var permAdapter = SoftDepend.type("net.luckperms.api.LuckPerms").wrap()
-                .map($ -> LuckPermsProvider.get())
-                .map(lp -> {
-                    var permissionAdapter = new FabricLuckPermsPermissionAdapter(this, lp);
-                    lp.getContextManager().registerCalculator(permissionAdapter);
-                    return (PermissionAdapter) permissionAdapter;
-                })
-                .orElseGet(() -> new FabricPermissionAdapter(this));
-
         this.cmdr = new Command.Manager() {{
-            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this, permAdapter));
+            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
         }};
         this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
         cmdr.register(BanModCommands.class);

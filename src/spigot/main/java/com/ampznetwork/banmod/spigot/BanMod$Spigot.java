@@ -5,13 +5,9 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
-import com.ampznetwork.banmod.core.cmd.PermissionAdapter;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
-import com.ampznetwork.banmod.spigot.adp.perm.SpigotLuckPermsPermissionAdapter;
-import com.ampznetwork.banmod.spigot.adp.perm.SpigotPermissionAdapter;
-import com.ampznetwork.banmod.spigot.adp.perm.VaultPermissionAdapter;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
@@ -87,24 +83,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         saveDefaultConfig();
         this.config = super.getConfig();
 
-        var permAdapter = Stream.ofNullable(Bukkit.getPluginManager().getPlugin("LuckPerms"))
-                .flatMap(cast(LuckPerms.class))
-                .findAny()
-                .map(lp -> {
-                    var permissionAdapter = new SpigotLuckPermsPermissionAdapter(this, lp);
-                    lp.getContextManager().registerCalculator(permissionAdapter);
-                    return (PermissionAdapter) permissionAdapter;
-                })
-                .or(() -> Stream.ofNullable(Bukkit.getPluginManager().getPlugin("Vault"))
-                        .findAny()
-                        .flatMap($ -> Optional.ofNullable(getServer().getServicesManager()
-                                .getRegistration(net.milkbowl.vault.permission.Permission.class)))
-                        .map(RegisteredServiceProvider::getProvider)
-                        .map(vault -> new VaultPermissionAdapter(this, vault)))
-                .orElseGet(() -> new SpigotPermissionAdapter(this));
-
         this.cmdr = new Command.Manager() {{
-            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Spigot.this, permAdapter));
+            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Spigot.this));
         }};
         this.adapter = cmdr.new Adapter$Spigot(this);
         cmdr.register(BanModCommands.class);
