@@ -9,7 +9,6 @@ import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
@@ -103,17 +102,21 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     }
 
     @Override
-    @SneakyThrows
     public void onDisable() {
-        this.entityService.terminate();
+        try {
+            if (entityService != null)
+                this.entityService.terminate();
+        } catch (Throwable t) {
+            log().error("Error while disabling", t);
+        }
     }
 
     @Override
-    @SneakyThrows
     public void onEnable() {
         this.entityService = new HibernateEntityService(this);
         this.defaultCategory = entityService.defaultCategory();
 
-        Bukkit.getPluginManager().registerEvents(eventDispatch, this);
+        Bukkit.getPluginManager()
+                .registerEvents(eventDispatch, this);
     }
 }

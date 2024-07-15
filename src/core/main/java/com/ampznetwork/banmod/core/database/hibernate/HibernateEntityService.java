@@ -39,6 +39,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static org.comroid.api.func.util.Debug.*;
+
 @Value
 @EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
@@ -84,7 +86,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 "hibernate.dialect", info.type()
                         .getDialectClass()
                         .getCanonicalName(),
-                //"hibernate.show_sql", String.valueOf(isDebug()),
+                "hibernate.show_sql", String.valueOf(isDebug()),
                 "hibernate.hbm2ddl.auto", hbm2ddl);
         var dataSource = new HikariDataSource() {{
             setDriverClassName(info.type()

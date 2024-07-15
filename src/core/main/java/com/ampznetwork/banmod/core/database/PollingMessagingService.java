@@ -1,6 +1,5 @@
 package com.ampznetwork.banmod.core.database;
 
-import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
@@ -55,7 +54,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
         var  rng = new Random();
         do {
             x = 1L << rng.nextInt(64);
-        } while ((x & ~occupied) != 0);
+        } while (x == 0 || (x & ~occupied) != 0);
         this.ident = x;
 
         // send HELLO
@@ -94,7 +93,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
         });
 
         var duration = stopwatch.stop();
-        var msg      = "Accepting %d events took %s".formatted(events.length, BanMod.Displays.formatDuration(duration));
+        var msg = "Accepting %d events took %sms".formatted(events.length, duration.toMillis());
         if (Debug.isDebug()) // best log level handling EVER
             service.getBanMod()
                     .log()

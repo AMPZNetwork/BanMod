@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
 import org.jetbrains.annotations.Nullable;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
@@ -30,11 +31,11 @@ import java.util.UUID;
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class NotifyEvent implements DbObject {
-    @Id                               long    ident;
-    @Id @lombok.Builder.Default       Instant timestamp   = Instant.now();
-    @lombok.Builder.Default           Type    type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable UUID    data        = null;
-    @lombok.Builder.Default           long    acknowledge = 0;
+    @Id @Column(columnDefinition = "bigint")                     long    ident;
+    @Id @lombok.Builder.Default                                  Instant timestamp   = Instant.now();
+    @lombok.Builder.Default                                      Type    type        = Type.SYNC;
+    @lombok.Builder.Default @Nullable                            UUID    data        = null;
+    @lombok.Builder.Default @Column(columnDefinition = "bigint") long    acknowledge = 0;
 
     public enum Type implements Named {
         /**

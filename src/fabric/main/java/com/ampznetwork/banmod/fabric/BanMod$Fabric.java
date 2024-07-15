@@ -10,7 +10,6 @@ import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -111,8 +110,12 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     }
 
     @Override
-    @SneakyThrows
     public void terminate() {
-        entityService.terminate();
+        try {
+            if (entityService != null)
+                entityService.terminate();
+        } catch (Throwable t) {
+            log().error("Error while disabling", t);
+        }
     }
 }
