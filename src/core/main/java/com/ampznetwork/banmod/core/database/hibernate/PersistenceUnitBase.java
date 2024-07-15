@@ -19,9 +19,9 @@ import java.util.Properties;
 @Value
 @NonFinal
 public abstract class PersistenceUnitBase implements PersistenceUnitInfo {
-    String persistenceUnitName;
+    String       persistenceUnitName;
     HikariDataSource dataSource;
-    URL jarUrl;
+    URL          jarUrl;
     List<String> classes;
 
     @Override

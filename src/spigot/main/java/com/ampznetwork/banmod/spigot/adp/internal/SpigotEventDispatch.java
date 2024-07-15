@@ -30,7 +30,7 @@ public class SpigotEventDispatch extends EventDispatchBase implements Listener {
                 });
         } catch (Throwable t) {
             handleThrowable(playerId, t, legacySection()::serialize,
-                    component -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, component));
+                            component -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, component));
         }
     }
 

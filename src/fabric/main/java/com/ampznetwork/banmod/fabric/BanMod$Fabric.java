@@ -35,23 +35,14 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final FabricPlayerAdapter playerAdapter = new FabricPlayerAdapter(this);
-    private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);
-    private Config config = Config.createAndLoad();
-    private MinecraftServer server;
-    private Command.Manager cmdr;
-    private Command$Manager$Adapter$Fabric adapter;
-    private EntityService entityService;
-    private PunishmentCategory defaultCategory;
-
-    public static Text component2text(Component component) {
-        return Text.Serializer.fromJson(gson().serialize(component));
-    }
-
-    @Override
-    public Logger log() {
-        return log;
-    }
+    private final FabricPlayerAdapter            playerAdapter = new FabricPlayerAdapter(this);
+    private final FabricEventDispatch            eventDispatch = new FabricEventDispatch(this);
+    private       Config                         config        = Config.createAndLoad();
+    private       MinecraftServer                server;
+    private       Command.Manager                cmdr;
+    private       Command$Manager$Adapter$Fabric adapter;
+    private       EntityService                  entityService;
+    private       PunishmentCategory             defaultCategory;
 
     @Override
     public DatabaseInfo getDatabaseInfo() {
@@ -63,8 +54,23 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     }
 
     @Override
+    public @Nullable String getBanAppealUrl() {
+        return config.banAppealUrl();
+    }
+
+    @Override
+    public Logger log() {
+        return log;
+    }
+
+    @Override
     public void reload() {
         config = Config.createAndLoad();
+    }
+
+    @Override
+    public boolean allowUnsafeConnections() {
+        return config.allowUnsafeConnections();
     }
 
     @Override
@@ -100,13 +106,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         entityService.terminate();
     }
 
-    @Override
-    public @Nullable String getBanAppealUrl() {
-        return config.banAppealUrl();
-    }
-
-    @Override
-    public boolean allowUnsafeConnections() {
-        return config.allowUnsafeConnections();
+    public static Text component2text(Component component) {
+        return Text.Serializer.fromJson(gson().serialize(component));
     }
 }

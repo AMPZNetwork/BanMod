@@ -38,17 +38,19 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
     }
 
     @Override
-    public void onLoginStart(ServerLoginNetworkHandler handler,
-                             MinecraftServer server,
-                             PacketSender sender,
-                             ServerLoginNetworking.LoginSynchronizer synchronizer) {
+    public void onLoginStart(
+            ServerLoginNetworkHandler handler,
+            MinecraftServer server,
+            PacketSender sender,
+            ServerLoginNetworking.LoginSynchronizer synchronizer
+    ) {
         // thank you fabric devs for this very useful and reasonable method
         var info = handler.getConnectionInfo();
         var matcher = ConInfoPattern.matcher(info);
 
         if (!matcher.matches()) {
             mod.log().warn(("Could not parse connection info string. Please report this at %s" +
-                            "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
+                    "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
             return;
         }
 
@@ -69,7 +71,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
     @Override
     public boolean allowChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
         var playerId = sender.getUuid();
-        var result = player(playerId);
+        var result  = player(playerId);
         var maySend = !result.isMuted();
         if (!maySend)
             BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {

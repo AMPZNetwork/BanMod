@@ -31,18 +31,51 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
-    private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
-    private FileConfiguration config;
-    private Command.Manager cmdr;
-    @Delegate(types = {TabCompleter.class, CommandExecutor.class})
-    private Command.Manager.Adapter$Spigot adapter;
-    private EntityService entityService;
-    private PunishmentCategory defaultCategory;
+    private final SpigotPlayerAdapter            playerAdapter = new SpigotPlayerAdapter(this);
+    private final SpigotEventDispatch            eventDispatch = new SpigotEventDispatch(this);
+    private       FileConfiguration              config;
+    private       Command.Manager                cmdr;
+    @Delegate(types = { TabCompleter.class, CommandExecutor.class })
+    private       Command.Manager.Adapter$Spigot adapter;
+    private       EntityService                  entityService;
+    private       PunishmentCategory             defaultCategory;
+
+    @Override
+    public DatabaseInfo getDatabaseInfo() {
+        var dbType = EntityService.DatabaseType.valueOf(config.getString("database.type", "h2"));
+        var dbUrl  = config.getString("database.url", "jdbc:h2:file:./BanMod.h2");
+        var dbUser = config.getString("database.username", "sa");
+        var dbPass = config.getString("database.password", "");
+        return new DatabaseInfo(dbType, dbUrl, dbUser, dbPass);
+    }
+
+    @Override
+    public @Nullable String getBanAppealUrl() {
+        var url = getConfig().get("banmod.appealUrl", null);
+        var txt = url == null ? null : url.toString();
+        if (txt != null && txt.isBlank()) txt = null;
+        return txt;
+    }
 
     @Override
     public Logger log() {
         return log;
+    }
+
+    @Override
+    public void reload() {
+        try {
+            onDisable();
+        } catch (Throwable ignored) {
+        }
+        reloadConfig();
+        config = getConfig();
+        onEnable();
+    }
+
+    @Override
+    public boolean allowUnsafeConnections() {
+        return config.getBoolean("banmod.allow-unsafe-connections", false);
     }
 
     @Override
@@ -65,49 +98,16 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     @SneakyThrows
-    public void onEnable() {
-        this.entityService = new HibernateEntityService(this);
-        this.defaultCategory = entityService.defaultCategory();
-
-        Bukkit.getPluginManager().registerEvents(eventDispatch, this);
-    }
-
-    @Override
-    @SneakyThrows
     public void onDisable() {
         this.entityService.terminate();
     }
 
     @Override
-    public void reload() {
-        try {
-            onDisable();
-        } catch (Throwable ignored) {
-        }
-        reloadConfig();
-        config = getConfig();
-        onEnable();
-    }
+    @SneakyThrows
+    public void onEnable() {
+        this.entityService = new HibernateEntityService(this);
+        this.defaultCategory = entityService.defaultCategory();
 
-    @Override
-    public @Nullable String getBanAppealUrl() {
-        var url = getConfig().get("banmod.appealUrl", null);
-        var txt = url == null ? null : url.toString();
-        if (txt != null && txt.isBlank()) txt = null;
-        return txt;
-    }
-
-    @Override
-    public boolean allowUnsafeConnections() {
-        return config.getBoolean("banmod.allow-unsafe-connections", false);
-    }
-
-    @Override
-    public DatabaseInfo getDatabaseInfo() {
-        var dbType = EntityService.DatabaseType.valueOf(config.getString("database.type", "h2"));
-        var dbUrl = config.getString("database.url", "jdbc:h2:file:./BanMod.h2");
-        var dbUser = config.getString("database.username", "sa");
-        var dbPass = config.getString("database.password", "");
-        return new DatabaseInfo(dbType, dbUrl, dbUser, dbPass);
+        Bukkit.getPluginManager().registerEvents(eventDispatch, this);
     }
 }

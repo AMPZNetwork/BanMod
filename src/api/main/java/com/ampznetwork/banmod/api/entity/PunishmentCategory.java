@@ -35,28 +35,21 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory implements Named, Described, DefaultReason, DbObject {
     @Id
-    String name;
+    String   name;
     @lombok.Builder.Default
     @Nullable
-    String description = null;
+    String   description       = null;
     @lombok.Builder.Default
     @Nullable
-    String defaultReason = null;
+    String   defaultReason     = null;
     @lombok.Builder.Default
-    Duration baseDuration = Duration.ofHours(3);
+    Duration baseDuration      = Duration.ofHours(3);
     @lombok.Builder.Default
-    double repetitionExpBase = 3;
+    double   repetitionExpBase = 3;
     @Singular
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_categories_thresholds")
     Map<@NotNull Integer, Punishment> punishmentThresholds;
-
-    public static PunishmentCategory.Builder standard(String name) {
-        return builder().name(name)
-                .punishmentThreshold(0, Punishment.Kick)
-                .punishmentThreshold(2, Punishment.Mute)
-                .punishmentThreshold(5, Punishment.Ban);
-    }
 
     public Duration calculateDuration(int repetition) {
         var factor = Math.pow(repetitionExpBase, repetition);
@@ -68,5 +61,12 @@ public class PunishmentCategory implements Named, Described, DefaultReason, DbOb
                 .filter(e -> e.getKey() < rep)
                 .min(Punishment.BY_SEVERITY)
                 .map(Map.Entry::getValue);
+    }
+
+    public static PunishmentCategory.Builder standard(String name) {
+        return builder().name(name)
+                .punishmentThreshold(0, Punishment.Kick)
+                .punishmentThreshold(2, Punishment.Mute)
+                .punishmentThreshold(5, Punishment.Ban);
     }
 }

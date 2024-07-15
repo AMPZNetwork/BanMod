@@ -26,7 +26,7 @@ public enum Punishment implements Named, DefaultReason {
 
     public static final Comparator<Map.Entry<@NotNull Integer, Punishment>> BY_SEVERITY = Comparator.comparingInt(Map.Entry::getKey);
     boolean inherentlyTemporary;
-    String adverb;
+    String  adverb;
     TextColor color;
 
     @Override

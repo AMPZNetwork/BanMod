@@ -27,28 +27,28 @@ import static java.time.Instant.*;
 
 @SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {
-    static String ip2string(InetAddress ip) {
-        return ip.toString().substring(1);
-    }
-
     BanMod getBanMod();
 
     MessagingService getMessagingService();
 
     Stream<PlayerData> getPlayerData();
 
+    Stream<Infraction> getInfractions();
+
     Optional<PlayerData> getPlayerData(UUID playerId);
 
     GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId);
+
+    Stream<PunishmentCategory> getCategories();
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
                 .filter(Infraction.IS_IN_EFFECT)
                 .sorted(Infraction.BY_SEVERITY)
                 .map(i -> new PlayerResult(playerId,
-                        i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
-                        i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
-                        i.getReason(), i.getTimestamp(), i.getExpires()))
+                                           i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
+                                           i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
+                                           i.getReason(), i.getTimestamp(), i.getExpires()))
                 .findFirst()
                 .orElseGet(() -> {
                     var now = now();
@@ -56,7 +56,9 @@ public interface EntityService extends LifeCycle {
                 });
     }
 
-    Stream<PunishmentCategory> getCategories();
+    Stream<Infraction> getInfractions(UUID playerId);
+
+    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
     default Optional<PunishmentCategory> findCategory(String name) {
         return getCategories()
@@ -64,12 +66,12 @@ public interface EntityService extends LifeCycle {
                 .findAny();
     }
 
-    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
-
     default PunishmentCategory defaultCategory() {
         return save(findCategory("default")
-                .orElseGet(() -> PunishmentCategory.standard("default").build()));
+                            .orElseGet(() -> PunishmentCategory.standard("default").build()));
     }
+
+    <T> T save(T object);
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
@@ -77,15 +79,9 @@ public interface EntityService extends LifeCycle {
                 .count();
     }
 
-    Stream<Infraction> getInfractions();
-
-    Stream<Infraction> getInfractions(UUID playerId);
-
     GetOrCreate<Infraction, Infraction.Builder> createInfraction();
 
     void revokeInfraction(UUID id, UUID revoker);
-
-    <T> T save(T object);
 
     int delete(Object... objects);
 
@@ -101,4 +97,7 @@ public interface EntityService extends LifeCycle {
         Class<?> dialectClass;
     }
 
+    static String ip2string(InetAddress ip) {
+        return ip.toString().substring(1);
+    }
 }

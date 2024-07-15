@@ -65,39 +65,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     }
 
     @Override
-    public void register(CommandDispatcher<ServerCommandSource> dispatcher,
-                         CommandRegistryAccess registryAccess,
-                         RegistrationEnvironment environment) {
+    public void register(
+            CommandDispatcher<ServerCommandSource> dispatcher,
+            CommandRegistryAccess registryAccess,
+            RegistrationEnvironment environment
+    ) {
         cmdr.getBaseNodes().stream()
                 // recurse into subcommand nodes
                 .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .distinct()
                 .forEach(dispatcher::register);
-    }
-
-    @Override
-    public Stream<Object> expandContext(Object... context) {
-        return super.expandContext(context).collect(expandRecursive(it -> {
-            if (it instanceof CommandContext<?> ctx)
-                return of(ctx.getSource());
-            if (it instanceof ServerCommandSource scs)
-                return of(scs.getPlayer());
-            if (it instanceof ServerPlayerEntity player)
-                return of(player.getUuid());
-            return empty();
-        }));
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else throw new Command.Error("Command parsing error");
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
     }
 
     @Override
@@ -110,10 +87,10 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             BanMod.Resources.printExceptionWithIssueReportUrl(log, "An internal error occurred during command preparation", t);
             var result = handleThrowable(t);
             handleResponse(Command.Usage.builder()
-                    .manager(cmdr)
-                    .fullCommand(fullCommand)
-                    .source(this)
-                    .build(), result, context);
+                                   .manager(cmdr)
+                                   .fullCommand(fullCommand)
+                                   .source(this)
+                                   .build(), result, context);
             return 0;
         }
         try {
@@ -153,38 +130,29 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         CommandRegistrationCallback.EVENT.register(this);
     }
 
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else throw new Command.Error("Command parsing error");
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
+    }
+
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
-                                                         SuggestionsBuilder builder) {
-        var input = context.getInput().substring(1); // strip leading slash
-        var inLen = input.length() + 1;
-        var split = input.split(" ");
-        var lsWrd = split.length <= input.chars().filter(c -> c == ' ').count() ? "" : split[split.length - 1];
-        var lwLen = lsWrd.length();
-        var range = new StringRange(inLen - lwLen, inLen);
-        return CompletableFuture.supplyAsync(() -> {
-                    var fullCommand = input.split(" ");
-                    var usage = cmdr.createUsageBase(this, fullCommand, context);
-                    usage.advanceFull();
-                    return usage.getNode().nodes()
-                            .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
-                            .limit(1)
-                            .flatMap(n0 -> (n0 instanceof Command.Node.Callable callable
-                                    ? callable.nodes()
-                                    .map(node -> node instanceof Command.Node.Parameter parameter
-                                            ? "<%s>".formatted(parameter.getName())
-                                            : node.getName())
-                                    : n0 instanceof Command.AutoFillProvider provider
-                                    ? provider.autoFill(usage, n0.getName(), lsWrd)
-                                    : Stream.<String>empty())
-                                    .map(String::trim)
-                                    .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
-                                    .map(str -> new Suggestion(range, str,
-                                            Text.of(n0.getName() + ": " + n0.getDescription()))))
-                            .toList();
-                })
-                .thenApply(ls -> new Suggestions(range, ls))
-                .exceptionally(Polyfill.exceptionLogger());
+    public Stream<Object> expandContext(Object... context) {
+        return super.expandContext(context).collect(expandRecursive(it -> {
+            if (it instanceof CommandContext<?> ctx)
+                return of(ctx.getSource());
+            if (it instanceof ServerCommandSource scs)
+                return of(scs.getPlayer());
+            if (it instanceof ServerPlayerEntity player)
+                return of(player.getUuid());
+            return empty();
+        }));
     }
 
     @Override
@@ -281,10 +249,47 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         return arg;
     }
 
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder builder
+    ) {
+        var input = context.getInput().substring(1); // strip leading slash
+        var inLen = input.length() + 1;
+        var split = input.split(" ");
+        var lsWrd = split.length <= input.chars().filter(c -> c == ' ').count() ? "" : split[split.length - 1];
+        var lwLen = lsWrd.length();
+        var range = new StringRange(inLen - lwLen, inLen);
+        return CompletableFuture.supplyAsync(() -> {
+                    var fullCommand = input.split(" ");
+                    var usage = cmdr.createUsageBase(this, fullCommand, context);
+                    usage.advanceFull();
+                    return usage.getNode().nodes()
+                            .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
+                            .limit(1)
+                            .flatMap(n0 -> (n0 instanceof Command.Node.Callable callable
+                                            ? callable.nodes()
+                                                    .map(node -> node instanceof Command.Node.Parameter parameter
+                                                                 ? "<%s>".formatted(parameter.getName())
+                                                                 : node.getName())
+                                            : n0 instanceof Command.AutoFillProvider provider
+                                              ? provider.autoFill(usage, n0.getName(), lsWrd)
+                                              : Stream.<String>empty())
+                                    .map(String::trim)
+                                    .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
+                                    .map(str -> new Suggestion(range, str,
+                                                               Text.of(n0.getName() + ": " + n0.getDescription()))))
+                            .toList();
+                })
+                .thenApply(ls -> new Suggestions(range, ls))
+                .exceptionally(Polyfill.exceptionLogger());
+    }
+
     private Stream<LiteralArgumentBuilder<ServerCommandSource>> createAliasRedirects(
             String pad,
             Command.Node desc,
-            LiteralArgumentBuilder<ServerCommandSource> target) {
+            LiteralArgumentBuilder<ServerCommandSource> target
+    ) {
         return desc.aliases()
                 .filter(not(desc.getName()::equals))
                 .map(alias -> {
@@ -296,16 +301,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
 
     @Value
     public static class ArgumentConverter {
-        public static final Map<Class<?>, ArgumentConverter> cache = new ConcurrentHashMap<>();
-        public static final ArgumentConverter BOOLEAN = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
-        public static final ArgumentConverter DOUBLE = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
-        public static final ArgumentConverter FLOAT = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
-        public static final ArgumentConverter INTEGER = new ArgumentConverter(StandardValueType.INTEGER, IntegerArgumentType::integer);
-        public static final ArgumentConverter LONG = new ArgumentConverter(StandardValueType.LONG, LongArgumentType::longArg);
-        public static final ArgumentConverter WORD = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::word);
-        public static final ArgumentConverter STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
-        public static final ArgumentConverter GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
-        public static final ArgumentConverter UUID = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
+        public static final Map<Class<?>, ArgumentConverter> cache         = new ConcurrentHashMap<>();
+        public static final ArgumentConverter                BOOLEAN       = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
+        public static final ArgumentConverter                DOUBLE        = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
+        public static final ArgumentConverter                FLOAT         = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
+        public static final ArgumentConverter                INTEGER       = new ArgumentConverter(StandardValueType.INTEGER, IntegerArgumentType::integer);
+        public static final ArgumentConverter                LONG          = new ArgumentConverter(StandardValueType.LONG, LongArgumentType::longArg);
+        public static final ArgumentConverter                WORD          = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::word);
+        public static final ArgumentConverter                STRING        = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
+        public static final ArgumentConverter                GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
+        public static final ArgumentConverter                UUID          = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
         ValueType<?> valueType;
         Supplier<ArgumentType<?>> supplier;
 

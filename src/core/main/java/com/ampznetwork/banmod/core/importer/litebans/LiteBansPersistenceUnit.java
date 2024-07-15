@@ -14,10 +14,10 @@ import java.util.stream.Stream;
 public class LiteBansPersistenceUnit extends PersistenceUnitBase {
     public LiteBansPersistenceUnit(HikariDataSource dataSource) {
         super("LiteBans",
-                dataSource,
-                BanMod.class.getProtectionDomain().getCodeSource().getLocation(),
-                Stream.of(Mute.class, Ban.class, History.class)
-                        .map(Class::getCanonicalName)
-                        .toList());
+              dataSource,
+              BanMod.class.getProtectionDomain().getCodeSource().getLocation(),
+              Stream.of(Mute.class, Ban.class, History.class)
+                      .map(Class::getCanonicalName)
+                      .toList());
     }
 }

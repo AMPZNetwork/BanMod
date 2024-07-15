@@ -27,10 +27,6 @@ import static org.comroid.api.java.StackTraceUtils.*;
 public abstract class EventDispatchBase {
     protected BanMod mod;
 
-    protected PlayerResult player(UUID playerId) {
-        return mod.getEntityService().queuePlayer(playerId);
-    }
-
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
         var service = mod.getEntityService();
         var name = mod.getPlayerAdapter().getName(playerId);
@@ -48,10 +44,16 @@ public abstract class EventDispatchBase {
         return player(playerId);
     }
 
-    protected <C> void handleThrowable(UUID playerId,
-                                       Throwable t,
-                                       Function<Component, C> componentSerializer,
-                                       Consumer<C> forwardAndDisconnect) {
+    protected PlayerResult player(UUID playerId) {
+        return mod.getEntityService().queuePlayer(playerId);
+    }
+
+    protected <C> void handleThrowable(
+            UUID playerId,
+            Throwable t,
+            Function<Component, C> componentSerializer,
+            Consumer<C> forwardAndDisconnect
+    ) {
         try (
                 var writer = new StringWriter();
                 var out = new DelegateStream.Output(writer);
@@ -59,14 +61,14 @@ public abstract class EventDispatchBase {
         ) {
             StackTraceUtils.writeFilteredStacktrace(t, printer);
             BanMod.Resources.notify(mod, playerId, null,
-                    new PlayerResult(playerId, false, false,
-                            "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
-                            null, null),
-                    (uuid, component) -> {
-                        var serialize = componentSerializer.apply(component);
-                        if (!mod.allowUnsafeConnections())
-                            forwardAndDisconnect.accept(serialize);
-                    });
+                                    new PlayerResult(playerId, false, false,
+                                                     "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
+                                                     null, null),
+                                    (uuid, component) -> {
+                                        var serialize = componentSerializer.apply(component);
+                                        if (!mod.allowUnsafeConnections())
+                                            forwardAndDisconnect.accept(serialize);
+                                    });
             mod.log().warn("An internal error occurred and is ");
         } catch (IOException e) {
             mod.log().error("Have you tried turning your machine off and back on again?", t);

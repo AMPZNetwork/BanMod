@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
-    BanMod getBanMod();
+    Stream<PlayerData> getCurrentPlayers();
 
     default UUID getId(String name) {
         return PlayerData.fetchId(name).join();
@@ -23,6 +23,8 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
                 .getOrFetchUsername().join();
     }
 
+    BanMod getBanMod();
+
     boolean isOnline(UUID playerId);
 
     void kick(UUID playerId, TextComponent reason);
@@ -32,6 +34,4 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
     void broadcast(@Nullable String recieverPermission, Component component);
 
     void openBook(UUID playerId, BookAdapter book);
-
-    Stream<PlayerData> getCurrentPlayers();
 }

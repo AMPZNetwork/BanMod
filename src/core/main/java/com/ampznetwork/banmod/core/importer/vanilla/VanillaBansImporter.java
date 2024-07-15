@@ -20,7 +20,7 @@ public class VanillaBansImporter implements Importer {
 
     @Override
     public ImportResult run() {
-        var c = new int[]{0};
+        var c = new int[]{ 0 };
         var mapper = new ObjectMapper();
         try (
                 var banFile = new FileInputStream("banned-players.json");
@@ -29,11 +29,11 @@ public class VanillaBansImporter implements Importer {
             var service = mod.getEntityService();
             mapper.readValues(mapper.createParser(banFile), Ban.class)
                     .forEachRemaining(ban -> service.save(Infraction.builder()
-                            .player(service.getOrCreatePlayerData(ban.getUuid()).requireNonNull())
-                            .category(mod.getDefaultCategory())
-                            .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))
-                            .reason(ban.getReason())
-                            .build()));
+                                                                  .player(service.getOrCreatePlayerData(ban.getUuid()).requireNonNull())
+                                                                  .category(mod.getDefaultCategory())
+                                                                  .timestamp(ban.getCreated().toInstant(ZoneOffset.UTC))
+                                                                  .reason(ban.getReason())
+                                                                  .build()));
 
             // todo: ip bans
 

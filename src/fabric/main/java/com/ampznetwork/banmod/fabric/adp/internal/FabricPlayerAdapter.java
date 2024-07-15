@@ -37,34 +37,29 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     BanMod$Fabric banMod;
 
     @Override
+    public Stream<PlayerData> getCurrentPlayers() {
+        var service = banMod.getEntityService();
+        return banMod.getServer().getPlayerManager()
+                .getPlayerList().stream()
+                .map(player -> {
+                    var name = player.getName().getString();
+                    return service.getOrCreatePlayerData(player.getUuid())
+                            .setUpdateOriginal(original -> original.pushKnownName(name))
+                            .complete(builder -> builder.knownName(name, now()));
+                });
+    }
+
+    @Override
     public boolean isOnline(UUID playerId) {
         return banMod.getServer().getPlayerManager()
-                       .getPlayer(playerId) != null;
-    }
-
-    @Override
-    public boolean checkOpLevel(UUID playerId, @MagicConstant(intValues = {0, 1, 2, 3, 4}) int minimum) {
-        return Optional.of(banMod.getServer())
-                .map(MinecraftServer::getPlayerManager)
-                .map(pm -> pm.getPlayer(playerId))
-                .filter(spe -> spe.hasPermissionLevel(minimum))
-                .isPresent();
-    }
-
-    @Override
-    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
-        return switch (Permissions.getPermissionValue(playerId, key).join()) {
-            case FALSE -> TriState.FALSE;
-            case DEFAULT -> TriState.NOT_SET;
-            case TRUE -> TriState.TRUE;
-        };
+                .getPlayer(playerId) != null;
     }
 
     @Override
     public void kick(UUID playerId, TextComponent reason) {
         var serialize = BanMod$Fabric.component2text(reason);
         Optional.ofNullable(banMod.getServer().getPlayerManager()
-                        .getPlayer(playerId))
+                                    .getPlayer(playerId))
                 .orElseThrow(() -> new Command.Error("Player not found"))
                 .networkHandler
                 .disconnect(serialize);
@@ -119,15 +114,20 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Stream<PlayerData> getCurrentPlayers() {
-        var service = banMod.getEntityService();
-        return banMod.getServer().getPlayerManager()
-                .getPlayerList().stream()
-                .map(player -> {
-                    var name = player.getName().getString();
-                    return service.getOrCreatePlayerData(player.getUuid())
-                            .setUpdateOriginal(original -> original.pushKnownName(name))
-                            .complete(builder -> builder.knownName(name, now()));
-                });
+    public boolean checkOpLevel(UUID playerId, @MagicConstant(intValues = { 0, 1, 2, 3, 4 }) int minimum) {
+        return Optional.of(banMod.getServer())
+                .map(MinecraftServer::getPlayerManager)
+                .map(pm -> pm.getPlayer(playerId))
+                .filter(spe -> spe.hasPermissionLevel(minimum))
+                .isPresent();
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
+        return switch (Permissions.getPermissionValue(playerId, key).join()) {
+            case FALSE -> TriState.FALSE;
+            case DEFAULT -> TriState.NOT_SET;
+            case TRUE -> TriState.TRUE;
+        };
     }
 }

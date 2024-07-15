@@ -30,8 +30,8 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
 
     @Override
     public ImportResult run() {
-        int[] count = new int[]{0, 0, 0};
-        var service = mod.getEntityService();
+        int[] count   = new int[]{ 0, 0, 0 };
+        var   service = mod.getEntityService();
         Stream.concat(
                         unit.manager().createQuery("select m from Mute m", Mute.class)
                                 .getResultStream(),
@@ -67,7 +67,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                     var now = now();
                     var data = service.getPlayerData(hist.getUuid())
                             .orElseGet(() -> new PlayerData(hist.getUuid(), now(),
-                                    new ConcurrentHashMap<>(), new ConcurrentHashMap<>()));
+                                                            new ConcurrentHashMap<>(), new ConcurrentHashMap<>()));
                     data.getKnownNames().put(hist.getName(), now);
                     data.getKnownIPs().put(hist.getIp(), now);
                     count[2] += 1;

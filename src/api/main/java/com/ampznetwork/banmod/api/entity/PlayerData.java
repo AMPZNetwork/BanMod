@@ -49,13 +49,14 @@ import static org.comroid.api.net.REST.Method.*;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData implements DbObject {
     public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+    public static BiConsumer<UUID, String> CACHE_NAME = null;
     @Id
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
-    UUID id;
+    UUID                                             id;
     @Nullable
     @lombok.Builder.Default
-    Instant lastSeen = null;
+    Instant                                          lastSeen = null;
     @Singular
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_playerdata_names")
@@ -65,16 +66,9 @@ public class PlayerData implements DbObject {
     @CollectionTable(name = "banmod_playerdata_ips")
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 
-    public static BiConsumer<UUID, String> CACHE_NAME = null;
-
-    public static CompletableFuture<UUID> fetchId(String name) {
-        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("id").asString())
-                .thenApply(UuidVarchar36Converter::fillDashes)
-                .thenApply(UUID::fromString);
-        future.thenAccept(id -> CACHE_NAME.accept(id, name));
-        return future;
+    public CompletableFuture<String> getOrFetchUsername() {
+        return getLastKnownName().map(CompletableFuture::completedFuture)
+                .orElseGet(() -> fetchUsername(id));
     }
 
     public static CompletableFuture<String> fetchUsername(UUID id) {
@@ -86,6 +80,18 @@ public class PlayerData implements DbObject {
             log.warn("Could not retrieve Minecraft Username; returning 'Steve' for ID {}", id, t);
             return "Steve";
         });
+    }
+
+    public Optional<String> getLastKnownName() {
+        return knownNames.entrySet().stream()
+                .max(PlayerData.MOST_RECENTLY_SEEN)
+                .map(Map.Entry::getKey);
+    }
+
+    public Optional<String> getLastKnownIp() {
+        return knownIPs.entrySet().stream()
+                .max(PlayerData.MOST_RECENTLY_SEEN)
+                .map(Map.Entry::getKey);
     }
 
     @Contract(value = "!null->this", pure = true)
@@ -100,20 +106,13 @@ public class PlayerData implements DbObject {
         return this;
     }
 
-    public Optional<String> getLastKnownName() {
-        return knownNames.entrySet().stream()
-                .max(PlayerData.MOST_RECENTLY_SEEN)
-                .map(Map.Entry::getKey);
-    }
-
-    public CompletableFuture<String> getOrFetchUsername() {
-        return getLastKnownName().map(CompletableFuture::completedFuture)
-                .orElseGet(() -> fetchUsername(id));
-    }
-
-    public Optional<String> getLastKnownIp() {
-        return knownIPs.entrySet().stream()
-                .max(PlayerData.MOST_RECENTLY_SEEN)
-                .map(Map.Entry::getKey);
+    public static CompletableFuture<UUID> fetchId(String name) {
+        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
+                .thenApply(REST.Response::validate2xxOK)
+                .thenApply(rsp -> rsp.getBody().get("id").asString())
+                .thenApply(UuidVarchar36Converter::fillDashes)
+                .thenApply(UUID::fromString);
+        future.thenAccept(id -> CACHE_NAME.accept(id, name));
+        return future;
     }
 }

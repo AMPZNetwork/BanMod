@@ -36,12 +36,12 @@ import static org.comroid.api.func.util.Debug.*;
 
 @Value
 public class HibernateEntityService extends Container.Base implements EntityService {
-    private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
-    private static final Logger log = LoggerFactory.getLogger(HibernateEntityService.class);
-    public Cache<UUID, PlayerData> Players;
-    public Cache<UUID, Infraction> Infractions;
-    public Cache<String, PunishmentCategory> Categories;
-    BanMod banMod;
+    private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
+    private static final Logger                            log = LoggerFactory.getLogger(HibernateEntityService.class);
+    public               Cache<UUID, PlayerData>           Players;
+    public               Cache<UUID, Infraction>           Infractions;
+    public               Cache<String, PunishmentCategory> Categories;
+    BanMod        banMod;
     EntityManager manager;
     MessagingService messagingService;
 
@@ -51,7 +51,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.manager = unit.manager;
         this.messagingService = new MessagingService(mod);
         addChildren(unit, messagingService);
-        this.Players = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
+        this.Players    = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
         this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
         this.Categories = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
     }
@@ -59,7 +59,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     public static Unit buildPersistenceUnit(
             DatabaseInfo info,
             Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
-            @MagicConstant(stringValues = {"update", "validate"}) String hbm2ddl) {
+            @MagicConstant(stringValues = { "update", "validate" }) String hbm2ddl
+    ) {
         var config = Map.of(
                 "hibernate.connection.driver_class", info.type().getDriverClass().getCanonicalName(),
                 "hibernate.connection.url", info.url(),
@@ -81,11 +82,34 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new Unit(dataSource, manager);
     }
 
+    private Optional<PunishmentCategory> getCategory(String name) {
+        return manager.createQuery("select pc from PunishmentCategory  pc where pc.name = :name", PunishmentCategory.class)
+                .setParameter("name", name)
+                .getResultStream()
+                .findAny();
+    }
+
+    private Optional<Infraction> getInfraction(UUID id) {
+        return manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
+                .setParameter("id", id)
+                .getResultStream()
+                .findAny();
+    }
+
+    private void uncache(Object id, DbObject obj) {
+    }
+
     @Override
     public Stream<PlayerData> getPlayerData() {
         return manager.createQuery("select pd from PlayerData pd", PlayerData.class)
                 .getResultStream()
                 .peek(data -> Players.replace(data.getId(), data));
+    }
+
+    @Override
+    public Stream<Infraction> getInfractions() {
+        return manager.createQuery("select i from Infraction i", Infraction.class)
+                .getResultStream();
     }
 
     @Override
@@ -111,13 +135,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 .getResultStream();
     }
 
-    private Optional<PunishmentCategory> getCategory(String name) {
-        return manager.createQuery("select pc from PunishmentCategory  pc where pc.name = :name", PunishmentCategory.class)
-                .setParameter("name", name)
-                .getResultStream()
-                .findAny();
-    }
-
     @Override
     public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
         return new GetOrCreate<>(
@@ -130,37 +147,10 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public Stream<Infraction> getInfractions() {
-        return manager.createQuery("select i from Infraction i", Infraction.class)
-                .getResultStream();
-    }
-
-    @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
         return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
                 .setParameter("playerId", playerId)
                 .getResultStream();
-    }
-
-    private Optional<Infraction> getInfraction(UUID id) {
-        return manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
-                .setParameter("id", id)
-                .getResultStream()
-                .findAny();
-    }
-
-    @Override
-    public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save);
-    }
-
-    @Override
-    public void revokeInfraction(UUID id, UUID revoker) {
-        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                        update banmod_infractions i set i.revoker = :revoker where i.id = :id
-                        """)
-                .setParameter("id", id)
-                .setParameter("revoker", revoker));
     }
 
     @Override
@@ -175,6 +165,20 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             return null;
         });
         return object;
+    }
+
+    @Override
+    public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save);
+    }
+
+    @Override
+    public void revokeInfraction(UUID id, UUID revoker) {
+        wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
+                                                                          update banmod_infractions i set i.revoker = :revoker where i.id = :id
+                                                                          """)
+                .setParameter("id", id)
+                .setParameter("revoker", revoker));
     }
 
     @Override
@@ -197,9 +201,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             }
         }
         return c;
-    }
-
-    private void uncache(Object id, DbObject obj) {
     }
 
     @SuppressWarnings("UnusedReturnValue")

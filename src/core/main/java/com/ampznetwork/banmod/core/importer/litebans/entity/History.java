@@ -30,10 +30,10 @@ import java.util.UUID;
 public final class History {
     @Id
     @Column(columnDefinition = "bigint(20) unsigned")
-    long id;
+    long   id;
     @Column(columnDefinition = "varchar(36)")
     @Convert(converter = UuidVarchar36Converter.class)
-    UUID uuid;
+    UUID   uuid;
     @Column(columnDefinition = "varchar(45)")
     String ip;
     @Column(columnDefinition = "varchar(16)")
@@ -41,11 +41,11 @@ public final class History {
     @Column(columnDefinition = "timestamp")
     Instant date;
 
-    public boolean equals(Object other) {
-        return other instanceof History ban && ban.getId() == getId();
-    }
-
     public int hashCode() {
         return Objects.hashCode(getId());
+    }
+
+    public boolean equals(Object other) {
+        return other instanceof History ban && ban.getId() == getId();
     }
 }

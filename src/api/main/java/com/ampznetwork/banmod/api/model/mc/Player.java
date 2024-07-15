@@ -28,13 +28,13 @@ public class Player implements UUIDContainer, Named {
 
     public CompletableFuture<String> fetchName() {
         var future = Cache.get("minecraft.username." + id,
-                () -> REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
-                        .thenApply(REST.Response::validate2xxOK)
-                        .thenApply(rsp -> rsp.getBody().get("name").asString())
-                        .exceptionally(t -> {
-                            log.warn("Could not retrieve Minecraft Username for user " + id, t);
-                            return "Steve";
-                        }));
+                               () -> REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
+                                       .thenApply(REST.Response::validate2xxOK)
+                                       .thenApply(rsp -> rsp.getBody().get("name").asString())
+                                       .exceptionally(t -> {
+                                           log.warn("Could not retrieve Minecraft Username for user " + id, t);
+                                           return "Steve";
+                                       }));
         future.thenAccept(str -> name = str);
         return future;
     }

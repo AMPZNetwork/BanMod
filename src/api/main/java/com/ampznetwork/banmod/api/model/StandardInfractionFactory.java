@@ -19,45 +19,32 @@ import static java.time.Instant.*;
 @RequiredArgsConstructor
 public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
     BanMod mod;
-    UUID playerId;
+    UUID   playerId;
     PunishmentCategory category;
     @lombok.Builder.Default
     @Nullable
     Punishment punishment = null;
     @lombok.Builder.Default
     @Nullable
-    UUID issuer = null;
+    UUID     issuer    = null;
     @lombok.Builder.Default
     @Nullable
-    String reason = null;
+    String   reason    = null;
     @lombok.Builder.Default
     @Nullable
-    Duration duration = null;
+    Duration duration  = null;
     @lombok.Builder.Default
-    boolean permanent = false;
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
-        return base(mod, playerId, null, punishment, issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
-        return base(mod, playerId, category, null, issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
-        if (category == null) category = mod.getDefaultCategory();
-        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
-    }
+    boolean  permanent = false;
 
     @Override
     @SuppressWarnings("ConstantValue")
     public void accept(Infraction.Builder builder) {
         var service = mod.getEntityService();
-        var rep = service.findRepetition(playerId, category);
+        var rep    = service.findRepetition(playerId, category);
         var target = service.getOrCreatePlayerData(playerId).requireNonNull();
         var punish = punishment != null ? punishment : category.calculatePunishment(rep).orElse(Punishment.Kick);
         var expire = duration != null ? duration : category.calculateDuration(rep);
-        var now = now();
+        var now    = now();
 
         builder.player(target)
                 .category(category)
@@ -66,5 +53,18 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
                 .reason(reason)
                 .timestamp(now)
                 .expires(permanent ? null : now.plus(expire));
+    }
+
+    public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
+        return base(mod, playerId, null, punishment, issuer);
+    }
+
+    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
+        if (category == null) category = mod.getDefaultCategory();
+        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
+    }
+
+    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
+        return base(mod, playerId, category, null, issuer);
     }
 }

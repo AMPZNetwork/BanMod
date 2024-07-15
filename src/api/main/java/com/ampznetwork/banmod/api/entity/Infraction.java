@@ -43,22 +43,24 @@ import static lombok.Builder.*;
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction implements DbObject {
-    public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
-    public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
-                                                                  && (i.getRevoker() == null
-                                                                      && (i.getExpires() == null || i.getExpires().isAfter(now())
-                                                                          || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
-    public static Comparator<Infraction> BY_SEVERITY = Comparator.<Infraction>comparingInt(i ->
-            i.getPunishment().ordinal()).reversed();
-    public static Comparator<Infraction> BY_NEWEST = Comparator.<Infraction>comparingLong(i ->
-            i.timestamp.toEpochMilli()).reversed();
-    public static Comparator<Infraction> BY_SHORTEST = Comparator.<Infraction>comparingLong(i ->
-            i.expires == null ? Long.MIN_VALUE : i.expires.toEpochMilli()).reversed();
+    public static final Instant                TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
+    public static final Predicate<Infraction>  IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
+            && (i.getRevoker() == null
+            && (i.getExpires() == null || i.getExpires().isAfter(now())
+            || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
+    public static       Comparator<Infraction> BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
+                                                                                                          i.getPunishment().ordinal()).reversed();
+    public static       Comparator<Infraction> BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
+                                                                                                           i.timestamp.toEpochMilli()).reversed();
+    public static       Comparator<Infraction> BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
+                                                                                                           i.expires == null
+                                                                                                           ? Long.MIN_VALUE
+                                                                                                           : i.expires.toEpochMilli()).reversed();
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
-    UUID id = UUID.randomUUID();
+    UUID       id        = UUID.randomUUID();
     @NotNull
     @OneToOne
     PlayerData player;
@@ -69,23 +71,23 @@ public class Infraction implements DbObject {
     Punishment punishment;
     @NotNull
     @Default
-    Instant timestamp = now();
+    Instant    timestamp = now();
     @Nullable
     @Default
-    Instant expires = null;
+    Instant    expires   = null;
     @Nullable
     @Default
-    String reason = null;
-    @Nullable
-    @Default
-    @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UuidBinary16Converter.class)
-    UUID issuer = null;
+    String     reason    = null;
     @Nullable
     @Default
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
-    UUID revoker = null;
+    UUID       issuer    = null;
+    @Nullable
+    @Default
+    @Column(columnDefinition = "binary(16)")
+    @Convert(converter = UuidBinary16Converter.class)
+    UUID       revoker   = null;
 
     public @Nullable String getReason() {
         return Optional.ofNullable(reason)
@@ -100,10 +102,10 @@ public class Infraction implements DbObject {
 
     public PlayerResult toResult() {
         return new PlayerResult(player.getId(),
-                punishment == Punishment.Mute,
-                punishment == Punishment.Ban,
-                reason,
-                timestamp,
-                expires);
+                                punishment == Punishment.Mute,
+                                punishment == Punishment.Ban,
+                                reason,
+                                timestamp,
+                                expires);
     }
 }
