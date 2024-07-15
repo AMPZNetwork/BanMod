@@ -93,6 +93,8 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         cmdr.register(BanModCommands.class);
         cmdr.register(this);
         cmdr.initialize();
+
+        initialize();
     }
 
     @Override
