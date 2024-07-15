@@ -48,5 +48,9 @@ public final class NotifyEvent implements DbObject {
         SYNC
     }
 
-    public record CompositeKey(String ident, Instant timestamp) implements Serializable {}
+    @Data
+    public static class CompositeKey implements Serializable {
+        long ident;
+        Instant timestamp;
+    }
 }
