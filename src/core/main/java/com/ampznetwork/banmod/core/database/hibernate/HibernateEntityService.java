@@ -36,24 +36,24 @@ import static org.comroid.api.func.util.Debug.*;
 
 @Value
 public class HibernateEntityService extends Container.Base implements EntityService {
-    private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
     private static final Logger                            log = LoggerFactory.getLogger(HibernateEntityService.class);
+    private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
     public               Cache<UUID, PlayerData>           Players;
     public               Cache<UUID, Infraction>           Infractions;
     public               Cache<String, PunishmentCategory> Categories;
-    BanMod        banMod;
-    EntityManager manager;
+    BanMod           banMod;
+    EntityManager    manager;
     MessagingService messagingService;
 
     public HibernateEntityService(BanMod mod) {
         this.banMod = mod;
         var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
-        this.manager = unit.manager;
+        this.manager          = unit.manager;
         this.messagingService = new MessagingService(mod);
         addChildren(unit, messagingService);
-        this.Players    = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
+        this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
         this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
-        this.Categories = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
+        this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
     }
 
     public static Unit buildPersistenceUnit(
@@ -76,7 +76,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             setUsername(info.user());
             setPassword(info.pass());
         }};
-        var unit = unitProvider.apply(dataSource);
+        var unit    = unitProvider.apply(dataSource);
         var factory = SPI.createContainerEntityManagerFactory(unit, config);
         var manager = factory.createEntityManager();
         return new Unit(dataSource, manager);
@@ -136,6 +136,13 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
+    public Stream<Infraction> getInfractions(UUID playerId) {
+        return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
+                .setParameter("playerId", playerId)
+                .getResultStream();
+    }
+
+    @Override
     public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
         return new GetOrCreate<>(
                 () -> getCategories()
@@ -144,13 +151,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 () -> PunishmentCategory.builder().name(name),
                 PunishmentCategory.Builder::build,
                 this::save);
-    }
-
-    @Override
-    public Stream<Infraction> getInfractions(UUID playerId) {
-        return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
-                .setParameter("playerId", playerId)
-                .getResultStream();
     }
 
     @Override
@@ -175,8 +175,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     @Override
     public void revokeInfraction(UUID id, UUID revoker) {
         wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                                                                          update banmod_infractions i set i.revoker = :revoker where i.id = :id
-                                                                          """)
+                        update banmod_infractions i set i.revoker = :revoker where i.id = :id
+                        """)
                 .setParameter("id", id)
                 .setParameter("revoker", revoker));
     }
@@ -184,7 +184,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     @Override
     public int delete(Object... infractions) {
         var transaction = manager.getTransaction();
-        var c = 0;
+        var c           = 0;
         synchronized (transaction) {
             try {
                 transaction.begin();
