@@ -91,7 +91,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public @Nullable String getBanAppealUrl() {
-        var url = getConfig().get("ban-appeal-url", null);
+        var url = getConfig().get("banmod.appealUrl", null);
         var txt = url == null ? null : url.toString();
         if (txt != null && txt.isBlank()) txt = null;
         return txt;
@@ -99,7 +99,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public boolean allowUnsafeConnections() {
-        return config.getBoolean("allow-unsafe-connections", false);
+        return config.getBoolean("banmod.allow-unsafe-connections", false);
     }
 
     @Override
