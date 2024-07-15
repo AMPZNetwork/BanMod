@@ -1,11 +1,8 @@
 package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.PlayerResult;
-import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.libmod.api.model.PlayerResult;
+import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

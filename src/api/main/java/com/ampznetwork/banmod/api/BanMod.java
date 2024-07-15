@@ -1,12 +1,10 @@
 package com.ampznetwork.banmod.api;
 
-import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.PlayerResult;
-import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
-import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.api.database.EntityService;
+import com.ampznetwork.libmod.api.model.PlayerResult;
+import com.ampznetwork.libmod.api.model.Punishment;
+import com.ampznetwork.libmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;

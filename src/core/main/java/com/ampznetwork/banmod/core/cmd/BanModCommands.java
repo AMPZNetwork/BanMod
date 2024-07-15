@@ -1,12 +1,9 @@
 package com.ampznetwork.banmod.core.cmd;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
+import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
@@ -24,7 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.base;
+import static com.ampznetwork.libmod.api.model.StandardInfractionFactory.base;
 import static java.time.Instant.now;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.openUrl;

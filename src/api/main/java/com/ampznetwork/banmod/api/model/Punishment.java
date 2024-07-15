@@ -1,6 +1,6 @@
 package com.ampznetwork.banmod.api.model;
 
-import com.ampznetwork.banmod.api.model.info.DefaultReason;
+import com.ampznetwork.libmod.api.model.info.DefaultReason;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public enum Punishment implements Named, DefaultReason {
     Debuff(false, "debuffed", NamedTextColor.LIGHT_PURPLE),
     Ban(false, "banned", NamedTextColor.DARK_RED);
 
-    public static final Comparator<Map.Entry<@NotNull Integer, Punishment>> BY_SEVERITY = Comparator.comparingInt(Map.Entry::getKey);
+    public static final Comparator<Map.Entry<@NotNull Integer, com.ampznetwork.libmod.api.model.Punishment>> BY_SEVERITY = Comparator.comparingInt(Map.Entry::getKey);
     boolean inherentlyTemporary;
     String adverb;
     TextColor color;

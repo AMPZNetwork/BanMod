@@ -1,7 +1,7 @@
 package com.ampznetwork.banmod.fabric.cfg;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.libmod.api.database.EntityService;
 import io.wispforest.owo.config.annotation.Config;
 import io.wispforest.owo.config.annotation.Modmenu;
 import io.wispforest.owo.config.annotation.Nest;

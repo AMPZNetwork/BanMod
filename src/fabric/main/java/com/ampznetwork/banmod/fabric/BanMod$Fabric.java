@@ -1,15 +1,14 @@
 package com.ampznetwork.banmod.fabric;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
+import com.ampznetwork.libmod.api.database.EntityService;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;

@@ -1,9 +1,6 @@
 package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 

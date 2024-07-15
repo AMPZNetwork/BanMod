@@ -1,6 +1,6 @@
 package com.ampznetwork.banmod.core.importer.litebans.entity;
 
-import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
+import com.ampznetwork.libmod.api.model.convert.UuidVarchar36Converter;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

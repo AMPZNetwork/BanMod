@@ -1,9 +1,8 @@
 package com.ampznetwork.banmod.fabric.adp.internal;
 
-import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.model.adp.BookAdapter;
-import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
+import com.ampznetwork.libmod.api.model.adp.BookAdapter;
+import com.ampznetwork.libmod.api.model.adp.PlayerAdapter;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
 import me.lucko.fabric.api.permissions.v0.Permissions;

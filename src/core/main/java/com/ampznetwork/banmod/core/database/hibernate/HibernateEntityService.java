@@ -1,11 +1,8 @@
 package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.api.database.EntityService;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;

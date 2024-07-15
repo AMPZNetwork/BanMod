@@ -1,8 +1,7 @@
 package com.ampznetwork.banmod.api.model;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -23,7 +22,7 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
     PunishmentCategory category;
     @lombok.Builder.Default
     @Nullable
-    Punishment punishment = null;
+    com.ampznetwork.libmod.api.model.Punishment punishment = null;
     @lombok.Builder.Default
     @Nullable
     UUID issuer = null;
@@ -36,7 +35,7 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
     @lombok.Builder.Default
     boolean permanent = false;
 
-    public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
+    public static Builder base(BanMod mod, UUID playerId, @Nullable com.ampznetwork.libmod.api.model.Punishment punishment, @Nullable UUID issuer) {
         return base(mod, playerId, null, punishment, issuer);
     }
 
@@ -44,7 +43,7 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
         return base(mod, playerId, category, null, issuer);
     }
 
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
+    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable com.ampznetwork.libmod.api.model.Punishment punishment, @Nullable UUID issuer) {
         if (category == null) category = mod.getDefaultCategory();
         return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
     }

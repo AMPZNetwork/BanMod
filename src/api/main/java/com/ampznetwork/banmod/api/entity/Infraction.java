@@ -1,9 +1,9 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.banmod.api.model.PlayerResult;
-import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
-import com.ampznetwork.banmod.api.model.info.DefaultReason;
+import com.ampznetwork.libmod.api.model.PlayerResult;
+import com.ampznetwork.libmod.api.model.Punishment;
+import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
+import com.ampznetwork.libmod.api.model.info.DefaultReason;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.jetbrains.annotations.NotNull;
@@ -32,15 +32,15 @@ import static lombok.Builder.Default;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction {
     public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
-    public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
-            && (i.getRevoker() == null
+    public static final Predicate<com.ampznetwork.libmod.api.entity.Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
+                                                                                                    && (i.getRevoker() == null
             && (i.getExpires() == null || i.getExpires().isAfter(now())
             || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
-    public static Comparator<Infraction> BY_SEVERITY = Comparator.<Infraction>comparingInt(i ->
+    public static Comparator<com.ampznetwork.libmod.api.entity.Infraction> BY_SEVERITY = Comparator.<com.ampznetwork.libmod.api.entity.Infraction>comparingInt(i ->
             i.getPunishment().ordinal()).reversed();
-    public static Comparator<Infraction> BY_NEWEST = Comparator.<Infraction>comparingLong(i ->
+    public static Comparator<com.ampznetwork.libmod.api.entity.Infraction> BY_NEWEST = Comparator.<com.ampznetwork.libmod.api.entity.Infraction>comparingLong(i ->
             i.timestamp.toEpochMilli()).reversed();
-    public static Comparator<Infraction> BY_SHORTEST = Comparator.<Infraction>comparingLong(i ->
+    public static Comparator<com.ampznetwork.libmod.api.entity.Infraction> BY_SHORTEST = Comparator.<com.ampznetwork.libmod.api.entity.Infraction>comparingLong(i ->
             i.expires == null ? Long.MIN_VALUE : i.expires.toEpochMilli()).reversed();
     @Default
     @Id

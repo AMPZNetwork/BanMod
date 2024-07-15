@@ -11,7 +11,7 @@ public interface IPropagationAdapter {
 
     @Value
     @NoArgsConstructor
-    class Stateful implements IPropagationAdapter {
+    class Stateful implements com.ampznetwork.libmod.api.model.adp.IPropagationAdapter {
         @NonFinal
         boolean cancelled;
         @NonFinal
