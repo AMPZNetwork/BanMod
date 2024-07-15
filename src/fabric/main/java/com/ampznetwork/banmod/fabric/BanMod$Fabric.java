@@ -8,17 +8,16 @@ import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
+import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
-import org.comroid.api.java.SoftDepend;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +98,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
 
     @Override
     public void initialize() {
-        config.load();
+        //config.load();
 
         this.entityService = new HibernateEntityService(this);
         defaultCategory = entityService.defaultCategory();

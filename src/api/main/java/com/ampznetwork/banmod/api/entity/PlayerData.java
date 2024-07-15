@@ -21,6 +21,7 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
@@ -35,9 +36,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
-import static com.ampznetwork.banmod.api.database.EntityService.*;
-import static java.time.Instant.*;
-import static org.comroid.api.net.REST.Method.*;
+import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
+import static java.time.Instant.now;
+import static org.comroid.api.net.REST.Method.GET;
 
 @Data
 @Slf4j
