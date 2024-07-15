@@ -1,5 +1,4 @@
 {
-  "entityService": "DATABASE",
   "database": {
     "type": "MariaDB",
     "url": "jdbc:mariadb://localhost:3306/dev",

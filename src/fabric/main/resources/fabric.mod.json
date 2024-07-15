@@ -13,20 +13,12 @@
   },
   "license": "GPL-3.0",
   "icon": "assets/banmod/icon.png",
-  "environment": "*",
+  "environment": "server",
   "entrypoints": {
     "main": [
       "com.ampznetwork.banmod.fabric.BanMod$Fabric"
-    ],
-    "client": []
+    ]
   },
-  "mixins": [
-    "banmod.mixins.json",
-    {
-      "config": "banmod-fabric.client.mixins.json",
-      "environment": "client"
-    }
-  ],
   "depends": {
     "fabricloader": ">=0.15.9",
     "minecraft": "~1.20.1",

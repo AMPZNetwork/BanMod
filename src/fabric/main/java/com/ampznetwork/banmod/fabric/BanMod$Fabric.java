@@ -5,12 +5,12 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
-import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -20,6 +20,7 @@ import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
+import org.comroid.api.tree.LifeCycle;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -29,7 +30,7 @@ import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.g
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
-public class BanMod$Fabric implements ModInitializer, BanMod {
+public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
@@ -55,7 +56,6 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
     @Override
     public DatabaseInfo getDatabaseInfo() {
         return new DatabaseInfo(
-                config.entityService(),
                 config.database.type(),
                 config.database.url(),
                 config.database.username(),
@@ -84,14 +84,20 @@ public class BanMod$Fabric implements ModInitializer, BanMod {
         cmdr.register(BanModCommands.class);
         cmdr.register(this);
         cmdr.initialize();
+    }
 
-        var impl = config.entityService();
-        this.entityService = switch (impl) {
-            case FILE -> new LocalEntityService(this);
-            case DATABASE -> new HibernateEntityService(this);
-        };
+    @Override
+    public void initialize() {
+        config.load();
 
+        this.entityService = new HibernateEntityService(this);
         defaultCategory = entityService.defaultCategory();
+    }
+
+    @Override
+    @SneakyThrows
+    public void terminate() {
+        entityService.terminate();
     }
 
     @Override
