@@ -1,10 +1,9 @@
-banmod:
-  database:
-    type: h2 # h2 or MySQL
-    url: jdbc:h2:file:./banmod.h2 # default is a local h2 database
-    username: sa
-    password:
-  # you can put a URL here which players can use to appeal for being unbanned
-  banAppealUrl: ''
-  # set to 'true' if you want to allow connecting while BanMod is experiencing a downtime, e.g. through a database downtime
-  allow-unsafe-connections: false
+database:
+  type: h2 # h2 or MySQL
+  url: jdbc:h2:file:./banmod.h2 # default is a local h2 database
+  username: sa
+  password:
+# you can put a URL here which players can use to appeal for being unbanned
+ban-appeal-url: ''
+# set to 'true' if you want to allow connecting while BanMod is experiencing a downtime, e.g. through a database downtime
+allow-unsafe-connections: false
