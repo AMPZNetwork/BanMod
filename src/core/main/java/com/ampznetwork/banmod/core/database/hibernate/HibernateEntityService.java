@@ -269,6 +269,13 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         }
     }
 
+    public void sync(UUID playerId) {
+        getInfractions(playerId)
+                .filter(Infraction.IS_IN_EFFECT)
+                .min(Infraction.BY_NEWEST)
+                .ifPresent(banMod::realize);
+    }
+
     public record Unit(HikariDataSource dataSource, EntityManager manager) implements UncheckedCloseable {
         @Override
         public void close() {

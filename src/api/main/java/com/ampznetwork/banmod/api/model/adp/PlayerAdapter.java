@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.api.model.adp;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +26,9 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
 
     boolean isOnline(UUID playerId);
 
-    void kick(UUID playerId, TextComponent reason);
+    void kick(UUID playerId, Component reason);
 
-    void send(UUID playerId, TextComponent component);
+    void send(UUID playerId, Component component);
 
     void broadcast(@Nullable String recieverPermission, Component component);
 

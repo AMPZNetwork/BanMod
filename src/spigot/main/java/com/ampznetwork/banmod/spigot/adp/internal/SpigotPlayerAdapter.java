@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.util.TriState;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
@@ -70,7 +69,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void kick(UUID playerId, TextComponent component) {
+    public void kick(UUID playerId, Component component) {
         var player = Bukkit.getPlayer(playerId);
         if (player == null)
             return;
@@ -79,7 +78,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void send(UUID playerId, TextComponent component) {
+    public void send(UUID playerId, Component component) {
         var player = banMod.getServer().getPlayer(playerId);
         if (player == null) return;
         var serialize = get().serialize(component);

@@ -39,8 +39,6 @@ public interface BanMod {
 
     PunishmentCategory getDefaultCategory();
 
-    PlayerAdapter getPlayerAdapter();
-
     EntityService getEntityService();
 
     @Nullable
@@ -52,14 +50,32 @@ public interface BanMod {
 
     boolean allowUnsafeConnections();
 
-    @UtilityClass final class Strings {
+    default void realize(Infraction infraction) {
+        var punish = infraction.getPunishment();
+        if (punish.isPassive())
+            return;
+        switch (punish) {
+            case Kick, Ban:
+                getPlayerAdapter().kick(infraction.getPlayer()
+                        .getId(), Displays.textPunishmentFull(infraction));
+                break;
+            case Debuff:/*todo*/
+                break;
+        }
+    }
+
+    PlayerAdapter getPlayerAdapter();
+
+    @UtilityClass
+    final class Strings {
         public static final String AddonName = "BanMod";
         public static final String AddonId   = "banmod";
         public static final String IssuesUrl = "https://github.com/AMPZNetwork/BanMod/issues";
         public static final String PleaseCheckConsole = "Please check console for further information";
     }
 
-    @UtilityClass final class Resources {
+    @UtilityClass
+    final class Resources {
         public static final int ENTRIES_PER_PAGE = 8;
 
         public static void notify(BanMod mod, UUID playerId, @Nullable Punishment punishment, PlayerResult result, BiConsumer<UUID, Component> forwarder) {
@@ -100,8 +116,9 @@ public interface BanMod {
             forwarder.accept(playerId, msgUser);
             playerAdapter.broadcast(permission, msgNotify);
             if (punishment != null)
-                mod.log().info("User %s is %#s (%s)".formatted(name, punishment,
-                        Displays.formatTimestamp(result.expires())));
+                mod.log()
+                        .info("User %s is %#s (%s)".formatted(name, punishment,
+                                Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
@@ -117,7 +134,8 @@ public interface BanMod {
         }
     }
 
-    @UtilityClass final class Permission {
+    @UtilityClass
+    final class Permission {
         public static final String PlayerBypassMute = "banmod.bypass.mute";
         public static final String PlayerBypassKick = "banmod.bypass.kick";
         public static final String PlayerBypassBan = "banmod.bypass.ban";
@@ -128,7 +146,8 @@ public interface BanMod {
         public static final String PluginErrorNotification  = "banmod.notify.error";
     }
 
-    @UtilityClass final class Displays {
+    @UtilityClass
+    final class Displays {
         @NotNull
         public static String formatDuration(Duration duration) {
             if (duration == null)
@@ -138,14 +157,17 @@ public interface BanMod {
 
         @NotNull
         public Component infractionList(BanMod banMod, int page, Punishment punishment) {
-            final var infractions = banMod.getEntityService().getInfractions()
+            final var infractions = banMod.getEntityService()
+                    .getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
                     .distinct()
                     .toList();
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
             return infractions.stream()
-                    .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer().getLastKnownName().orElse("")))
+                    .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer()
+                            .getLastKnownName()
+                            .orElse("")))
                     .skip(Math.max(0, (page - 1L) * Resources.ENTRIES_PER_PAGE))
                     .limit(Resources.ENTRIES_PER_PAGE)
                     .map(infraction -> text("\n- ")
@@ -165,11 +187,14 @@ public interface BanMod {
 
         @NotNull
         public Component textPunishmentFull(Infraction infraction) {
-            var username = infraction.getPlayer().getOrFetchUsername().join();
+            var username = infraction.getPlayer()
+                    .getOrFetchUsername()
+                    .join();
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))
-                    .append(infraction.getPunishment().toComponent(true));
+                    .append(infraction.getPunishment()
+                            .toComponent(true));
 
             var reason = infraction.getReason();
             if (reason != null)
@@ -196,19 +221,23 @@ public interface BanMod {
         public static TextComponent bannedTextUser(BanMod mod, PlayerResult result) {
             var text = text()
                     .append(text("You are banned from this Server")
-                            .color(RED).decorate(BOLD, UNDERLINED))
+                            .color(RED)
+                            .decorate(BOLD, UNDERLINED))
                     .append(text("\n\n"));
             if (result.reason() != null)
                 text.append(text("Reason:\n\n")
-                                .color(AQUA).decorate(UNDERLINED))
+                                .color(AQUA)
+                                .decorate(UNDERLINED))
                         .append(text(result.reason()).color(YELLOW))
                         .append(text("\n\n\n"));
 
             text.append(text("This punishment ").color(RED));
-            if (result.expires() == null || result.expires().isBefore(Infraction.TOO_EARLY))
+            if (result.expires() == null || result.expires()
+                    .isBefore(Infraction.TOO_EARLY))
                 text.append(text("is ").color(RED))
                         .append(text("permanent")
-                                .color(DARK_RED).decorate(BOLD))
+                                .color(DARK_RED)
+                                .decorate(BOLD))
                         .append(text(".").color(RED));
             else text.append(text("ends at ").color(RED))
                     .append(text(formatTimestamp(result.expires()))

@@ -1,11 +1,14 @@
 package com.ampznetwork.banmod.core.database;
 
+import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.AlmostComplete;
+import org.comroid.api.func.util.Debug;
+import org.comroid.api.func.util.Stopwatch;
 import org.comroid.api.tree.Component;
 
 import javax.persistence.EntityManager;
@@ -51,6 +54,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
     }
 
     public void pollNotifier() {
+        var stopwatch = Stopwatch.start(this);
         var events = service.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
             var handle = Polyfill.<List<NotifyEvent>>uncheckedCast(manager.createNativeQuery("""
                     select ne.*
@@ -71,6 +75,17 @@ public class PollingMessagingService extends Component.Base implements Messaging
             }
             return handle.toArray(new NotifyEvent[0]);
         });
+
+        var duration = stopwatch.stop();
+        var msg      = "Accepting %d events took %s".formatted(events.length, BanMod.Displays.formatDuration(duration));
+        if (Debug.isDebug()) // best log level handling EVER
+            service.getBanMod()
+                    .log()
+                    .info(msg);
+        else service.getBanMod()
+                .log()
+                .debug(msg);
+
         service.getScheduler().execute(() -> dispatch(events));
     }
 
@@ -85,5 +100,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
             dispatch(event);
         var event = events[0];
         if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
+        // handle SYNC
+        service.sync(event.getData());
     }
 }

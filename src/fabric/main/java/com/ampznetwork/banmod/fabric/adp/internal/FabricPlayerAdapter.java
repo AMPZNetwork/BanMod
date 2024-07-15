@@ -9,7 +9,6 @@ import lombok.Value;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -56,7 +55,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void kick(UUID playerId, TextComponent reason) {
+    public void kick(UUID playerId, Component reason) {
         var serialize = BanMod$Fabric.component2text(reason);
         Optional.ofNullable(banMod.getServer().getPlayerManager()
                         .getPlayer(playerId))
@@ -66,7 +65,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void send(UUID playerId, TextComponent component) {
+    public void send(UUID playerId, Component component) {
         var serialize = BanMod$Fabric.component2text(component);
         var player = banMod.getServer().getPlayerManager().getPlayer(playerId);
         if (player == null) return;
