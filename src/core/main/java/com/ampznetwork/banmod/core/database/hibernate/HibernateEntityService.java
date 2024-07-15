@@ -28,6 +28,7 @@ import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.sql.Connection;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,7 +62,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
         // boot up messaging service
         this.scheduler        = Executors.newScheduledThreadPool(2);
-        this.messagingService = new PollingMessagingService(this, manager);
+        this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup
@@ -173,16 +174,17 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public <T> T save(T object) {
-        wrapTransaction(() -> {
+        return wrapTransaction(() -> {
             try {
                 manager.persist(object);
+                // now a persistent object!
+                return object;
             } catch (Throwable t) {
                 log.debug("persist() failed for " + object, t);
-                manager.merge(object);
+                // its fine we return it either way
+                return manager.merge(object);
             }
-            return null;
         });
-        return object;
     }
 
     @Override

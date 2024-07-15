@@ -4,55 +4,86 @@ import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
+import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.AlmostComplete;
 import org.comroid.api.tree.Component;
 
-import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.sql.Connection;
+import java.time.Duration;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Value
 public class PollingMessagingService extends Component.Base implements MessagingService {
-    HibernateEntityService entityService;
+    HibernateEntityService service;
     EntityManager          manager;
+    long                   me;
 
-    public PollingMessagingService(HibernateEntityService entityService, EntityManager manager) {
-        this.entityService = entityService;
+    public PollingMessagingService(HibernateEntityService service, EntityManager manager, Duration interval) {
+        this.service = service;
         this.manager = manager;
 
-        entityService.getScheduler().scheduleAtFixedRate(this::pollNotifier, 5, 2, TimeUnit.SECONDS);
+        service.getScheduler().scheduleWithFixedDelay(this::pollNotifier, 5, interval.toMillis(), TimeUnit.MILLISECONDS);
 
-        // find free ident bit & send hello
-        var ident =
-                push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
+        // find recently used idents
+        //noinspection unchecked
+        var occupied = service.wrapQuery(Query::getResultStream, manager.createQuery("""
+                select BIT_OR(ne.ident)
+                from NotifyEvent ne
+                group by ne.ident
+                order by ne.timestamp desc
+                limit 50
+                """, Long.class)).mapToLong(x -> (long) x).findAny().orElse(0);
+
+        // randomly try to get a new ident
+        long x;
+        var  rng = new Random();
+        do {
+            x = 1L << rng.nextInt(64);
+        } while ((x & ~occupied) != 0);
+        this.me = x;
+
+        // send HELLO
+        push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
     }
 
-    public void pollNotifier() {}
+    public void pollNotifier() {
+        var events = service.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
+            var handle = Polyfill.<List<NotifyEvent>>uncheckedCast(manager.createNativeQuery("""
+                    select ne.*
+                    from banmod_notify ne
+                    where ne.ident != :me and (ne.acknowledge & :me) = 0
+                    order by ne.timestamp
+                    """, NotifyEvent.class).getResultList());
+            for (var event : handle.toArray(new NotifyEvent[0])) {
+                var ack = manager.createNativeQuery("""
+                        update banmod_notify ne
+                        set ne.acknowledge = (ne.acknowledge | :me)
+                        where ne.ident = :ident and ne.timestamp = :timestamp
+                        """).setParameter("me", me).setParameter("ident", event.getIdent()).setParameter("timestamp", event.getTimestamp()).executeUpdate();
+                if (ack != 1) {
+                    service.getBanMod().log().warn("Failed to acknowledge notification {}; ignoring it", event);
+                    handle.remove(event);
+                }
+            }
+            return handle.toArray(new NotifyEvent[0]);
+        });
+        service.getScheduler().execute(() -> dispatch(events));
+    }
 
     @Override
     public AlmostComplete<NotifyEvent.Builder> push() {
-        return new AlmostComplete<>(NotifyEvent::builder, this::push);
+        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(me).build()));
     }
 
-    private void push(NotifyEvent.Builder push) {
-        entityService.wrapTransaction(Connection.TRANSACTION_SERIALIZABLE, () -> {
-            // get next free incr
-            long incr = manager.createQuery("""
-                    select ne.incr from NotifyEvent ne order by ne.timestamp desc
-                    """, Long.class).getResultStream().findAny().orElse(0L);
-
-            // set incr to this event
-            var event = push.incr(incr + 1).build();
-
-            do {
-                try {
-                    manager.persist(event);
-                    return event;
-                } catch (EntityExistsException ignored) {
-                    event.setIncr(incr += 1);
-                }
-            } while (true);
-        });
+    private void dispatch(NotifyEvent... events) {
+        if (events.length == 0) return;
+        if (events.length > 1) for (var event : events)
+            dispatch(event);
+        var event = events[0];
+        if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
     }
 }
