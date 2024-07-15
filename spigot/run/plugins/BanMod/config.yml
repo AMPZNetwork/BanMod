@@ -4,5 +4,4 @@ banmod:
     url: jdbc:mariadb://localhost:3306/dev
     username: dev
     password: dev
-  entity_service: database
   banAppealUrl: https://www.youtube.com/watch?v=dQw4w9WgXcQ
