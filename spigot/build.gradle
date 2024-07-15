@@ -99,7 +99,6 @@ repositories {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
-    maven { url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
 }
 
 dependencies {
@@ -109,9 +108,6 @@ dependencies {
 
     // banMod api
     implementation project("$prefix:core")
-
-    // placeholderapi
-    compileOnly 'me.clip:placeholderapi:2.9.+'
 }
 
 def targetJavaVersion = 17
