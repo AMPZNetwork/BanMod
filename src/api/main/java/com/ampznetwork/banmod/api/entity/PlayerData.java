@@ -2,7 +2,13 @@ package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
@@ -10,10 +16,21 @@ import org.comroid.api.net.REST;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.net.InetAddress;
 import java.time.Instant;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -30,7 +47,7 @@ import static org.comroid.api.net.REST.Method.GET;
 @EqualsAndHashCode(of = "id")
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PlayerData {
+public class PlayerData implements DbObject {
     public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @Id
     @Column(columnDefinition = "binary(16)")

@@ -4,12 +4,24 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -30,7 +42,7 @@ import static lombok.Builder.Default;
 @EqualsAndHashCode(of = "id")
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Infraction {
+public class Infraction implements DbObject {
     public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
     public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
             && (i.getRevoker() == null

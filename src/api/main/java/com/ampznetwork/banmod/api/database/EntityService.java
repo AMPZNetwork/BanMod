@@ -33,6 +33,8 @@ public interface EntityService extends LifeCycle {
 
     BanMod getBanMod();
 
+    MessagingService getMessagingService();
+
     Stream<PlayerData> getPlayerData();
 
     Optional<PlayerData> getPlayerData(UUID playerId);

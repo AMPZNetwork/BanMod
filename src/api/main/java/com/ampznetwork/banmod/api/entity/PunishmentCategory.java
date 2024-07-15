@@ -2,14 +2,25 @@ package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Described;
 import org.comroid.api.attr.Named;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +33,7 @@ import java.util.Optional;
 @EqualsAndHashCode(of = "name")
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PunishmentCategory implements Named, Described, DefaultReason {
+public class PunishmentCategory implements Named, Described, DefaultReason, DbObject {
     @Id
     String name;
     @lombok.Builder.Default
