@@ -130,12 +130,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public Stream<PunishmentCategory> getCategories() {
-        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
-                .getResultStream();
-    }
-
-    @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
         return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
                 .setParameter("playerId", playerId)
@@ -151,6 +145,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 () -> PunishmentCategory.builder().name(name),
                 PunishmentCategory.Builder::build,
                 this::save);
+    }
+
+    @Override
+    public Stream<PunishmentCategory> getCategories() {
+        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
+                .getResultStream();
     }
 
     @Override

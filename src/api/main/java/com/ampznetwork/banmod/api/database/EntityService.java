@@ -27,6 +27,10 @@ import static java.time.Instant.*;
 
 @SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {
+    static String ip2string(InetAddress ip) {
+        return ip.toString().substring(1);
+    }
+
     BanMod getBanMod();
 
     MessagingService getMessagingService();
@@ -41,24 +45,24 @@ public interface EntityService extends LifeCycle {
 
     Stream<PunishmentCategory> getCategories();
 
+    Stream<Infraction> getInfractions(UUID playerId);
+
+    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
+
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
                 .filter(Infraction.IS_IN_EFFECT)
                 .sorted(Infraction.BY_SEVERITY)
                 .map(i -> new PlayerResult(playerId,
-                                           i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
-                                           i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
-                                           i.getReason(), i.getTimestamp(), i.getExpires()))
+                        i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
+                        i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
+                        i.getReason(), i.getTimestamp(), i.getExpires()))
                 .findFirst()
                 .orElseGet(() -> {
                     var now = now();
                     return new PlayerResult(playerId, false, false, null, now, now);
                 });
     }
-
-    Stream<Infraction> getInfractions(UUID playerId);
-
-    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
     default Optional<PunishmentCategory> findCategory(String name) {
         return getCategories()
@@ -68,7 +72,7 @@ public interface EntityService extends LifeCycle {
 
     default PunishmentCategory defaultCategory() {
         return save(findCategory("default")
-                            .orElseGet(() -> PunishmentCategory.standard("default").build()));
+                .orElseGet(() -> PunishmentCategory.standard("default").build()));
     }
 
     <T> T save(T object);
@@ -95,9 +99,5 @@ public interface EntityService extends LifeCycle {
 
         Class<?> driverClass;
         Class<?> dialectClass;
-    }
-
-    static String ip2string(InetAddress ip) {
-        return ip.toString().substring(1);
     }
 }

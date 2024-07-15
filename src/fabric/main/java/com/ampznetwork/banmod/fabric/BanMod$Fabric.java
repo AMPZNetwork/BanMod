@@ -35,6 +35,9 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
+    public static Text component2text(Component component) {
+        return Text.Serializer.fromJson(gson().serialize(component));
+    }
     private final FabricPlayerAdapter            playerAdapter = new FabricPlayerAdapter(this);
     private final FabricEventDispatch            eventDispatch = new FabricEventDispatch(this);
     private       Config                         config        = Config.createAndLoad();
@@ -104,9 +107,5 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     @SneakyThrows
     public void terminate() {
         entityService.terminate();
-    }
-
-    public static Text component2text(Component component) {
-        return Text.Serializer.fromJson(gson().serialize(component));
     }
 }

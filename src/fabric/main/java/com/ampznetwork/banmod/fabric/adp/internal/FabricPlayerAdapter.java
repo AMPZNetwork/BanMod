@@ -59,7 +59,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     public void kick(UUID playerId, TextComponent reason) {
         var serialize = BanMod$Fabric.component2text(reason);
         Optional.ofNullable(banMod.getServer().getPlayerManager()
-                                    .getPlayer(playerId))
+                        .getPlayer(playerId))
                 .orElseThrow(() -> new Command.Error("Player not found"))
                 .networkHandler
                 .disconnect(serialize);

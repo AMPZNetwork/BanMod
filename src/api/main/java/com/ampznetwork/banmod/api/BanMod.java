@@ -69,10 +69,10 @@ public interface BanMod {
             String permission    = Permission.PluginErrorNotification;
             if (punishment == null) {
                 msgUser = text("""
-                                       An internal server error occurred.
-                                       Please contact your server administrator and try again later.
+                        An internal server error occurred.
+                        Please contact your server administrator and try again later.
 
-                                       %s""".formatted(result.reason())).color(RED);
+                        %s""".formatted(result.reason())).color(RED);
                 msgNotify = text("An internal error is causing issues for players and they cannot join.").color(RED)
                         .append(text("To allow connecting anyway, please enable "))
                         .append(text("banmod.allowUnsafeConnections").color(AQUA))
@@ -101,7 +101,7 @@ public interface BanMod {
             playerAdapter.broadcast(permission, msgNotify);
             if (punishment != null)
                 mod.log().info("User %s is %#s (%s)".formatted(name, punishment,
-                                                               Displays.formatTimestamp(result.expires())));
+                        Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
@@ -153,14 +153,14 @@ public interface BanMod {
                     .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                             .append(text("(none)").color(GRAY))))
                     .collect(Collector.of(() -> text()
-                                                  .append(text(punishment.name() + "list (Page %d of %d)"
-                                                          .formatted((Integer) (pageCount == 0 ? 0 : Math.max(1, page)), (Integer) (int) pageCount))),
-                                          ComponentBuilder::append,
-                                          (l, r) -> {
-                                              l.append(r);
-                                              return l;
-                                          },
-                                          ComponentBuilder::build));
+                                    .append(text(punishment.name() + "list (Page %d of %d)"
+                                            .formatted((Integer) (pageCount == 0 ? 0 : Math.max(1, page)), (Integer) (int) pageCount))),
+                            ComponentBuilder::append,
+                            (l, r) -> {
+                                l.append(r);
+                                return l;
+                            },
+                            ComponentBuilder::build));
         }
 
         @NotNull
@@ -196,11 +196,11 @@ public interface BanMod {
         public static TextComponent bannedTextUser(BanMod mod, PlayerResult result) {
             var text = text()
                     .append(text("You are banned from this Server")
-                                    .color(RED).decorate(BOLD, UNDERLINED))
+                            .color(RED).decorate(BOLD, UNDERLINED))
                     .append(text("\n\n"));
             if (result.reason() != null)
                 text.append(text("Reason:\n\n")
-                                    .color(AQUA).decorate(UNDERLINED))
+                                .color(AQUA).decorate(UNDERLINED))
                         .append(text(result.reason()).color(YELLOW))
                         .append(text("\n\n\n"));
 
@@ -208,20 +208,29 @@ public interface BanMod {
             if (result.expires() == null || result.expires().isBefore(Infraction.TOO_EARLY))
                 text.append(text("is ").color(RED))
                         .append(text("permanent")
-                                        .color(DARK_RED).decorate(BOLD))
+                                .color(DARK_RED).decorate(BOLD))
                         .append(text(".").color(RED));
             else text.append(text("ends at ").color(RED))
                     .append(text(formatTimestamp(result.expires()))
-                                    .color(YELLOW))
+                            .color(YELLOW))
                     .append(text(".").color(RED));
 
             var appealUrl = mod.getBanAppealUrl();
             if (appealUrl != null)
                 text.append(text("\nYou may appeal to get unbanned at\n").color(GRAY))
                         .append(text(appealUrl).color(AQUA)
-                                        .hoverEvent(showText(text("Open Link")))
-                                        .clickEvent(clickEvent(ClickEvent.Action.OPEN_URL, appealUrl)));
+                                .hoverEvent(showText(text("Open Link")))
+                                .clickEvent(clickEvent(ClickEvent.Action.OPEN_URL, appealUrl)));
             return text.build();
+        }
+
+        @NotNull
+        public static String formatTimestamp(Instant expiry) {
+            if (expiry == null)
+                return "permanent";
+            var dateTime  = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
+            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            return dateTime.format(formatter);
         }
 
         @NotNull
@@ -259,15 +268,6 @@ public interface BanMod {
                     .append(text("Player "))
                     .append(text(name).color(RED))
                     .append(text(" was kicked from the server."));
-        }
-
-        @NotNull
-        public static String formatTimestamp(Instant expiry) {
-            if (expiry == null)
-                return "permanent";
-            var dateTime  = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
-            var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            return dateTime.format(formatter);
         }
 
         @NotNull

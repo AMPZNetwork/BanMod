@@ -50,6 +50,16 @@ import static org.comroid.api.net.REST.Method.*;
 public class PlayerData implements DbObject {
     public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     public static BiConsumer<UUID, String> CACHE_NAME = null;
+
+    public static CompletableFuture<UUID> fetchId(String name) {
+        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
+                .thenApply(REST.Response::validate2xxOK)
+                .thenApply(rsp -> rsp.getBody().get("id").asString())
+                .thenApply(UuidVarchar36Converter::fillDashes)
+                .thenApply(UUID::fromString);
+        future.thenAccept(id -> CACHE_NAME.accept(id, name));
+        return future;
+    }
     @Id
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
@@ -104,15 +114,5 @@ public class PlayerData implements DbObject {
     public PlayerData pushKnownIp(InetAddress ip) {
         getKnownIPs().compute(ip2string(ip), ($0, $1) -> now());
         return this;
-    }
-
-    public static CompletableFuture<UUID> fetchId(String name) {
-        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("id").asString())
-                .thenApply(UuidVarchar36Converter::fillDashes)
-                .thenApply(UUID::fromString);
-        future.thenAccept(id -> CACHE_NAME.accept(id, name));
-        return future;
     }
 }

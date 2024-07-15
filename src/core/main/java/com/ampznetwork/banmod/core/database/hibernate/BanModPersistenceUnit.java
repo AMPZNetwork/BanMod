@@ -13,10 +13,10 @@ import java.util.stream.Stream;
 public class BanModPersistenceUnit extends PersistenceUnitBase {
     public BanModPersistenceUnit(HikariDataSource dataSource) {
         super("BanMod",
-              dataSource,
-              BanMod.class.getProtectionDomain().getCodeSource().getLocation(),
-              Stream.of(PlayerData.class, PunishmentCategory.class, Infraction.class)
-                      .map(Class::getCanonicalName)
-                      .toList());
+                dataSource,
+                BanMod.class.getProtectionDomain().getCodeSource().getLocation(),
+                Stream.of(PlayerData.class, PunishmentCategory.class, Infraction.class)
+                        .map(Class::getCanonicalName)
+                        .toList());
     }
 }

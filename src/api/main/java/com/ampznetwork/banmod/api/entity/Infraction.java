@@ -49,13 +49,13 @@ public class Infraction implements DbObject {
             && (i.getExpires() == null || i.getExpires().isAfter(now())
             || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
     public static       Comparator<Infraction> BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
-                                                                                                          i.getPunishment().ordinal()).reversed();
+            i.getPunishment().ordinal()).reversed();
     public static       Comparator<Infraction> BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
-                                                                                                           i.timestamp.toEpochMilli()).reversed();
+            i.timestamp.toEpochMilli()).reversed();
     public static       Comparator<Infraction> BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
-                                                                                                           i.expires == null
-                                                                                                           ? Long.MIN_VALUE
-                                                                                                           : i.expires.toEpochMilli()).reversed();
+            i.expires == null
+            ? Long.MIN_VALUE
+            : i.expires.toEpochMilli()).reversed();
     @Default
     @Id
     @Column(columnDefinition = "binary(16)")
@@ -102,10 +102,10 @@ public class Infraction implements DbObject {
 
     public PlayerResult toResult() {
         return new PlayerResult(player.getId(),
-                                punishment == Punishment.Mute,
-                                punishment == Punishment.Ban,
-                                reason,
-                                timestamp,
-                                expires);
+                punishment == Punishment.Mute,
+                punishment == Punishment.Ban,
+                reason,
+                timestamp,
+                expires);
     }
 }

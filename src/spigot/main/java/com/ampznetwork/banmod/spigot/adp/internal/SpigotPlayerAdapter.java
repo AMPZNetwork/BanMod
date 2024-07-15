@@ -103,11 +103,11 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
         meta.setTitle(BookAdapter.TITLE);
         meta.setAuthor(BookAdapter.AUTHOR);
         meta.spigot().setPages(book.getPages().stream()
-                                       .map(page -> Arrays.stream(page)
-                                               .map(component -> get().serialize(component))
-                                               .flatMap(Arrays::stream)
-                                               .toArray(BaseComponent[]::new))
-                                       .toList());
+                .map(page -> Arrays.stream(page)
+                        .map(component -> get().serialize(component))
+                        .flatMap(Arrays::stream)
+                        .toArray(BaseComponent[]::new))
+                .toList());
         stack.setItemMeta(meta);
         banMod.getServer().getPlayer(playerId).openBook(stack);
     }

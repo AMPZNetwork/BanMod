@@ -34,6 +34,12 @@ import java.util.Optional;
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory implements Named, Described, DefaultReason, DbObject {
+    public static PunishmentCategory.Builder standard(String name) {
+        return builder().name(name)
+                .punishmentThreshold(0, Punishment.Kick)
+                .punishmentThreshold(2, Punishment.Mute)
+                .punishmentThreshold(5, Punishment.Ban);
+    }
     @Id
     String   name;
     @lombok.Builder.Default
@@ -61,12 +67,5 @@ public class PunishmentCategory implements Named, Described, DefaultReason, DbOb
                 .filter(e -> e.getKey() < rep)
                 .min(Punishment.BY_SEVERITY)
                 .map(Map.Entry::getValue);
-    }
-
-    public static PunishmentCategory.Builder standard(String name) {
-        return builder().name(name)
-                .punishmentThreshold(0, Punishment.Kick)
-                .punishmentThreshold(2, Punishment.Mute)
-                .punishmentThreshold(5, Punishment.Ban);
     }
 }

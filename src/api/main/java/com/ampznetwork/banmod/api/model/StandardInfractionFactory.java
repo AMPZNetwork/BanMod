@@ -18,6 +18,19 @@ import static java.time.Instant.*;
 @Builder
 @RequiredArgsConstructor
 public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
+    public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
+        return base(mod, playerId, null, punishment, issuer);
+    }
+
+    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
+        if (category == null) category = mod.getDefaultCategory();
+        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
+    }
+
+    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
+        return base(mod, playerId, category, null, issuer);
+    }
+
     BanMod mod;
     UUID   playerId;
     PunishmentCategory category;
@@ -53,18 +66,5 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
                 .reason(reason)
                 .timestamp(now)
                 .expires(permanent ? null : now.plus(expire));
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
-        return base(mod, playerId, null, punishment, issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
-        if (category == null) category = mod.getDefaultCategory();
-        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
-        return base(mod, playerId, category, null, issuer);
     }
 }

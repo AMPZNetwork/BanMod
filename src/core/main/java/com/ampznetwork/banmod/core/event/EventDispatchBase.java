@@ -61,14 +61,14 @@ public abstract class EventDispatchBase {
         ) {
             StackTraceUtils.writeFilteredStacktrace(t, printer);
             BanMod.Resources.notify(mod, playerId, null,
-                                    new PlayerResult(playerId, false, false,
-                                                     "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
-                                                     null, null),
-                                    (uuid, component) -> {
-                                        var serialize = componentSerializer.apply(component);
-                                        if (!mod.allowUnsafeConnections())
-                                            forwardAndDisconnect.accept(serialize);
-                                    });
+                    new PlayerResult(playerId, false, false,
+                            "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
+                            null, null),
+                    (uuid, component) -> {
+                        var serialize = componentSerializer.apply(component);
+                        if (!mod.allowUnsafeConnections())
+                            forwardAndDisconnect.accept(serialize);
+                    });
             mod.log().warn("An internal error occurred and is ");
         } catch (IOException e) {
             mod.log().error("Have you tried turning your machine off and back on again?", t);

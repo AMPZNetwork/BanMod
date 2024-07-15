@@ -87,10 +87,10 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
             BanMod.Resources.printExceptionWithIssueReportUrl(log, "An internal error occurred during command preparation", t);
             var result = handleThrowable(t);
             handleResponse(Command.Usage.builder()
-                                   .manager(cmdr)
-                                   .fullCommand(fullCommand)
-                                   .source(this)
-                                   .build(), result, context);
+                    .manager(cmdr)
+                    .fullCommand(fullCommand)
+                    .source(this)
+                    .build(), result, context);
             return 0;
         }
         try {
@@ -128,18 +128,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     @Override
     public void initialize() {
         CommandRegistrationCallback.EVENT.register(this);
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else throw new Command.Error("Command parsing error");
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
     }
 
     @Override
@@ -249,6 +237,32 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         return arg;
     }
 
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else throw new Command.Error("Command parsing error");
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
+    }
+
+    private Stream<LiteralArgumentBuilder<ServerCommandSource>> createAliasRedirects(
+            String pad,
+            Command.Node desc,
+            LiteralArgumentBuilder<ServerCommandSource> target
+    ) {
+        return desc.aliases()
+                .filter(not(desc.getName()::equals))
+                .map(alias -> {
+                    var redirect = literal(alias).redirect(target.build());
+                    if (isDebug()) System.out.printf("%s-> Alias: '%s'\n", pad, alias);
+                    return redirect;
+                });
+    }
+
     @Override
     public CompletableFuture<Suggestions> getSuggestions(
             CommandContext<ServerCommandSource> context,
@@ -278,25 +292,11 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                                     .map(String::trim)
                                     .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
                                     .map(str -> new Suggestion(range, str,
-                                                               Text.of(n0.getName() + ": " + n0.getDescription()))))
+                                            Text.of(n0.getName() + ": " + n0.getDescription()))))
                             .toList();
                 })
                 .thenApply(ls -> new Suggestions(range, ls))
                 .exceptionally(Polyfill.exceptionLogger());
-    }
-
-    private Stream<LiteralArgumentBuilder<ServerCommandSource>> createAliasRedirects(
-            String pad,
-            Command.Node desc,
-            LiteralArgumentBuilder<ServerCommandSource> target
-    ) {
-        return desc.aliases()
-                .filter(not(desc.getName()::equals))
-                .map(alias -> {
-                    var redirect = literal(alias).redirect(target.build());
-                    if (isDebug()) System.out.printf("%s-> Alias: '%s'\n", pad, alias);
-                    return redirect;
-                });
     }
 
     @Value
@@ -311,15 +311,6 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         public static final ArgumentConverter                STRING        = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
         public static final ArgumentConverter                GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
         public static final ArgumentConverter                UUID          = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
-        ValueType<?> valueType;
-        Supplier<ArgumentType<?>> supplier;
-
-        public ArgumentConverter(ValueType<?> valueType, Supplier<ArgumentType<?>> supplier) {
-            this.valueType = valueType;
-            this.supplier = supplier;
-
-            //CACHE.put(valueType.getTargetClass(), this);
-        }
 
         public static <T> ArgumentConverter blob(Command.Node.Parameter parameter) {
             var type = parameter.getParam().getType();
@@ -336,6 +327,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                             .filter(conv -> conv.valueType.equals(t0)))
                     .findAny()
                     .orElse(STRING);
+        }
+
+        ValueType<?>              valueType;
+        Supplier<ArgumentType<?>> supplier;
+
+        public ArgumentConverter(ValueType<?> valueType, Supplier<ArgumentType<?>> supplier) {
+            this.valueType = valueType;
+            this.supplier  = supplier;
+
+            //CACHE.put(valueType.getTargetClass(), this);
         }
     }
 }
