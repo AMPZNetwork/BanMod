@@ -18,10 +18,10 @@ public class UuidVarchar36Converter implements AttributeConverter<UUID, String> 
             uuid = uuid.replaceAll("-", "");
         return uuid.length() == 36 ? uuid
                 : uuid.substring(0, 8) +
-                '-' + uuid.substring(8, 12) +
-                '-' + uuid.substring(12, 16) +
-                '-' + uuid.substring(16, 20) +
-                '-' + uuid.substring(20);
+                  '-' + uuid.substring(8, 12) +
+                  '-' + uuid.substring(12, 16) +
+                  '-' + uuid.substring(16, 20) +
+                  '-' + uuid.substring(20);
     }
 
     @Override

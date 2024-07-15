@@ -19,7 +19,7 @@ import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.ampznetwork.banmod.fabric.BanMod$Fabric.component2text;
+import static com.ampznetwork.banmod.fabric.BanMod$Fabric.*;
 
 @Value
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {

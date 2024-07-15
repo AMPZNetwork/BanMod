@@ -22,9 +22,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
-import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.*;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.*;
 
 @Value
 public class SpigotPlayerAdapter implements PlayerAdapter {

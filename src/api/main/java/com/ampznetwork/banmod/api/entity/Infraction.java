@@ -29,9 +29,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import static java.time.Instant.now;
-import static java.util.function.Predicate.not;
-import static lombok.Builder.Default;
+import static java.time.Instant.*;
+import static java.util.function.Predicate.*;
+import static lombok.Builder.*;
 
 @Data
 @Entity
@@ -45,9 +45,9 @@ import static lombok.Builder.Default;
 public class Infraction implements DbObject {
     public static final Instant TOO_EARLY = Instant.EPOCH.plus(Duration.ofDays(2));
     public static final Predicate<Infraction> IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
-            && (i.getRevoker() == null
-            && (i.getExpires() == null || i.getExpires().isAfter(now())
-            || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
+                                                                  && (i.getRevoker() == null
+                                                                      && (i.getExpires() == null || i.getExpires().isAfter(now())
+                                                                          || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
     public static Comparator<Infraction> BY_SEVERITY = Comparator.<Infraction>comparingInt(i ->
             i.getPunishment().ordinal()).reversed();
     public static Comparator<Infraction> BY_NEWEST = Comparator.<Infraction>comparingLong(i ->

@@ -9,8 +9,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
-import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
-import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
+import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.*;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.*;
 
 @Value
 public class SpigotEventDispatch extends EventDispatchBase implements Listener {

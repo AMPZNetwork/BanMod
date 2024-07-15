@@ -8,7 +8,6 @@ import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
-import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,7 @@ import org.slf4j.Logger;
 
 import java.util.stream.Stream;
 
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)

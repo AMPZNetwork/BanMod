@@ -12,7 +12,7 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static java.time.Instant.now;
+import static java.time.Instant.*;
 
 @Value
 @Builder

@@ -28,17 +28,11 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
-import static net.kyori.adventure.text.event.HoverEvent.showText;
-import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
-import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.event.ClickEvent.*;
+import static net.kyori.adventure.text.event.HoverEvent.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public interface BanMod {
     Logger log();

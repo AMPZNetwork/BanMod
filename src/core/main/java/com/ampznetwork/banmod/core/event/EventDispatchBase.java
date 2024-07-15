@@ -17,9 +17,9 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
-import static java.time.Instant.now;
-import static org.comroid.api.java.StackTraceUtils.lessSimpleDetailedName;
+import static com.ampznetwork.banmod.api.database.EntityService.*;
+import static java.time.Instant.*;
+import static org.comroid.api.java.StackTraceUtils.*;
 
 @Log
 @Value

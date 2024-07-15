@@ -12,10 +12,9 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.function.Predicate.not;
-import static java.util.stream.Stream.empty;
-import static org.comroid.api.func.util.Streams.atLeastOneOrElseFlatten;
-import static org.comroid.api.func.util.Streams.cast;
+import static java.util.function.Predicate.*;
+import static java.util.stream.Stream.*;
+import static org.comroid.api.func.util.Streams.*;
 
 @UtilityClass
 public class AutoFillProvider {

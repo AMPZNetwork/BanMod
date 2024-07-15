@@ -3,7 +3,13 @@ package org.comroid.api.func.util;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -36,12 +42,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static java.util.function.Predicate.not;
+import static java.util.function.Predicate.*;
+import static java.util.stream.Stream.of;
 import static java.util.stream.Stream.*;
 import static net.minecraft.server.command.CommandManager.*;
-import static org.comroid.api.func.util.Debug.isDebug;
-import static org.comroid.api.func.util.Streams.expand;
-import static org.comroid.api.func.util.Streams.expandRecursive;
+import static org.comroid.api.func.util.Debug.*;
+import static org.comroid.api.func.util.Streams.*;
 
 @Value
 @Slf4j

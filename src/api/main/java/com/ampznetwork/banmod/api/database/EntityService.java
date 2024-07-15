@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
+import static java.time.Instant.*;
 
 @SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {

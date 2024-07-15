@@ -28,9 +28,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
 
 @Value
 public class FabricPlayerAdapter implements PlayerAdapter {
@@ -39,7 +39,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     @Override
     public boolean isOnline(UUID playerId) {
         return banMod.getServer().getPlayerManager()
-                .getPlayer(playerId) != null;
+                       .getPlayer(playerId) != null;
     }
 
     @Override

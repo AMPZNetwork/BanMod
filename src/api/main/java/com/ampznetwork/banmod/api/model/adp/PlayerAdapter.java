@@ -26,7 +26,9 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
     boolean isOnline(UUID playerId);
 
     void kick(UUID playerId, TextComponent reason);
+
     void send(UUID playerId, TextComponent component);
+
     void broadcast(@Nullable String recieverPermission, Component component);
 
     void openBook(UUID playerId, BookAdapter book);

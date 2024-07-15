@@ -34,9 +34,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
-import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
-import static java.time.Instant.now;
-import static org.comroid.api.net.REST.Method.GET;
+import static com.ampznetwork.banmod.api.database.EntityService.*;
+import static java.time.Instant.*;
+import static org.comroid.api.net.REST.Method.*;
 
 @Data
 @Slf4j

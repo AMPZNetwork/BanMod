@@ -32,7 +32,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.comroid.api.func.util.Debug.isDebug;
+import static org.comroid.api.func.util.Debug.*;
 
 @Value
 public class HibernateEntityService extends Container.Base implements EntityService {
