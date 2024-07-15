@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
@@ -77,7 +76,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
         var serialize = BanMod$Fabric.component2text(component);
         banMod.getServer().getPlayerManager()
                 .getPlayerList().stream()
-                .filter(player -> recieverPermission == null || Permissions.check(player, recieverPermission))
+                .filter(player -> recieverPermission == null || banMod.hasPermission(player, recieverPermission))
                 .forEach(player -> player.sendMessage(serialize));
     }
 

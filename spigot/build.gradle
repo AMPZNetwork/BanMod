@@ -106,7 +106,6 @@ dependencies {
 
     compileOnly 'org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT'
     compileOnly 'net.kyori:adventure-platform-bungeecord:4.3.3'
-    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
 }
 
 def targetJavaVersion = 17

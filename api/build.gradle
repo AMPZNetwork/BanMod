@@ -35,7 +35,6 @@ dependencies {
 
     // minecraft
     api 'net.kyori:adventure-api:4.11.+'
-    api "net.luckperms:api:5.4"
 
     // database
     api 'javax.persistence:javax.persistence-api:2.2'
