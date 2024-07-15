@@ -24,25 +24,26 @@ import java.util.concurrent.TimeUnit;
 public class PollingMessagingService extends Component.Base implements MessagingService {
     HibernateEntityService service;
     EntityManager          manager;
-    long                   me;
+    Session session;
+    long    ident;
 
     public PollingMessagingService(HibernateEntityService service, EntityManager manager, Duration interval) {
         this.service = service;
         this.manager = manager;
+        this.session = manager.unwrap(Session.class);
 
         service.getScheduler()
                 .scheduleWithFixedDelay(this::pollNotifier, 5, interval.toMillis(), TimeUnit.MILLISECONDS);
 
         // find recently used idents
         //noinspection unchecked
-        var occupied = service.wrapQuery(Query::getResultList, manager.unwrap(Session.class)
-                        .createSQLQuery("""
-                                select BIT_OR(ne.ident)
-                                from banmod_notify ne
-                                group by ne.ident, ne.timestamp
-                                order by ne.timestamp desc
-                                limit 50
-                                """))
+        var occupied = service.wrapQuery(Query::getResultList, session.createSQLQuery("""
+                        select BIT_OR(ne.ident)
+                        from banmod_notify ne
+                        group by ne.ident, ne.timestamp
+                        order by ne.timestamp desc
+                        limit 50
+                        """))
                 .stream()
                 .mapToLong(x -> (long) x)
                 .findAny()
@@ -54,7 +55,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
         do {
             x = 1L << rng.nextInt(64);
         } while ((x & ~occupied) != 0);
-        this.me = x;
+        this.ident = x;
 
         // send HELLO
         push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
@@ -69,7 +70,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
                             where ne.ident != :me and (ne.acknowledge & :me) = 0
                             order by ne.timestamp
                             """, NotifyEvent.class)
-                    .setParameter("me", me)
+                    .setParameter("me", ident)
                     .getResultList());
             for (var event : handle.toArray(new NotifyEvent[0])) {
                 var ack = manager.createNativeQuery("""
@@ -77,7 +78,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
                                 set ne.acknowledge = (ne.acknowledge | :me)
                                 where ne.ident = :ident and ne.timestamp = :timestamp
                                 """)
-                        .setParameter("me", me)
+                        .setParameter("me", ident)
                         .setParameter("ident", event.getIdent())
                         .setParameter("timestamp", event.getTimestamp())
                         .executeUpdate();
@@ -107,7 +108,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
     @Override
     public AlmostComplete<NotifyEvent.Builder> push() {
-        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(me)
+        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(ident)
                 .build()));
     }
 
