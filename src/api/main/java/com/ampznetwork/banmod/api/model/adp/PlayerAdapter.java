@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import net.kyori.adventure.text.Component;
 import org.comroid.api.func.util.Command;
+import net.kyori.adventure.text.TextComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -11,6 +12,8 @@ import java.util.stream.Stream;
 
 public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
     Stream<PlayerData> getCurrentPlayers();
+
+    BanMod getBanMod();
 
     default UUID getId(String name) {
         return PlayerData.fetchId(name).join();
@@ -21,8 +24,6 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
                 .getOrCreatePlayerData(playerId).get()
                 .getOrFetchUsername().join();
     }
-
-    BanMod getBanMod();
 
     boolean isOnline(UUID playerId);
 

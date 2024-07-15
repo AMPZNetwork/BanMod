@@ -53,7 +53,7 @@ import static org.comroid.api.func.util.Streams.*;
 @Slf4j
 @NonFinal
 public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
-        implements Command.Handler.Minecraft, CommandRegistrationCallback,
+        implements Command.Handler.Minecraft<ServerPlayerEntity>, CommandRegistrationCallback,
         com.mojang.brigadier.Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
     Set<Command.Capability> capabilities = Set.of(Command.Capability.NAMED_ARGS);
     Command.Manager cmdr;

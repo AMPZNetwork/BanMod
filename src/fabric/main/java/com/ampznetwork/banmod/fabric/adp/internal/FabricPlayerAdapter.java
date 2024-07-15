@@ -27,9 +27,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.*;
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
+import static java.time.Instant.now;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
 @Value
 public class FabricPlayerAdapter implements PlayerAdapter {

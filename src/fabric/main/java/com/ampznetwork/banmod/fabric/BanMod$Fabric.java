@@ -5,19 +5,24 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
+import com.ampznetwork.banmod.core.cmd.PermissionAdapter;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
+import com.ampznetwork.banmod.fabric.adp.perm.FabricLuckPermsPermissionAdapter;
+import com.ampznetwork.banmod.fabric.adp.perm.FabricPermissionAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.kyori.adventure.text.Component;
+import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
+import org.comroid.api.java.SoftDepend;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +90,17 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
                 log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
         });
 
+        var permAdapter = SoftDepend.type("net.luckperms.api.LuckPerms").wrap()
+                .map($ -> LuckPermsProvider.get())
+                .map(lp -> {
+                    var permissionAdapter = new FabricLuckPermsPermissionAdapter(this, lp);
+                    lp.getContextManager().registerCalculator(permissionAdapter);
+                    return (PermissionAdapter) permissionAdapter;
+                })
+                .orElseGet(() -> new FabricPermissionAdapter(this));
+
         this.cmdr = new Command.Manager() {{
-            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
-            this.addChild(Command.PermissionChecker.minecraft(playerAdapter));
+            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this, permAdapter));
         }};
         this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
         cmdr.register(BanModCommands.class);

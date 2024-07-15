@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
+import net.kyori.adventure.text.TextComponent;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
