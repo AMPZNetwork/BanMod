@@ -9,6 +9,7 @@ import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;
+import org.comroid.api.map.Cache;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.jpa.HibernatePersistenceProvider;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.comroid.api.func.util.Debug.isDebug;
@@ -34,12 +36,32 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     private static final Logger log = LoggerFactory.getLogger(HibernateEntityService.class);
     BanMod banMod;
     EntityManager manager;
+    public final Cache<UUID, PlayerData> Players;
+    public final Cache<UUID, Infraction> Infractions;
+    public final Cache<String, PunishmentCategory> Categories;
+    private final BanMod mod;
+    private final EntityManager manager;
 
     public HibernateEntityService(BanMod banMod) {
         this.banMod = banMod;
         var unit = buildPersistenceUnit(banMod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
         this.manager = unit.manager;
         addChildren(unit);
+        this.Players = new Cache<>(mod, EntityService::getPlayerData);
+        this.Infractions = new Cache<>(mod, EntityService::getInfractions);
+        this.Categories = new Cache<>(mod, EntityService::getCategories);
+    }
+
+    private <K, V> void pushCache(Map<K, V> cache, K key, V value) {
+        wrapTransaction(() -> manager.merge(value));
+        cache.put(key, value);
+    }
+
+    private <K, V> Optional<V> pullCache(Map<K, V> cache, K key) {
+        return Optional.ofNullable(key)
+                .filter(cache::containsKey)
+                .map(cache::get)
+                .or(() ->)
     }
 
     public static Unit buildPersistenceUnit(
@@ -69,7 +91,9 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public Stream<PlayerData> getPlayerData() {
-        return manager.createQuery("select pd from PlayerData pd", PlayerData.class).getResultStream();
+        return manager.createQuery("select pd from PlayerData pd", PlayerData.class)
+                .getResultStream()
+                .peek(data -> $playerdata.replace(data.getId(), data));
     }
 
     @Override
@@ -142,6 +166,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 log.debug("persist() failed for " + object, t);
                 manager.merge(object);
             }
+            return null;
         });
         return object;
     }
@@ -169,31 +194,28 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    private <R> R wrapQuery(Function<Query, R> executor, Query query) {
-        var wrapper = new Runnable() {
-            R result;
-
+    private <T> T wrapQuery(Function<Query, T> executor, Query query) {
+        return wrapTransaction(new Supplier<T>() {
             @Override
-            public void run() {
-                result = executor.apply(query);
+            public T get() {
+                return executor.apply(query);
             }
 
             @Override
             public String toString() {
                 return query.toString();
             }
-        };
-        wrapTransaction(wrapper);
-        return wrapper.result;
+        });
     }
 
-    private void wrapTransaction(Runnable task) {
+    private <T> T wrapTransaction(Supplier<T> task) {
         var transaction = manager.getTransaction();
         synchronized (transaction) {
             transaction.begin();
             try {
-                task.run();
+                var result = task.get();
                 transaction.commit();
+                return result;
             } catch (Throwable t) {
                 banMod.log().warn("Could not execute task " + task, t);
                 if (transaction.isActive())

@@ -31,7 +31,12 @@ import java.util.stream.Collector;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
@@ -167,8 +172,8 @@ public interface BanMod {
                     .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                             .append(text("(none)").color(GRAY))))
                     .collect(Collector.of(() -> text()
-                                    .append(text(punishment.name() + "list (Page %d of %d)".formatted(
-                                            pageCount == 0 ? 0 : Math.max(1, page), (int) pageCount))),
+                                    .append(text(punishment.name() + "list (Page %d of %d)"
+                                            .formatted((Integer) (pageCount == 0 ? 0 : Math.max(1, page)), (Integer) (int) pageCount))),
                             ComponentBuilder::append,
                             (l, r) -> {
                                 l.append(r);
