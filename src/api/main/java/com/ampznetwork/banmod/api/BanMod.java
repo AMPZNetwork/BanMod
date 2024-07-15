@@ -66,6 +66,8 @@ public interface BanMod {
 
     PlayerAdapter getPlayerAdapter();
 
+    void executeSync(Runnable task);
+
     @UtilityClass
     final class Strings {
         public static final String AddonName = "BanMod";

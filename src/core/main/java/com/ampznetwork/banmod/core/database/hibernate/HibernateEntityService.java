@@ -39,8 +39,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.comroid.api.func.util.Debug.*;
-
 @Value
 @EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
@@ -69,25 +67,29 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
         this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
         this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
-        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories).forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories)
+                .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
     }
 
     public static Unit buildPersistenceUnit(
-            DatabaseInfo info,
-            Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
-            @MagicConstant(stringValues = { "update", "validate" }) String hbm2ddl
+            DatabaseInfo info, Function<HikariDataSource, PersistenceUnitInfo> unitProvider, @MagicConstant(stringValues = { "update", "validate" }) String hbm2ddl
     ) {
         var config = Map.of(
-                "hibernate.connection.driver_class", info.type().getDriverClass().getCanonicalName(),
+                "hibernate.connection.driver_class", info.type()
+                        .getDriverClass()
+                        .getCanonicalName(),
                 "hibernate.connection.url", info.url(),
                 "hibernate.connection.username", info.user(),
                 "hibernate.connection.password", info.pass(),
-                "hibernate.dialect", info.type().getDialectClass().getCanonicalName(),
-                "hibernate.show_sql", String.valueOf(isDebug()),
-                "hibernate.hbm2ddl.auto", hbm2ddl
-        );
+                "hibernate.dialect", info.type()
+                        .getDialectClass()
+                        .getCanonicalName(),
+                //"hibernate.show_sql", String.valueOf(isDebug()),
+                "hibernate.hbm2ddl.auto", hbm2ddl);
         var dataSource = new HikariDataSource() {{
-            setDriverClassName(info.type().getDriverClass().getCanonicalName());
+            setDriverClassName(info.type()
+                    .getDriverClass()
+                    .getCanonicalName());
             setJdbcUrl(info.url());
             setUsername(info.user());
             setPassword(info.pass());
@@ -141,11 +143,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId) {
-        return new GetOrCreate<>(
-                () -> getPlayerData(playerId).orElse(null),
-                () -> PlayerData.builder().id(playerId),
-                PlayerData.Builder::build,
-                this::save);
+        return new GetOrCreate<>(() -> getPlayerData(playerId).orElse(null), () -> PlayerData.builder()
+                .id(playerId), PlayerData.Builder::build, this::save);
     }
 
     @Override
@@ -163,13 +162,10 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name) {
-        return new GetOrCreate<>(
-                () -> getCategories()
-                        .filter(cat -> name.equals(cat.getName()))
-                        .findAny().orElse(null),
-                () -> PunishmentCategory.builder().name(name),
-                PunishmentCategory.Builder::build,
-                this::save);
+        return new GetOrCreate<>(() -> getCategories().filter(cat -> name.equals(cat.getName()))
+                .findAny()
+                .orElse(null), () -> PunishmentCategory.builder()
+                .name(name), PunishmentCategory.Builder::build, this::save);
     }
 
     @Override
@@ -250,7 +246,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
             try ( // need a session
                   var session = manager.unwrap(Session.class)
-                          .getSessionFactory().openSession()
+                          .getSessionFactory()
+                          .openSession()
             ) {
                 // isolate
                 session.doWork(con -> con.setTransactionIsolation(isolation));
@@ -261,17 +258,16 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
                 return result;
             } catch (Throwable t) {
-                banMod.log().warn("Could not execute task " + executor, t);
-                if (transaction.isActive())
-                    transaction.rollback();
+                banMod.log()
+                        .warn("Could not execute task " + executor, t);
+                if (transaction.isActive()) transaction.rollback();
                 throw t;
             }
         }
     }
 
     public void sync(UUID playerId) {
-        getInfractions(playerId)
-                .filter(Infraction.IS_IN_EFFECT)
+        getInfractions(playerId).filter(Infraction.IS_IN_EFFECT)
                 .min(Infraction.BY_NEWEST)
                 .ifPresent(banMod::realize);
     }

@@ -77,6 +77,11 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     }
 
     @Override
+    public void executeSync(Runnable task) {
+        task.run(); // todo: is this safe on fabric?
+    }
+
+    @Override
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             this.server = server;

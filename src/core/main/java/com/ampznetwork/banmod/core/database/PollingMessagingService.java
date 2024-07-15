@@ -33,7 +33,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
         this.session = manager.unwrap(Session.class);
 
         service.getScheduler()
-                .scheduleWithFixedDelay(this::pollNotifier, 5, interval.toMillis(), TimeUnit.MILLISECONDS);
+                .scheduleWithFixedDelay(this::pollNotifier, interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
 
         // find recently used idents
         //noinspection unchecked
@@ -46,8 +46,9 @@ public class PollingMessagingService extends Component.Base implements Messaging
                         """))
                 .stream()
                 .mapToLong(x -> (long) x)
+                .filter(x -> x != 0)
                 .findAny()
-                .orElse(0);
+                .orElse(0xFFFF_FFFFL);
 
         // randomly try to get a new ident
         long x;
