@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.fabric;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
@@ -44,7 +43,6 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     private Command$Manager$Adapter$Fabric adapter;
     private EntityService entityService;
     private PunishmentCategory defaultCategory;
-    private MessagingService messagingService;
 
     public static Text component2text(Component component) {
         return Text.Serializer.fromJson(gson().serialize(component));
@@ -94,7 +92,6 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
 
         this.entityService = new HibernateEntityService(this);
         this.defaultCategory = entityService.defaultCategory();
-        this.messagingService = new MessagingService(this);
     }
 
     @Override
