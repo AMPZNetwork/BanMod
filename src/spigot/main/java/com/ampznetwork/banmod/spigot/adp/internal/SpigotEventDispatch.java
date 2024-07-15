@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.spigot.adp.internal;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
-import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.Value;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

@@ -1,8 +1,10 @@
 package com.ampznetwork.banmod.spigot.adp.internal;
 
+import com.ampznetwork.banmod.api.adapter.PlayerAdapter;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
-import com.ampznetwork.libmod.api.model.adp.BookAdapter;
-import com.ampznetwork.libmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.libmod.api.adapter.IBookAdapter;
+import com.ampznetwork.libmod.spigot.adapter.player.SpigotPlayerAdapterBase;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -10,14 +12,12 @@ import net.kyori.adventure.util.TriState;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -26,32 +26,8 @@ import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSeri
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 @Value
-public class SpigotPlayerAdapter implements PlayerAdapter {
+public class SpigotPlayerAdapter extends SpigotPlayerAdapterBase implements PlayerAdapter {
     BanMod$Spigot banMod;
-
-    @Override
-    public UUID getId(String name) {
-        final var fetch = PlayerData.fetchId(name);
-        return Arrays.stream(Bukkit.getOfflinePlayers())
-                .filter(player -> name.equals(player.getName()))
-                .findAny()
-                .map(OfflinePlayer::getUniqueId)
-                .or(() -> banMod.getEntityService().getPlayerData()
-                        .filter(pd -> pd.getKnownNames().keySet()
-                                .stream().anyMatch(name::equals))
-                        .map(PlayerData::getId)
-                        .findAny())
-                .orElseGet(fetch::join);
-    }
-
-    @Override
-    public String getName(UUID playerId) {
-        final var fetch = PlayerData.fetchUsername(playerId);
-        return Optional.ofNullable(banMod.getServer().getOfflinePlayer(playerId).getName())
-                .or(() -> banMod.getEntityService().getPlayerData(playerId)
-                        .flatMap(PlayerData::getLastKnownName))
-                .orElseGet(fetch::join);
-    }
 
     @Override
     public boolean isOnline(UUID playerId) {
@@ -111,13 +87,13 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void openBook(UUID playerId, BookAdapter book) {
+    public void openBook(UUID playerId, IBookAdapter book) {
         if (!isOnline(playerId))
             throw new AssertionError("Target player is not online");
         var stack = new ItemStack(Material.WRITTEN_BOOK, 1);
         var meta = Objects.requireNonNull((BookMeta) stack.getItemMeta(), "item meta");
-        meta.setTitle(BookAdapter.TITLE);
-        meta.setAuthor(BookAdapter.AUTHOR);
+        meta.setTitle(IBookAdapter.TITLE);
+        meta.setAuthor(IBookAdapter.AUTHOR);
         meta.spigot().setPages(book.getPages().stream()
                 .map(page -> Arrays.stream(page)
                         .map(component -> get().serialize(component))

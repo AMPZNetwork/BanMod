@@ -1,15 +1,16 @@
-package com.ampznetwork.banmod.api.database;
+package com.ampznetwork.banmod.api.adapter;
 
-import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.model.PlayerResult;
-import com.ampznetwork.libmod.api.model.Punishment;
+import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.banmod.api.model.PlayerResult;
+import com.ampznetwork.banmod.api.model.Punishment;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
 import org.comroid.api.func.util.GetOrCreate;
-import org.comroid.api.tree.LifeCycle;
 import org.h2.Driver;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.MariaDBDialect;
@@ -23,12 +24,10 @@ import java.util.stream.Stream;
 import static java.time.Instant.now;
 
 @SuppressWarnings("UnusedReturnValue")
-public interface EntityService extends LifeCycle {
+public interface EntityService extends com.ampznetwork.libmod.api.database.EntityService {
     static String ip2string(InetAddress ip) {
         return ip.toString().substring(1);
     }
-
-    BanMod getBanMod();
 
     Stream<PlayerData> getPlayerData();
 

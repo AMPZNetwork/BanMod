@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
-import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.Value;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;

@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.core.database.file.LocalEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
-import com.ampznetwork.libmod.api.database.EntityService;
 import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import lombok.Getter;
 import lombok.SneakyThrows;

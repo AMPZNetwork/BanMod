@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.fabric.adp.internal;
 
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
-import com.ampznetwork.libmod.api.model.adp.BookAdapter;
-import com.ampznetwork.libmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.libmod.api.adapter.IBookAdapter;
+import com.ampznetwork.libmod.api.adapter.IPlayerAdapter;
 import io.netty.buffer.Unpooled;
 import lombok.Value;
 import me.lucko.fabric.api.permissions.v0.Permissions;
@@ -32,7 +32,7 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
 @Value
-public class FabricPlayerAdapter implements PlayerAdapter {
+public class FabricPlayerAdapter implements IPlayerAdapter {
     BanMod$Fabric banMod;
 
     @Override
@@ -87,15 +87,15 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void openBook(UUID playerId, BookAdapter book) {
+    public void openBook(UUID playerId, IBookAdapter book) {
         var plr = banMod.getServer().getPlayerManager()
                 .getPlayer(playerId);
         ItemStack stack = new ItemStack(Items.WRITTEN_BOOK);
 
         // Set the stack's title, author, and pages
         var tag = new NbtCompound();
-        tag.putString("title", BookAdapter.TITLE);
-        tag.putString("author", BookAdapter.AUTHOR);
+        tag.putString("title", IBookAdapter.TITLE);
+        tag.putString("author", IBookAdapter.AUTHOR);
 
         var pages = book.getPages().stream()
                 .map(page -> {

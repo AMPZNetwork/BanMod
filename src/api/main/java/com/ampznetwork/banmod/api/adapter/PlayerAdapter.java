@@ -1,16 +1,17 @@
-package com.ampznetwork.banmod.api.model.adp;
+package com.ampznetwork.banmod.api.adapter;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.model.adp.BookAdapter;
+import com.ampznetwork.banmod.api.entity.PlayerData;
+import com.ampznetwork.libmod.api.adapter.IBookAdapter;
+import com.ampznetwork.libmod.api.adapter.IPlayerAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
+public interface PlayerAdapter extends IPlayerAdapter {
     BanMod getBanMod();
 
     default UUID getId(String name) {
@@ -29,7 +30,7 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
     void send(UUID playerId, TextComponent component);
     void broadcast(@Nullable String recieverPermission, Component component);
 
-    void openBook(UUID playerId, BookAdapter book);
+    void openBook(UUID playerId, IBookAdapter book);
 
     Stream<PlayerData> getCurrentPlayers();
 }

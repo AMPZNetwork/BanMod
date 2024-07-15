@@ -1,10 +1,12 @@
 package com.ampznetwork.banmod.api;
 
-import com.ampznetwork.libmod.api.database.EntityService;
-import com.ampznetwork.libmod.api.model.PlayerResult;
-import com.ampznetwork.libmod.api.model.Punishment;
-import com.ampznetwork.libmod.api.model.adp.PlayerAdapter;
-import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.banmod.api.adapter.EntityService;
+import com.ampznetwork.banmod.api.adapter.PlayerAdapter;
+import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.banmod.api.model.PlayerResult;
+import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.libmod.api.addon.Mod;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -33,13 +35,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
-public interface BanMod {
-    Logger log();
-
-    void reload();
-
-    DatabaseInfo getDatabaseInfo();
-
+public interface BanMod extends Mod {
     PunishmentCategory getDefaultCategory();
 
     PlayerAdapter getPlayerAdapter();

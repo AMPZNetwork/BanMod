@@ -91,9 +91,14 @@ dependencies {
 	if (findProject("$prefix:japi") != null)
 		include project("$prefix:japi")
 	else include 'org.comroid:japi:+'
+
+	if (findProject(':LibMod') != null)
+		compileOnly project(":LibMod:fabric")
 	include project("$prefix:api")
-	implementation project("$prefix:core")
 	include project("$prefix:core")
+	implementation project("$prefix:core")
+
+
 	include 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
 	include 'javax.persistence:javax.persistence-api:2.2'
 	include 'net.kyori:adventure-api:4.14.0'

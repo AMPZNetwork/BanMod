@@ -3,7 +3,6 @@ package com.ampznetwork.banmod.core.cmd;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
-import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;

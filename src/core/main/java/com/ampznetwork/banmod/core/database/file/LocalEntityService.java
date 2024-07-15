@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.core.database.file;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.database.EntityService;
 import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;
 

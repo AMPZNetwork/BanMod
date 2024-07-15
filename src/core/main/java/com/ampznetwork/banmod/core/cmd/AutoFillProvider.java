@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.core.cmd;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
 import org.comroid.api.func.util.Command;

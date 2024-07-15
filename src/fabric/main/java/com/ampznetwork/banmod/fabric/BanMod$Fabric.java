@@ -7,7 +7,6 @@ import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
-import com.ampznetwork.libmod.api.database.EntityService;
 import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

@@ -103,12 +103,13 @@ repositories {
 }
 
 dependencies {
+    if (findProject(':LibMod') != null)
+        compileOnly project(":LibMod:spigot")
+    implementation project("$prefix:core")
+
     // spigot
     implementation 'org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT'
     implementation 'net.kyori:adventure-platform-bungeecord:4.3.3'
-
-    // banMod api
-    implementation project("$prefix:core")
 
     // placeholderapi
     compileOnly 'me.clip:placeholderapi:2.9.+'

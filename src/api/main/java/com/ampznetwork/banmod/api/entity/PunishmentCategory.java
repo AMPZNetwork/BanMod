@@ -1,7 +1,7 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.libmod.api.model.Punishment;
-import com.ampznetwork.libmod.api.model.info.DefaultReason;
+import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Described;
@@ -40,7 +40,7 @@ public class PunishmentCategory implements Named, Described, DefaultReason {
     @CollectionTable(name = "banmod_categories_thresholds")
     Map<@NotNull Integer, Punishment> punishmentThresholds;
 
-    public static com.ampznetwork.libmod.api.entity.PunishmentCategory.Builder standard(String name) {
+    public static PunishmentCategory.Builder standard(String name) {
         return builder().name(name)
                 .punishmentThreshold(0, Punishment.Kick)
                 .punishmentThreshold(2, Punishment.Mute)

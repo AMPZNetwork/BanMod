@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.api.entity;
 
+import com.ampznetwork.libmod.api.model.Player;
 import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
 import com.ampznetwork.libmod.api.model.convert.UuidVarchar36Converter;
 import lombok.*;
@@ -17,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
-import static com.ampznetwork.libmod.api.database.EntityService.ip2string;
+import static com.ampznetwork.banmod.api.adapter.EntityService.ip2string;
 import static java.time.Instant.now;
 import static org.comroid.api.net.REST.Method.GET;
 
@@ -30,7 +31,7 @@ import static org.comroid.api.net.REST.Method.GET;
 @EqualsAndHashCode(of = "id")
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PlayerData {
+public class PlayerData implements Player {
     public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @Id
     @Column(columnDefinition = "binary(16)")
@@ -72,20 +73,20 @@ public class PlayerData {
     }
 
     @Contract(value = "!null->this", pure = true)
-    public com.ampznetwork.libmod.api.entity.PlayerData pushKnownName(String name) {
+    public PlayerData pushKnownName(String name) {
         getKnownNames().compute(name, ($0, $1) -> now());
         return this;
     }
 
     @Contract(value = "!null->this", pure = true)
-    public com.ampznetwork.libmod.api.entity.PlayerData pushKnownIp(InetAddress ip) {
+    public PlayerData pushKnownIp(InetAddress ip) {
         getKnownIPs().compute(ip2string(ip), ($0, $1) -> now());
         return this;
     }
 
     public Optional<String> getLastKnownName() {
         return knownNames.entrySet().stream()
-                .max(com.ampznetwork.libmod.api.entity.PlayerData.MOST_RECENTLY_SEEN)
+                .max(PlayerData.MOST_RECENTLY_SEEN)
                 .map(Map.Entry::getKey);
     }
 
@@ -96,7 +97,7 @@ public class PlayerData {
 
     public Optional<String> getLastKnownIp() {
         return knownIPs.entrySet().stream()
-                .max(com.ampznetwork.libmod.api.entity.PlayerData.MOST_RECENTLY_SEEN)
+                .max(PlayerData.MOST_RECENTLY_SEEN)
                 .map(Map.Entry::getKey);
     }
 }

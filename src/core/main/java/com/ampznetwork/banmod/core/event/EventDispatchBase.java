@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.core.event;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.model.PlayerResult;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
@@ -17,7 +16,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.ampznetwork.libmod.api.database.EntityService.ip2string;
+import static com.ampznetwork.libmod.api.adapter.IEntityService.ip2string;
 import static java.time.Instant.now;
 import static org.comroid.api.java.StackTraceUtils.lessSimpleDetailedName;
 

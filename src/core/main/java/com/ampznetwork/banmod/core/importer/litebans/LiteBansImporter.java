@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.core.importer.ImportResult;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Ban;
 import com.ampznetwork.banmod.core.importer.litebans.entity.History;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
-import com.ampznetwork.libmod.api.model.Punishment;
 import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import lombok.Value;
 

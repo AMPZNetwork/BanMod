@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.api.model;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.libmod.api.model.Punishment;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
