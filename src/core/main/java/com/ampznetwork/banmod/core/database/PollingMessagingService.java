@@ -10,6 +10,7 @@ import org.comroid.api.func.util.AlmostComplete;
 import org.comroid.api.func.util.Debug;
 import org.comroid.api.func.util.Stopwatch;
 import org.comroid.api.tree.Component;
+import org.hibernate.Session;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -33,13 +34,18 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
         // find recently used idents
         //noinspection unchecked
-        var occupied = service.wrapQuery(Query::getResultStream, manager.createNativeQuery("""
+        var occupied = service.wrapQuery(Query::getResultList, manager.unwrap(Session.class)
+                        .createSQLQuery("""
                 select BIT_OR(ne.ident)
                 from banmod_notify ne
                 group by ne.ident, ne.timestamp
                 order by ne.timestamp desc
                 limit 50
-                """, Long.class)).mapToLong(x -> (long) x).findAny().orElse(0);
+                                """))
+                .stream()
+                .mapToLong(x -> (long) x)
+                .findAny()
+                .orElse(0);
 
         // randomly try to get a new ident
         long x;
