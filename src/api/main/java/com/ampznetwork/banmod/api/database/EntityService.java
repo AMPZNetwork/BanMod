@@ -34,10 +34,6 @@ public interface EntityService extends LifeCycle {
 
     BanMod getBanMod();
 
-    MessagingService getMessagingService();
-
-    java.util.concurrent.ScheduledExecutorService getScheduler();
-
     Optional<PunishmentCategory> getCategory(String name);
 
     Optional<Infraction> getInfraction(UUID id);

@@ -9,11 +9,13 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.database.PollingMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.map.Cache;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
+import org.hibernate.Session;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.sql.Connection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,33 +41,34 @@ import java.util.stream.Stream;
 import static org.comroid.api.func.util.Debug.*;
 
 @Value
+@EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final Logger                            log = LoggerFactory.getLogger(HibernateEntityService.class);
     private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
     public               Cache<UUID, PlayerData>           Players;
     public               Cache<UUID, Infraction>           Infractions;
     public               Cache<String, PunishmentCategory> Categories;
-    BanMod           banMod;
-    EntityManager    manager;
+    BanMod        banMod;
+    EntityManager manager;
     ScheduledExecutorService scheduler;
     PollingMessagingService  messagingService;
 
     public HibernateEntityService(BanMod mod) {
+        // boot up hibernate
         this.banMod = mod;
         var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
-        this.manager          = unit.manager;
+        this.manager = unit.manager;
+
+        // boot up messaging service
         this.scheduler        = Executors.newScheduledThreadPool(2);
-        this.messagingService = new PollingMessagingService(this);
+        this.messagingService = new PollingMessagingService(this, manager);
         addChildren(unit, scheduler, messagingService);
 
+        // caches & cleanup
         this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
         this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
         this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
-        scheduler.scheduleAtFixedRate(() -> {
-            Players.clear();
-            Infractions.clear();
-            Categories.clear();
-        }, 5, 5, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories).forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
     }
 
     public static Unit buildPersistenceUnit(
@@ -93,21 +97,24 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new Unit(dataSource, manager);
     }
 
-    @Override public Optional<PunishmentCategory> getCategory(String name) {
+    @Override
+    public Optional<PunishmentCategory> getCategory(String name) {
         return manager.createQuery("select pc from PunishmentCategory  pc where pc.name = :name", PunishmentCategory.class)
                 .setParameter("name", name)
                 .getResultStream()
                 .findAny();
     }
 
-    @Override public Optional<Infraction> getInfraction(UUID id) {
+    @Override
+    public Optional<Infraction> getInfraction(UUID id) {
         return manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findAny();
     }
 
-    @Override public void uncache(Object id, DbObject obj) {
+    @Override
+    public void uncache(Object id, DbObject obj) {
     }
 
     @Override
@@ -141,6 +148,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
+    public Stream<PunishmentCategory> getCategories() {
+        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
+                .getResultStream();
+    }
+
+    @Override
     public Stream<Infraction> getInfractions(UUID playerId) {
         return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
                 .setParameter("playerId", playerId)
@@ -156,12 +169,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 () -> PunishmentCategory.builder().name(name),
                 PunishmentCategory.Builder::build,
                 this::save);
-    }
-
-    @Override
-    public Stream<PunishmentCategory> getCategories() {
-        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
-                .getResultStream();
     }
 
     @Override
@@ -215,7 +222,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    private <T> T wrapQuery(Function<Query, T> executor, Query query) {
+    public <T> T wrapQuery(Function<Query, T> executor, Query query) {
         return wrapTransaction(new Supplier<T>() {
             @Override
             public T get() {
@@ -229,16 +236,30 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         });
     }
 
-    private <T> T wrapTransaction(Supplier<T> task) {
+    public <T> T wrapTransaction(Supplier<T> executor) {
+        return wrapTransaction(Connection.TRANSACTION_READ_COMMITTED, executor);
+    }
+
+    public <T> T wrapTransaction(@MagicConstant(valuesFromClass = Connection.class) int isolation, Supplier<T> executor) {
         var transaction = manager.getTransaction();
+
         synchronized (transaction) {
             transaction.begin();
-            try {
-                var result = task.get();
+
+            try ( // need a session
+                  var session = manager.unwrap(Session.class)
+                          .getSessionFactory().openSession()
+            ) {
+                // isolate
+                session.doWork(con -> con.setTransactionIsolation(isolation));
+
+                // execute and commit
+                var result = executor.get();
                 transaction.commit();
+
                 return result;
             } catch (Throwable t) {
-                banMod.log().warn("Could not execute task " + task, t);
+                banMod.log().warn("Could not execute task " + executor, t);
                 if (transaction.isActive())
                     transaction.rollback();
                 throw t;
