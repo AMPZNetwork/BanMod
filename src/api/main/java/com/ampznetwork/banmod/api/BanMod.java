@@ -59,7 +59,7 @@ public interface BanMod {
         switch (punish) {
             case Kick, Ban:
                 getPlayerAdapter().kick(infraction.getPlayer()
-                        .getId(), Displays.textPunishmentFull(infraction));
+                        .getId(), Displays.textPunishmentFull(this, infraction));
                 break;
             case Debuff:/*todo*/
                 break;
@@ -162,8 +162,8 @@ public interface BanMod {
         }
 
         @NotNull
-        public Component infractionList(BanMod banMod, int page, Punishment punishment) {
-            final var infractions = banMod.getEntityService()
+        public Component infractionList(BanMod mod, int page, Punishment punishment) {
+            final var infractions = mod.getEntityService()
                     .getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
@@ -177,7 +177,7 @@ public interface BanMod {
                     .skip(Math.max(0, (page - 1L) * Resources.ENTRIES_PER_PAGE))
                     .limit(Resources.ENTRIES_PER_PAGE)
                     .map(infraction -> text("\n- ")
-                            .append(textPunishmentFull(infraction)))
+                            .append(textPunishmentFull(mod, infraction)))
                     .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
                             .append(text("(none)").color(GRAY))))
                     .collect(Collector.of(() -> text()
@@ -192,10 +192,8 @@ public interface BanMod {
         }
 
         @NotNull
-        public Component textPunishmentFull(Infraction infraction) {
-            var username = infraction.getPlayer()
-                    .getOrFetchUsername()
-                    .join();
+        public Component textPunishmentFull(BanMod mod, Infraction infraction) {
+            var username = mod.getPlayerAdapter().getName(infraction.getPlayer().getId());
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))

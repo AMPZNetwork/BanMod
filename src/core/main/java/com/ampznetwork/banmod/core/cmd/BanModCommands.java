@@ -205,7 +205,7 @@ public class BanModCommands {
             });
         else mod.getPlayerAdapter().send(tgt, BanMod.Displays.mutedTextUser(result));
 
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
@@ -233,7 +233,7 @@ public class BanModCommands {
                         .duration(parseDuration(durationText))
                         .reason(reason)
                         .build());
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
@@ -253,7 +253,7 @@ public class BanModCommands {
                         .permanent(true)
                         .reason(reason)
                         .build());
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
@@ -289,7 +289,7 @@ public class BanModCommands {
 
         var text = BanMod.Displays.kickedTextUser(infraction.toResult());
         mod.getPlayerAdapter().kick(tgt, text);
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
@@ -318,7 +318,7 @@ public class BanModCommands {
                         .reason(reason)
                         .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
@@ -339,7 +339,7 @@ public class BanModCommands {
                         .reason(reason)
                         .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
