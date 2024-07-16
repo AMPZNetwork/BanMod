@@ -15,7 +15,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
+import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.GetOrCreate;
+import org.comroid.api.func.util.Streams;
 import org.comroid.api.map.Cache;
 import org.comroid.api.tree.Container;
 import org.comroid.api.tree.UncheckedCloseable;
@@ -115,11 +117,17 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public Optional<PunishmentCategory> getCategory(UUID id) {
-        return manager.createQuery("select pc from PunishmentCategory pc where pc.id = :id", PunishmentCategory.class)
-                .setParameter("id", id)
+    public Stream<PunishmentCategory> getCategories() {
+        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
                 .getResultStream()
-                .findAny();
+                .peek(categories::push);
+    }
+
+    @Override
+    public Stream<Infraction> getInfractions() {
+        return manager.createQuery("select i from Infraction i", Infraction.class)
+                .getResultStream()
+                .peek(infractions::push);
     }
 
     @Override
@@ -127,59 +135,17 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return manager.createQuery("select pc from PunishmentCategory  pc where pc.name = :name", PunishmentCategory.class)
                 .setParameter("name", name)
                 .getResultStream()
+                .peek(categories::push)
                 .findAny();
     }
 
     @Override
-    public Optional<Infraction> getInfraction(UUID id) {
-        return manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
-                .setParameter("id", id)
-                .getResultStream()
+    public Optional<PunishmentCategory> getCategory(UUID id) {
+        return getFromCacheOrSupply(EntityType.PunishmentCategory, id,
+                manager.createQuery("select pc from PunishmentCategory pc where pc.id = :id", PunishmentCategory.class)
+                        .setParameter("id", id)
+                        .getResultStream())
                 .findAny();
-    }
-
-    @Override
-    public void uncache(Object id, DbObject obj) {
-    }
-
-    @Override
-    public Stream<PlayerData> getPlayerData() {
-        return manager.createQuery("select pd from PlayerData pd", PlayerData.class)
-                .getResultStream()
-                .peek(data -> players.replace(data.getId(), data));
-    }
-
-    @Override
-    public Stream<Infraction> getInfractions() {
-        return manager.createQuery("select i from Infraction i", Infraction.class)
-                .getResultStream();
-    }
-
-    @Override
-    public Optional<PlayerData> getPlayerData(UUID playerId) {
-        return manager.createQuery("select pd from PlayerData  pd where pd.id = :playerId", PlayerData.class)
-                .setParameter("playerId", playerId)
-                .getResultStream()
-                .findAny();
-    }
-
-    @Override
-    public GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId) {
-        return new GetOrCreate<>(() -> getPlayerData(playerId).orElse(null), () -> PlayerData.builder()
-                .id(playerId), PlayerData.Builder::build, this::save);
-    }
-
-    @Override
-    public Stream<PunishmentCategory> getCategories() {
-        return manager.createQuery("select pc from PunishmentCategory pc", PunishmentCategory.class)
-                .getResultStream();
-    }
-
-    @Override
-    public Stream<Infraction> getInfractions(UUID playerId) {
-        return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
-                .setParameter("playerId", playerId)
-                .getResultStream();
     }
 
     @Override
@@ -187,30 +153,54 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new GetOrCreate<>(() -> getCategories().filter(cat -> name.equals(cat.getName()))
                 .findAny()
                 .orElse(null), () -> PunishmentCategory.builder()
-                .name(name), PunishmentCategory.Builder::build, this::save);
+                .name(name), PunishmentCategory.Builder::build, this::save)
+                .addCompletionCallback(categories::push);
     }
 
     @Override
-    public <T extends DbObject> T save(T object) {
-        var persistent = wrapTransaction(() -> {
-            try {
-                manager.persist(object);
-                // now a persistent object!
-                return object;
-            } catch (Throwable t) {
-                log.log(isDebug() ? Level.ERROR : Level.DEBUG, "persist() failed for " + object, t);
-                // its fine we return it either way
-                return manager.merge(object);
-            }
-        });
-        if (!(object instanceof NotifyEvent))
-            caches.get(object.getEntityType()).push(persistent);
-        return persistent;
+    public Stream<PlayerData> getPlayerData() {
+        return manager.createQuery("select pd from PlayerData pd", PlayerData.class)
+                .getResultStream()
+                .peek(players::push);
+    }
+
+    @Override
+    public Optional<PlayerData> getPlayerData(UUID playerId) {
+        return getFromCacheOrSupply(EntityType.PlayerData, playerId,
+                manager.createQuery("select pd from PlayerData  pd where pd.id = :playerId", PlayerData.class)
+                        .setParameter("playerId", playerId)
+                        .getResultStream())
+                .findAny();
+    }
+
+    @Override
+    public GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId) {
+        return new GetOrCreate<>(() -> getPlayerData(playerId).orElse(null), () -> PlayerData.builder()
+                .id(playerId), PlayerData.Builder::build, this::save)
+                .addCompletionCallback(players::push);
+    }
+
+    @Override
+    public Stream<Infraction> getInfractions(UUID playerId) {
+        return manager.createQuery("select i from Infraction i where i.player.id = :playerId", Infraction.class)
+                .setParameter("playerId", playerId)
+                .getResultStream()
+                .peek(infractions::push);
+    }
+
+    @Override
+    public Optional<Infraction> getInfraction(UUID id) {
+        return getFromCacheOrSupply(EntityType.Infraction, id,
+                manager.createQuery("select i from Infraction i where i.id = :id", Infraction.class)
+                        .setParameter("id", id)
+                        .getResultStream())
+                .findAny();
     }
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
         return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save)
+                .addCompletionCallback(infractions::push)
                 .addCompletionCallback(infraction -> messagingService.push()
                         .complete(notif -> notif.relatedId(infraction.getId()).relatedType(EntityType.Infraction)));
     }
@@ -224,6 +214,30 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 .setParameter("revoker", revoker));
         getInfraction(id).ifPresent(infraction -> messagingService.push()
                 .complete(bld -> bld.relatedId(infraction.getId()).relatedType(EntityType.Infraction)));
+    }
+
+    @Override
+    public <T extends DbObject> T save(T object) {
+        var persistent = wrapTransaction(() -> {
+            if (manager.contains(object))
+                try {
+                    manager.persist(object);
+                    // now a persistent object!
+                    return object;
+                } catch (Throwable t) {
+                    log.log(isDebug() ? Level.ERROR : Level.DEBUG, "persist() failed for " + object, t);
+                }
+            // try merging as a fallback action
+            return manager.merge(object);
+        });
+        if (!(object instanceof NotifyEvent))
+            caches.get(object.getEntityType()).push(persistent);
+        return persistent;
+    }
+
+    @Override
+    public void uncache(Object id, DbObject obj) {
+
     }
 
     @Override
@@ -306,6 +320,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             var value = relatedType.fetch(this, id).orElse(null);
             save(value);
         }
+    }
+
+    private <T extends DbObject> Stream<T> getFromCacheOrSupply(EntityType type, UUID id, Stream<T> fallback) {
+        return Stream.ofNullable(caches.get(type).getOrDefault(id, null))
+                .map(Polyfill::<T>uncheckedCast)
+                .collect(Streams.or(() -> fallback.peek(caches.get(type)::push)));
     }
 
     public record Unit(HikariDataSource dataSource, EntityManager manager) implements UncheckedCloseable {

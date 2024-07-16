@@ -34,27 +34,22 @@ public interface EntityService extends LifeCycle {
 
     BanMod getBanMod();
 
-    Optional<PunishmentCategory> getCategory(UUID id);
-    @Deprecated
-    Optional<PunishmentCategory> getCategory(String name);
-
-    Optional<Infraction> getInfraction(UUID id);
-
-    void uncache(Object id, DbObject obj);
-
-    Stream<PlayerData> getPlayerData();
+    Stream<PunishmentCategory> getCategories();
 
     Stream<Infraction> getInfractions();
+
+    @Deprecated(forRemoval = true)
+    Optional<PunishmentCategory> getCategory(String name);
+
+    Optional<PunishmentCategory> getCategory(UUID id);
+
+    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
+
+    Stream<PlayerData> getPlayerData();
 
     Optional<PlayerData> getPlayerData(UUID playerId);
 
     GetOrCreate<PlayerData, PlayerData.Builder> getOrCreatePlayerData(UUID playerId);
-
-    Stream<PunishmentCategory> getCategories();
-
-    Stream<Infraction> getInfractions(UUID playerId);
-
-    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getInfractions(playerId)
@@ -71,17 +66,15 @@ public interface EntityService extends LifeCycle {
                 });
     }
 
-    default Optional<PunishmentCategory> findCategory(String name) {
-        return getCategories()
-                .filter(cat -> cat.getName().equals(name))
-                .findAny();
-    }
-
     default PunishmentCategory defaultCategory() {
         return getOrCreateCategory("default").get();
     }
 
-    <T extends DbObject> T save(T object);
+    Stream<Infraction> getInfractions(UUID playerId);
+
+    Optional<Infraction> getInfraction(UUID id);
+
+    GetOrCreate<Infraction, Infraction.Builder> createInfraction();
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
@@ -89,9 +82,11 @@ public interface EntityService extends LifeCycle {
                 .count();
     }
 
-    GetOrCreate<Infraction, Infraction.Builder> createInfraction();
-
     void revokeInfraction(UUID id, UUID revoker);
+
+    <T extends DbObject> T save(T object);
+
+    void uncache(Object id, DbObject obj);
 
     int delete(Object... objects);
 

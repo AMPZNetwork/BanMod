@@ -31,13 +31,13 @@ import java.util.UUID;
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
 public final class NotifyEvent implements DbObject {
-    @Id @Column(columnDefinition = "bigint(64)") long       ident;
-    @Id @lombok.Builder.Default                  Instant    timestamp   = Instant.now();
-    @lombok.Builder.Default                      Type       type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable UUID       relatedId   = null;
-    @lombok.Builder.Default @Nullable EntityType relatedType = null;
+    @Id @Column(columnDefinition = "bigint") long       ident;
+    @Id @lombok.Builder.Default              Instant    timestamp   = Instant.now();
+    @lombok.Builder.Default                  Type       type        = Type.SYNC;
+    @lombok.Builder.Default @Nullable        UUID       relatedId   = null;
+    @lombok.Builder.Default @Nullable        EntityType relatedType = null;
     @lombok.Builder.Default
-    @Column(columnDefinition = "bigint(64)")     long       acknowledge = 0;
+    @Column(columnDefinition = "bigint")     long       acknowledge = 0;
 
     @Override
     public UUID getId() {

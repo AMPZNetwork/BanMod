@@ -186,7 +186,7 @@ public class BanModCommands {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
-        var cat = mod.getEntityService().findCategory(category)
+        var cat = mod.getEntityService().getCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
         var infraction = mod.getEntityService().createInfraction()
                 .complete(base(mod, tgt, cat, issuer)
@@ -474,7 +474,7 @@ public class BanModCommands {
                 repetitionBase = Math.max(2, repetitionBase);
             else repetitionBase = 2d;
             var update = new boolean[]{ false };
-            var category = mod.getEntityService().findCategory(name)
+            var category = mod.getEntityService().getCategory(name)
                     .map(it -> {
                         update[0] = true;
                         return it.toBuilder();
@@ -507,7 +507,7 @@ public class BanModCommands {
             if ("default".equals(name))
                 throw new Command.Error("Cannot delete the default category!");
             var service = mod.getEntityService();
-            var cat = service.findCategory(name);
+            var cat = service.getCategory(name);
             return service.delete(cat) > 0
                    ? text("Deleted category " + name).color(RED)
                    : text("Could not delete category " + name).color(DARK_RED);
