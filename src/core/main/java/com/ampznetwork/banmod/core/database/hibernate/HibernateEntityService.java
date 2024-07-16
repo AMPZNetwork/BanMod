@@ -80,7 +80,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     public Cache<UUID, PlayerData>           Players;
     public Cache<UUID, Infraction>           Infractions;
-    public Cache<String, PunishmentCategory> Categories;
+    Cache<UUID, PunishmentCategory> categories;
     BanMod                   banMod;
     EntityManager            manager;
     ScheduledExecutorService scheduler;
@@ -98,11 +98,19 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup
-        this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
-        this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
-        this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
-        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories)
+        this.players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
+        this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
+        this.categories  = new Cache<>(PunishmentCategory::getId, this::uncache, SoftReference::new, this::getCategory);
+        scheduler.scheduleAtFixedRate(() -> Stream.of(players, infractions, categories)
                 .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public Optional<PunishmentCategory> getCategory(UUID id) {
+        return manager.createQuery("select pc from PunishmentCategory pc where pc.id = :id", PunishmentCategory.class)
+                .setParameter("id", id)
+                .getResultStream()
+                .findAny();
     }
 
     @Override
@@ -129,7 +137,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     public Stream<PlayerData> getPlayerData() {
         return manager.createQuery("select pd from PlayerData pd", PlayerData.class)
                 .getResultStream()
-                .peek(data -> Players.replace(data.getId(), data));
+                .peek(data -> players.replace(data.getId(), data));
     }
 
     @Override

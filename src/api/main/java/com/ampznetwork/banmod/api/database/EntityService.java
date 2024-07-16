@@ -34,6 +34,8 @@ public interface EntityService extends LifeCycle {
 
     BanMod getBanMod();
 
+    Optional<PunishmentCategory> getCategory(UUID id);
+    @Deprecated
     Optional<PunishmentCategory> getCategory(String name);
 
     Optional<Infraction> getInfraction(UUID id);
