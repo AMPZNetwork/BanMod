@@ -23,6 +23,8 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import java.net.InetAddress;
 import java.time.Instant;
@@ -68,12 +70,16 @@ public class PlayerData implements DbObject {
     @lombok.Builder.Default
     Instant                                          lastSeen = null;
     @Singular
+    @Column(name = "seen")
+    @MapKeyColumn(name = "name")
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "banmod_playerdata_names")
+    @CollectionTable(name = "banmod_playerdata_names", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
     @Singular
+    @Column(name = "seen")
+    @MapKeyColumn(name = "ip")
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "banmod_playerdata_ips")
+    @CollectionTable(name = "banmod_playerdata_ips", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 
     public CompletableFuture<String> getOrFetchUsername() {
