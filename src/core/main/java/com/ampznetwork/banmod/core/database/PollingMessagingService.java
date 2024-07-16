@@ -53,10 +53,12 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
         // randomly try to get a new ident
         long x;
+        var c = 0;
         var  rng = new Random();
         do {
+            c += 1;
             x = 1L << rng.nextInt(64);
-        } while (x == 0 || (x & ~occupied) != 0);
+        } while (c < 64 || x == 0 || (x & ~occupied) == 0 || x == occupied);
         this.ident = x;
 
         // send HELLO
