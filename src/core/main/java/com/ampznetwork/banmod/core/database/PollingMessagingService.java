@@ -97,6 +97,8 @@ public class PollingMessagingService extends Component.Base implements Messaging
         });
 
         var duration = stopwatch.stop();
+        if (events.length == 0)
+            return;
         var msg = "Accepting %d events took %sms".formatted(events.length, duration.toMillis());
         if (Debug.isDebug()) // best log level handling EVER
             service.getBanMod()
