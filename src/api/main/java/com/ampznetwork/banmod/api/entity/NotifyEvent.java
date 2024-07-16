@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.api.entity;
 
+import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import org.comroid.api.attr.Named;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
@@ -32,13 +34,14 @@ import java.util.UUID;
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
 public final class NotifyEvent implements DbObject {
-    @Id @Column(columnDefinition = "bigint") BigInteger ident;
-    @Id @lombok.Builder.Default              Instant    timestamp   = Instant.now();
-    @lombok.Builder.Default                  Type       type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable        UUID       relatedId   = null;
-    @lombok.Builder.Default @Nullable        EntityType relatedType = null;
+    @Id @Column(columnDefinition = "bigint")          BigInteger ident;
+    @Id @lombok.Builder.Default                       Instant    timestamp   = Instant.now();
+    @lombok.Builder.Default                           Type       type        = Type.SYNC;
+    @lombok.Builder.Default @Nullable
+    @Convert(converter = UuidBinary16Converter.class) UUID       relatedId   = null;
+    @lombok.Builder.Default @Nullable                 EntityType relatedType = null;
     @lombok.Builder.Default
-    @Column(columnDefinition = "bigint")     BigInteger acknowledge = BigInteger.valueOf(0);
+    @Column(columnDefinition = "bigint")              BigInteger acknowledge = BigInteger.valueOf(0);
 
     @Override
     public UUID getId() {
