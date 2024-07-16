@@ -29,12 +29,12 @@ import java.util.UUID;
 @IdClass(NotifyEvent.CompositeKey.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(of = { "ident", "timestamp" })
-@ToString(of = { "type", "timestamp", "related" })
+@ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
 public final class NotifyEvent {
     @Id @Column(columnDefinition = "bigint(64)") long       ident;
     @Id @lombok.Builder.Default                  Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                      Type       type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable UUID       related     = null;
+    @lombok.Builder.Default @Nullable UUID       relatedId   = null;
     @lombok.Builder.Default @Nullable EntityType relatedType = null;
     @lombok.Builder.Default
     @Column(columnDefinition = "bigint(64)")     long       acknowledge = 0;
