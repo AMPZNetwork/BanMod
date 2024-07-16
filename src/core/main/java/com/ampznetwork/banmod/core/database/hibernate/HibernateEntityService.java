@@ -213,10 +213,14 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     @Override
     public void revokeInfraction(UUID id, UUID revoker) {
         wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
-                        update banmod_infractions i set i.revoker = :revoker where i.id = :id
+                        update banmod_infractions i
+                        set i.revoker = :revoker, i.revokedAt = :now
+                        where i.id = :id
                         """)
                 .setParameter("id", id)
-                .setParameter("revoker", revoker));
+                .setParameter("revoker", revoker)
+                .setParameter("now", now()));
+        refresh(EntityType.Infraction, id);
         getInfraction(id).ifPresent(infraction -> messagingService.push()
                 .complete(bld -> bld.relatedId(infraction.getId()).relatedType(EntityType.Infraction)));
     }

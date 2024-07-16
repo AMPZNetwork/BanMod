@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.core.importer.litebans.entity;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public interface LiteBansEntity {
@@ -14,4 +15,6 @@ public interface LiteBansEntity {
     UUID getBannedByUuid();
 
     UUID getRemovedByUuid();
+
+    Instant getRemovedByDate();
 }

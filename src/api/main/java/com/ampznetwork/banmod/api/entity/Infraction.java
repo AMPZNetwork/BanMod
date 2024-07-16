@@ -92,6 +92,9 @@ public class Infraction implements DbObject {
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
     UUID       revoker   = null;
+    @Nullable
+    @Default
+    Instant    revokedAt = null;
 
     public @Nullable String getReason() {
         return Optional.ofNullable(reason)

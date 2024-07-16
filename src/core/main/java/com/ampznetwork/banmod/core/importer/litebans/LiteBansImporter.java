@@ -54,6 +54,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                             .punishment(punishment)
                             .issuer(it.getBannedByUuid())
                             .revoker(it.getRemovedByUuid())
+                            .revokedAt(it.getRemovedByDate())
                             .timestamp(Instant.ofEpochMilli(it.getTime()))
                             .expires(Instant.ofEpochMilli(it.getUntil()))
                             .reason(it.getReason())
