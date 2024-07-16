@@ -46,35 +46,10 @@ import static org.comroid.api.func.util.Debug.*;
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final Logger                            log = LoggerFactory.getLogger(HibernateEntityService.class);
     private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
-    public               Cache<UUID, PlayerData>           Players;
-    public               Cache<UUID, Infraction>           Infractions;
-    public               Cache<String, PunishmentCategory> Categories;
-    BanMod        banMod;
-    EntityManager manager;
-    ScheduledExecutorService scheduler;
-    PollingMessagingService  messagingService;
-
-    public HibernateEntityService(BanMod mod) {
-        // boot up hibernate
-        this.banMod = mod;
-        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
-        this.manager = unit.manager;
-
-        // boot up messaging service
-        this.scheduler        = Executors.newScheduledThreadPool(2);
-        this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
-        addChildren(unit, scheduler, messagingService);
-
-        // caches & cleanup
-        this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
-        this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
-        this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
-        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories)
-                .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
-    }
 
     public static Unit buildPersistenceUnit(
-            DatabaseInfo info, Function<HikariDataSource, PersistenceUnitInfo> unitProvider, @MagicConstant(stringValues = { "update", "validate" }) String hbm2ddl
+            DatabaseInfo info, Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
+            @MagicConstant(stringValues = { "update", "validate" }) String hbm2ddl
     ) {
         var config = Map.of(
                 "hibernate.connection.driver_class", info.type()
@@ -100,6 +75,33 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         var factory = SPI.createContainerEntityManagerFactory(unit, config);
         var manager = factory.createEntityManager();
         return new Unit(dataSource, manager);
+    }
+
+    public Cache<UUID, PlayerData>           Players;
+    public Cache<UUID, Infraction>           Infractions;
+    public Cache<String, PunishmentCategory> Categories;
+    BanMod                   banMod;
+    EntityManager            manager;
+    ScheduledExecutorService scheduler;
+    PollingMessagingService  messagingService;
+
+    public HibernateEntityService(BanMod mod) {
+        // boot up hibernate
+        this.banMod = mod;
+        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
+        this.manager = unit.manager;
+
+        // boot up messaging service
+        this.scheduler        = Executors.newScheduledThreadPool(2);
+        this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
+        addChildren(unit, scheduler, messagingService);
+
+        // caches & cleanup
+        this.Players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
+        this.Infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
+        this.Categories  = new Cache<>(PunishmentCategory::getName, this::uncache, SoftReference::new, this::getCategory);
+        scheduler.scheduleAtFixedRate(() -> Stream.of(Players, Infractions, Categories)
+                .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
     }
 
     @Override
@@ -187,7 +189,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save);
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, infraction -> {
+            save(infraction);
+
+            // send database sync
+            messagingService.push().complete(notif -> notif.infraction(infraction));
+        });
     }
 
     @Override
@@ -266,12 +273,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 throw t;
             }
         }
-    }
-
-    public void sync(UUID playerId) {
-        getInfractions(playerId).filter(Infraction.IS_IN_EFFECT)
-                .min(Infraction.BY_NEWEST)
-                .ifPresent(banMod::realize);
     }
 
     public record Unit(HikariDataSource dataSource, EntityManager manager) implements UncheckedCloseable {

@@ -21,7 +21,6 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
@@ -70,15 +69,15 @@ public class PlayerData implements DbObject {
     @lombok.Builder.Default
     Instant                                          lastSeen = null;
     @Singular
+    @ElementCollection
     @Column(name = "seen")
     @MapKeyColumn(name = "name")
-    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_playerdata_names", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
     @Singular
+    @ElementCollection
     @Column(name = "seen")
     @MapKeyColumn(name = "ip")
-    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_playerdata_ips", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 

@@ -123,6 +123,8 @@ public class PollingMessagingService extends Component.Base implements Messaging
         var event = events[0];
         if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
         // handle SYNC
-        service.sync(event.getData());
+        if (event.getInfraction() == null)
+            service.getBanMod().log().error("Invalid SYNC event received; data was null");
+        service.getBanMod().realize(event.getInfraction());
     }
 }
