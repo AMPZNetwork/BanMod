@@ -200,6 +200,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                         """)
                 .setParameter("id", id)
                 .setParameter("revoker", revoker));
+        getInfraction(id).ifPresent(infraction -> messagingService.push().complete(bld -> bld.infraction(infraction)));
     }
 
     @Override
