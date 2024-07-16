@@ -61,9 +61,20 @@ public class PlayerData implements DbObject {
         future.thenAccept(id -> CACHE_NAME.accept(id, name));
         return future;
     }
+
+    public static CompletableFuture<String> fetchUsername(UUID id) {
+        var future = REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
+                .thenApply(REST.Response::validate2xxOK)
+                .thenApply(rsp -> rsp.getBody().get("name").asString());
+        future.thenAccept(name -> CACHE_NAME.accept(id, name));
+        return future.exceptionally(t -> {
+            log.warn("Could not retrieve Minecraft Username; returning 'Steve' for ID {}", id, t);
+            return "Steve";
+        });
+    }
     @Id
-    @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
+    @Column(columnDefinition = "binary(16)", updatable = false, nullable = false)
     UUID                                             id;
     @Nullable
     @lombok.Builder.Default
@@ -86,17 +97,6 @@ public class PlayerData implements DbObject {
                 .orElseGet(() -> fetchUsername(id));
     }
 
-    public static CompletableFuture<String> fetchUsername(UUID id) {
-        var future = REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("name").asString());
-        future.thenAccept(name -> CACHE_NAME.accept(id, name));
-        return future.exceptionally(t -> {
-            log.warn("Could not retrieve Minecraft Username; returning 'Steve' for ID {}", id, t);
-            return "Steve";
-        });
-    }
-
     public Optional<String> getLastKnownName() {
         return knownNames.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
@@ -111,13 +111,17 @@ public class PlayerData implements DbObject {
 
     @Contract(value = "!null->this", pure = true)
     public PlayerData pushKnownName(String name) {
-        getKnownNames().compute(name, ($0, $1) -> now());
+        var map = getKnownNames();
+        map = new HashMap<>(map);
+        map.compute(name, ($0, $1) -> now());
         return this;
     }
 
     @Contract(value = "!null->this", pure = true)
     public PlayerData pushKnownIp(InetAddress ip) {
-        getKnownIPs().compute(ip2string(ip), ($0, $1) -> now());
+        var map = getKnownIPs();
+        map = new HashMap<>(map);
+        map.compute(ip2string(ip), ($0, $1) -> now());
         return this;
     }
 }

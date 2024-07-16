@@ -12,12 +12,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.GenericGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
@@ -56,10 +58,12 @@ public class Infraction implements DbObject {
             i.expires == null
             ? Long.MIN_VALUE
             : i.expires.toEpochMilli()).reversed();
-    @Default
     @Id
-    @Column(columnDefinition = "binary(16)")
+    @Default
+    @GeneratedValue(generator = "UUID")
     @Convert(converter = UuidBinary16Converter.class)
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(columnDefinition = "binary(16)", updatable = false, nullable = false)
     UUID       id        = UUID.randomUUID();
     @NotNull
     @OneToOne

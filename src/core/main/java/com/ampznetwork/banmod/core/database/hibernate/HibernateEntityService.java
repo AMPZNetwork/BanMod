@@ -11,6 +11,8 @@ import com.ampznetwork.banmod.core.database.PollingMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
 import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.map.Cache;
 import org.comroid.api.tree.Container;
@@ -18,8 +20,6 @@ import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.Session;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -42,9 +42,9 @@ import java.util.stream.Stream;
 import static org.comroid.api.func.util.Debug.*;
 
 @Value
+@Log4j2
 @EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
-    private static final Logger                            log = LoggerFactory.getLogger(HibernateEntityService.class);
     private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
 
     public static Unit buildPersistenceUnit(
@@ -180,7 +180,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 // now a persistent object!
                 return object;
             } catch (Throwable t) {
-                log.debug("persist() failed for " + object, t);
+                log.log(isDebug() ? Level.ERROR : Level.DEBUG, "persist() failed for " + object, t);
                 // its fine we return it either way
                 return manager.merge(object);
             }
@@ -189,12 +189,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, infraction -> {
-            save(infraction);
-
-            // send database sync
-            messagingService.push().complete(notif -> notif.infraction(infraction));
-        });
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, object -> save(object))
+                .addCompletionCallback(infraction -> messagingService.push().complete(notif -> notif.infraction(infraction)));
     }
 
     @Override
