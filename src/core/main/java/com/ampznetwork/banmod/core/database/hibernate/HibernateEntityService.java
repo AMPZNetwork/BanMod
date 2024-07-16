@@ -108,11 +108,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
         // caches & cleanup task
         var caches = new ConcurrentHashMap<EntityType, Cache<UUID, ? extends DbObject>>();
-        caches.put(EntityType.PlayerData, this.players = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData));
-        caches.put(EntityType.Infraction, this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction));
-        caches.put(EntityType.PunishmentCategory,
-                this.categories = new Cache<>(PunishmentCategory::getId, this::uncache, SoftReference::new, this::getCategory));
+        caches.put(EntityType.PlayerData, this.players = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new));
+        caches.put(EntityType.Infraction, this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new));
+        caches.put(EntityType.PunishmentCategory, this.categories = new Cache<>(PunishmentCategory::getId, this::uncache, SoftReference::new));
         this.caches = uncheckedCast(Collections.unmodifiableMap(caches));
+
+        // cleanup task
         scheduler.scheduleAtFixedRate(() -> Stream.of(players, infractions, categories)
                 .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
 
