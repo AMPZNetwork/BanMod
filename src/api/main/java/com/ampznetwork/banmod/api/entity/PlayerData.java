@@ -114,6 +114,11 @@ public class PlayerData implements DbObject {
                 .map(Map.Entry::getKey);
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.PlayerData;
+    }
+
     @Contract(value = "!null->this", pure = true)
     public PlayerData pushKnownName(String name) {
         var map = getKnownNames();

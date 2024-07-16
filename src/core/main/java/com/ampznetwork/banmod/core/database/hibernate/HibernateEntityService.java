@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.core.database.hibernate;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.DbObject;
+import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -189,8 +190,9 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     @Override
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
-        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, object -> save(object))
-                .addCompletionCallback(infraction -> messagingService.push().complete(notif -> notif.infraction(infraction)));
+        return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save)
+                .addCompletionCallback(infraction -> messagingService.push()
+                        .complete(notif -> notif.related(infraction.getId()).relatedType(EntityType.Infraction)));
     }
 
     @Override
@@ -200,7 +202,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                         """)
                 .setParameter("id", id)
                 .setParameter("revoker", revoker));
-        getInfraction(id).ifPresent(infraction -> messagingService.push().complete(bld -> bld.infraction(infraction)));
+        getInfraction(id).ifPresent(infraction -> messagingService.push()
+                .complete(bld -> bld.related(infraction.getId()).relatedType(EntityType.Infraction)));
     }
 
     @Override

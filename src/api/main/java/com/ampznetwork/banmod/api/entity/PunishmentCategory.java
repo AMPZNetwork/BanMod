@@ -69,6 +69,11 @@ public class PunishmentCategory implements Named, Described, DefaultReason, DbOb
     @CollectionTable(name = "banmod_categories_thresholds")
     Map<@NotNull Integer, Punishment> punishmentThresholds;
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.PunishmentCategory;
+    }
+
     public Duration calculateDuration(int repetition) {
         var factor = Math.pow(repetitionExpBase, repetition);
         return baseDuration.multipliedBy((long) factor);

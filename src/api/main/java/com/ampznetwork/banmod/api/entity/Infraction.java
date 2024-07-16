@@ -104,6 +104,11 @@ public class Infraction implements DbObject {
                 .orElseGet(() -> "You were " + punishment.getAdverb());
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.Infraction;
+    }
+
     public PlayerResult toResult() {
         return new PlayerResult(player.getId(),
                 punishment == Punishment.Mute,

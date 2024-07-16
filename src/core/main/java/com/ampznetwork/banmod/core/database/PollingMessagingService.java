@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.core.database;
 
 import com.ampznetwork.banmod.api.database.MessagingService;
+import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
@@ -125,9 +126,10 @@ public class PollingMessagingService extends Component.Base implements Messaging
         var event = events[0];
         if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
         // handle SYNC
-        if (event.getInfraction() == null)
+        if (event.getRelated() == null)
             service.getBanMod().log().error("Invalid SYNC event received; data was null");
         //service.refresh(event.getInfraction().getId());
-        service.getBanMod().realize(event.getInfraction());
+        if (event.getRelatedType() == EntityType.Infraction)
+            service.getInfraction(event.getRelated()).ifPresent(service.getBanMod()::realize);
     }
 }

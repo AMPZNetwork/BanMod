@@ -15,10 +15,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -29,12 +29,13 @@ import java.time.Instant;
 @IdClass(NotifyEvent.CompositeKey.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(of = { "ident", "timestamp" })
-@ToString(of = { "type", "timestamp", "infraction" })
+@ToString(of = { "type", "timestamp", "related" })
 public final class NotifyEvent {
     @Id @Column(columnDefinition = "bigint(64)") long       ident;
     @Id @lombok.Builder.Default                  Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                      Type       type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable @ManyToOne Infraction infraction  = null;
+    @lombok.Builder.Default @Nullable UUID       related     = null;
+    @lombok.Builder.Default @Nullable EntityType relatedType = null;
     @lombok.Builder.Default
     @Column(columnDefinition = "bigint(64)")     long       acknowledge = 0;
 
