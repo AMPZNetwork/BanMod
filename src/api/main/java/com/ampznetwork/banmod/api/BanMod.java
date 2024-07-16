@@ -44,6 +44,8 @@ public interface BanMod {
     @Nullable
     String getBanAppealUrl();
 
+    PlayerAdapter getPlayerAdapter();
+
     Logger log();
 
     void reload();
@@ -63,8 +65,6 @@ public interface BanMod {
                 break;
         }
     }
-
-    PlayerAdapter getPlayerAdapter();
 
     void executeSync(Runnable task);
 
@@ -86,15 +86,19 @@ public interface BanMod {
             TextComponent msgUser, msgNotify;
             String permission    = Permission.PluginErrorNotification;
             if (punishment == null) {
-                msgUser = text("""
+                msgUser   = text("""
                         An internal server error occurred.
                         Please contact your server administrator and try again later.
 
                         %s""".formatted(result.reason())).color(RED);
                 msgNotify = text("An internal error is causing issues for players and they cannot join.").color(RED)
                         .append(text("To allow connecting anyway, please enable "))
-                        .append(text("banmod.allowUnsafeConnections").color(AQUA))
+                        .append(text("allow-unsafe-connections").color(AQUA))
                         .append(text(" in the plugin configuration."));
+                mod.log().error("""
+                        An internal error occured and is keeping players from joining the server!
+                        \tIf you want to still allow players to join, please enable 'allow-unsafe-connections' in the config.
+                        \tError Message: %s""".formatted(result.reason()));
             } else switch (punishment) {
                 case Mute:
                     msgUser = Displays.mutedTextUser(result);

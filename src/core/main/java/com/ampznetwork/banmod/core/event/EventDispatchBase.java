@@ -59,6 +59,7 @@ public abstract class EventDispatchBase {
                 var out = new DelegateStream.Output(writer);
                 var printer = new PrintStream(out);
         ) {
+            mod.log().warn("An internal error occurred", t);
             StackTraceUtils.writeFilteredStacktrace(t, printer);
             BanMod.Resources.notify(mod, playerId, null,
                     new PlayerResult(playerId, false, false,
@@ -69,7 +70,6 @@ public abstract class EventDispatchBase {
                         if (!mod.allowUnsafeConnections())
                             forwardAndDisconnect.accept(serialize);
                     });
-            mod.log().warn("An internal error occurred and is ");
         } catch (IOException e) {
             mod.log().error("Have you tried turning your machine off and back on again?", t);
         }
