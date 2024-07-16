@@ -36,6 +36,7 @@ public abstract class EventDispatchBase {
                         .pushKnownName(name)
                         .pushKnownIp(address))
                 .complete(builder -> builder.lastSeen(now())
+                        .id(playerId)
                         .knownName(name, now())
                         .knownIP(ip2string(address), now()));
         service.save(data);
