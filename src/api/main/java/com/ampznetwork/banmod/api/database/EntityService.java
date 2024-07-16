@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.BanMod;
+import com.ampznetwork.banmod.api.entity.DbObject;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -23,7 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
+import static java.time.Instant.*;
 
 @SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {
@@ -32,6 +33,17 @@ public interface EntityService extends LifeCycle {
     }
 
     BanMod getBanMod();
+
+    Stream<PunishmentCategory> getCategories();
+
+    Stream<Infraction> getInfractions();
+
+    @Deprecated(forRemoval = true)
+    Optional<PunishmentCategory> getCategory(String name);
+
+    Optional<PunishmentCategory> getCategory(UUID id);
+
+    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
 
     Stream<PlayerData> getPlayerData();
 
@@ -54,20 +66,15 @@ public interface EntityService extends LifeCycle {
                 });
     }
 
-    Stream<PunishmentCategory> getCategories();
-
-    default Optional<PunishmentCategory> findCategory(String name) {
-        return getCategories()
-                .filter(cat -> cat.getName().equals(name))
-                .findAny();
-    }
-
-    GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getOrCreateCategory(String name);
-
     default PunishmentCategory defaultCategory() {
-        return save(findCategory("default")
-                .orElseGet(() -> PunishmentCategory.standard("default").build()));
+        return getOrCreateCategory("default").get();
     }
+
+    Stream<Infraction> getInfractions(UUID playerId);
+
+    Optional<Infraction> getInfraction(UUID id);
+
+    GetOrCreate<Infraction, Infraction.Builder> createInfraction();
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
@@ -75,15 +82,11 @@ public interface EntityService extends LifeCycle {
                 .count();
     }
 
-    Stream<Infraction> getInfractions();
-
-    Stream<Infraction> getInfractions(UUID playerId);
-
-    GetOrCreate<Infraction, Infraction.Builder> createInfraction();
-
     void revokeInfraction(UUID id, UUID revoker);
 
-    <T> T save(T object);
+    <T extends DbObject> T save(T object);
+
+    void uncache(Object id, DbObject obj);
 
     int delete(Object... objects);
 
@@ -98,5 +101,4 @@ public interface EntityService extends LifeCycle {
         Class<?> driverClass;
         Class<?> dialectClass;
     }
-
 }

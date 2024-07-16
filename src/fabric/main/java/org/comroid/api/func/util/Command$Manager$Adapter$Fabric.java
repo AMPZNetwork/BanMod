@@ -3,7 +3,13 @@ package org.comroid.api.func.util;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -22,13 +28,13 @@ import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import org.comroid.api.Polyfill;
 import org.comroid.api.data.seri.type.EnumValueType;
 import org.comroid.api.data.seri.type.StandardValueType;
 import org.comroid.api.data.seri.type.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -36,12 +42,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static java.util.function.Predicate.not;
+import static java.util.function.Predicate.*;
+import static java.util.stream.Stream.of;
 import static java.util.stream.Stream.*;
 import static net.minecraft.server.command.CommandManager.*;
-import static org.comroid.api.func.util.Debug.isDebug;
-import static org.comroid.api.func.util.Streams.expand;
-import static org.comroid.api.func.util.Streams.expandRecursive;
+import static org.comroid.api.func.util.Debug.*;
+import static org.comroid.api.func.util.Streams.*;
 
 @Value
 @Slf4j
@@ -59,39 +65,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     }
 
     @Override
-    public void register(CommandDispatcher<ServerCommandSource> dispatcher,
-                         CommandRegistryAccess registryAccess,
-                         RegistrationEnvironment environment) {
+    public void register(
+            CommandDispatcher<ServerCommandSource> dispatcher,
+            CommandRegistryAccess registryAccess,
+            RegistrationEnvironment environment
+    ) {
         cmdr.getBaseNodes().stream()
                 // recurse into subcommand nodes
                 .flatMap(node -> convertNode("[Fabric Command Adapter Debug] -", node, 0))
                 .distinct()
                 .forEach(dispatcher::register);
-    }
-
-    @Override
-    public Stream<Object> expandContext(Object... context) {
-        return super.expandContext(context).collect(expandRecursive(it -> {
-            if (it instanceof CommandContext<?> ctx)
-                return of(ctx.getSource());
-            if (it instanceof ServerCommandSource scs)
-                return of(scs.getPlayer());
-            if (it instanceof ServerPlayerEntity player)
-                return of(player.getUuid());
-            return empty();
-        }));
-    }
-
-    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
-        Command.Node.Call call;
-        if (usage.getNode() instanceof Command.Node.Group group)
-            call = group.getDefaultCall();
-        else if (usage.getNode() instanceof Command.Node.Call call0)
-            call = call0;
-        else throw new Command.Error("Command parsing error");
-        if (call == null)
-            throw new Command.Error("Not a command");
-        return call;
     }
 
     @Override
@@ -148,37 +131,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context,
-                                                         SuggestionsBuilder builder) {
-        var input = context.getInput().substring(1); // strip leading slash
-        var inLen = input.length() + 1;
-        var split = input.split(" ");
-        var lsWrd = split.length <= input.chars().filter(c -> c == ' ').count() ? "" : split[split.length - 1];
-        var lwLen = lsWrd.length();
-        var range = new StringRange(inLen - lwLen, inLen);
-        return CompletableFuture.supplyAsync(() -> {
-                    var fullCommand = input.split(" ");
-                    var usage = cmdr.createUsageBase(this, fullCommand, context);
-                    usage.advanceFull();
-                    return usage.getNode().nodes()
-                            .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
-                            .limit(1)
-                            .flatMap(n0 -> (n0 instanceof Command.Node.Callable callable
-                                    ? callable.nodes()
-                                    .map(node -> node instanceof Command.Node.Parameter parameter
-                                            ? "<%s>".formatted(parameter.getName())
-                                            : node.getName())
-                                    : n0 instanceof Command.AutoFillProvider provider
-                                    ? provider.autoFill(usage, n0.getName(), lsWrd)
-                                    : Stream.<String>empty())
-                                    .map(String::trim)
-                                    .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
-                                    .map(str -> new Suggestion(range, str,
-                                            Text.of(n0.getName() + ": " + n0.getDescription()))))
-                            .toList();
-                })
-                .thenApply(ls -> new Suggestions(range, ls))
-                .exceptionally(Polyfill.exceptionLogger());
+    public Stream<Object> expandContext(Object... context) {
+        return super.expandContext(context).collect(expandRecursive(it -> {
+            if (it instanceof CommandContext<?> ctx)
+                return of(ctx.getSource());
+            if (it instanceof ServerCommandSource scs)
+                return of(scs.getPlayer());
+            if (it instanceof ServerPlayerEntity player)
+                return of(player.getUuid());
+            return empty();
+        }));
     }
 
     @Override
@@ -275,10 +237,23 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         return arg;
     }
 
+    private static Command.Node.@NotNull Call getCall(Command.Usage usage) {
+        Command.Node.Call call;
+        if (usage.getNode() instanceof Command.Node.Group group)
+            call = group.getDefaultCall();
+        else if (usage.getNode() instanceof Command.Node.Call call0)
+            call = call0;
+        else throw new Command.Error("Command parsing error");
+        if (call == null)
+            throw new Command.Error("Not a command");
+        return call;
+    }
+
     private Stream<LiteralArgumentBuilder<ServerCommandSource>> createAliasRedirects(
             String pad,
             Command.Node desc,
-            LiteralArgumentBuilder<ServerCommandSource> target) {
+            LiteralArgumentBuilder<ServerCommandSource> target
+    ) {
         return desc.aliases()
                 .filter(not(desc.getName()::equals))
                 .map(alias -> {
@@ -288,27 +263,57 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                 });
     }
 
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder builder
+    ) {
+        var input = context.getInput().substring(1); // strip leading slash
+        var inLen = input.length() + 1;
+        var split = input.split(" ");
+        var lsWrd = split.length <= input.chars().filter(c -> c == ' ').count() ? "" : split[split.length - 1];
+        var lwLen = lsWrd.length();
+        var range = new StringRange(inLen - lwLen, inLen);
+        return CompletableFuture.supplyAsync(() -> {
+                    var fullCommand = input.split(" ");
+                    var usage = cmdr.createUsageBase(this, fullCommand, context);
+                    usage.advanceFull();
+                    return usage.getNode().nodes()
+                            .skip(split.length - (lsWrd.isEmpty() ? 1 : 2) - usage.getCallIndex())
+                            .limit(1)
+                            .flatMap(n0 -> (n0 instanceof Command.Node.Callable callable
+                                            ? callable.nodes()
+                                                    .map(node -> node instanceof Command.Node.Parameter parameter
+                                                                 ? "<%s>".formatted(parameter.getName())
+                                                                 : node.getName())
+                                            : n0 instanceof Command.AutoFillProvider provider
+                                              ? provider.autoFill(usage, n0.getName(), lsWrd)
+                                              : Stream.<String>empty())
+                                    .map(String::trim)
+                                    .filter(str -> str.toLowerCase().startsWith(lsWrd.toLowerCase()))
+                                    .map(str -> new Suggestion(range, str,
+                                            Text.of(n0.getName() + ": " + n0.getDescription()))))
+                            .toList();
+                })
+                .thenApply(ls -> new Suggestions(range, ls))
+                .exceptionally(t -> {
+                    log.error("Could not compute autofill suggestions", t);
+                    return new Suggestions(range, List.of());
+                });
+    }
+
     @Value
     public static class ArgumentConverter {
-        public static final Map<Class<?>, ArgumentConverter> cache = new ConcurrentHashMap<>();
-        public static final ArgumentConverter BOOLEAN = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
-        public static final ArgumentConverter DOUBLE = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
-        public static final ArgumentConverter FLOAT = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
-        public static final ArgumentConverter INTEGER = new ArgumentConverter(StandardValueType.INTEGER, IntegerArgumentType::integer);
-        public static final ArgumentConverter LONG = new ArgumentConverter(StandardValueType.LONG, LongArgumentType::longArg);
-        public static final ArgumentConverter WORD = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::word);
-        public static final ArgumentConverter STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
-        public static final ArgumentConverter GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
-        public static final ArgumentConverter UUID = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
-        ValueType<?> valueType;
-        Supplier<ArgumentType<?>> supplier;
-
-        public ArgumentConverter(ValueType<?> valueType, Supplier<ArgumentType<?>> supplier) {
-            this.valueType = valueType;
-            this.supplier = supplier;
-
-            //CACHE.put(valueType.getTargetClass(), this);
-        }
+        public static final Map<Class<?>, ArgumentConverter> cache         = new ConcurrentHashMap<>();
+        public static final ArgumentConverter                BOOLEAN       = new ArgumentConverter(StandardValueType.BOOLEAN, BoolArgumentType::bool);
+        public static final ArgumentConverter                DOUBLE        = new ArgumentConverter(StandardValueType.DOUBLE, DoubleArgumentType::doubleArg);
+        public static final ArgumentConverter                FLOAT         = new ArgumentConverter(StandardValueType.FLOAT, FloatArgumentType::floatArg);
+        public static final ArgumentConverter                INTEGER       = new ArgumentConverter(StandardValueType.INTEGER, IntegerArgumentType::integer);
+        public static final ArgumentConverter                LONG          = new ArgumentConverter(StandardValueType.LONG, LongArgumentType::longArg);
+        public static final ArgumentConverter                WORD          = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::word);
+        public static final ArgumentConverter                STRING        = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::string);
+        public static final ArgumentConverter                GREEDY_STRING = new ArgumentConverter(StandardValueType.STRING, StringArgumentType::greedyString);
+        public static final ArgumentConverter                UUID          = new ArgumentConverter(StandardValueType.UUID, UuidArgumentType::uuid);
 
         public static <T> ArgumentConverter blob(Command.Node.Parameter parameter) {
             var type = parameter.getParam().getType();
@@ -325,6 +330,16 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                             .filter(conv -> conv.valueType.equals(t0)))
                     .findAny()
                     .orElse(STRING);
+        }
+
+        ValueType<?>              valueType;
+        Supplier<ArgumentType<?>> supplier;
+
+        public ArgumentConverter(ValueType<?> valueType, Supplier<ArgumentType<?>> supplier) {
+            this.valueType = valueType;
+            this.supplier  = supplier;
+
+            //CACHE.put(valueType.getTargetClass(), this);
         }
     }
 }

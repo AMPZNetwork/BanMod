@@ -9,7 +9,6 @@ import lombok.Value;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -28,13 +27,26 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
 
 @Value
 public class FabricPlayerAdapter implements PlayerAdapter {
     BanMod$Fabric banMod;
+
+    @Override
+    public Stream<PlayerData> getCurrentPlayers() {
+        var service = banMod.getEntityService();
+        return banMod.getServer().getPlayerManager()
+                .getPlayerList().stream()
+                .map(player -> {
+                    var name = player.getName().getString();
+                    return service.getOrCreatePlayerData(player.getUuid())
+                            .setUpdateOriginal(original -> original.pushKnownName(name))
+                            .complete(builder -> builder.knownName(name, now()));
+                });
+    }
 
     @Override
     public boolean isOnline(UUID playerId) {
@@ -43,25 +55,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public boolean checkOpLevel(UUID playerId, @MagicConstant(intValues = {0, 1, 2, 3, 4}) int minimum) {
-        return Optional.of(banMod.getServer())
-                .map(MinecraftServer::getPlayerManager)
-                .map(pm -> pm.getPlayer(playerId))
-                .filter(spe -> spe.hasPermissionLevel(minimum))
-                .isPresent();
-    }
-
-    @Override
-    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
-        return switch (Permissions.getPermissionValue(playerId, key).join()) {
-            case FALSE -> TriState.FALSE;
-            case DEFAULT -> TriState.NOT_SET;
-            case TRUE -> TriState.TRUE;
-        };
-    }
-
-    @Override
-    public void kick(UUID playerId, TextComponent reason) {
+    public void kick(UUID playerId, Component reason) {
         var serialize = BanMod$Fabric.component2text(reason);
         Optional.ofNullable(banMod.getServer().getPlayerManager()
                         .getPlayer(playerId))
@@ -71,7 +65,7 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void send(UUID playerId, TextComponent component) {
+    public void send(UUID playerId, Component component) {
         var serialize = BanMod$Fabric.component2text(component);
         var player = banMod.getServer().getPlayerManager().getPlayer(playerId);
         if (player == null) return;
@@ -119,15 +113,20 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Stream<PlayerData> getCurrentPlayers() {
-        var service = banMod.getEntityService();
-        return banMod.getServer().getPlayerManager()
-                .getPlayerList().stream()
-                .map(player -> {
-                    var name = player.getName().getString();
-                    return service.getOrCreatePlayerData(player.getUuid())
-                            .setUpdateOriginal(original -> original.pushKnownName(name))
-                            .complete(builder -> builder.knownName(name, now()));
-                });
+    public boolean checkOpLevel(UUID playerId, @MagicConstant(intValues = { 0, 1, 2, 3, 4 }) int minimum) {
+        return Optional.of(banMod.getServer())
+                .map(MinecraftServer::getPlayerManager)
+                .map(pm -> pm.getPlayer(playerId))
+                .filter(spe -> spe.hasPermissionLevel(minimum))
+                .isPresent();
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
+        return switch (Permissions.getPermissionValue(playerId, key).join()) {
+            case FALSE -> TriState.FALSE;
+            case DEFAULT -> TriState.NOT_SET;
+            case TRUE -> TriState.TRUE;
+        };
     }
 }

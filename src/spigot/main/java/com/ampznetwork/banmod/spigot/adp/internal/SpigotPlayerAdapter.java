@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.util.TriState;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
@@ -22,13 +21,23 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
-import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.*;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.*;
 
 @Value
 public class SpigotPlayerAdapter implements PlayerAdapter {
     BanMod$Spigot banMod;
+
+    @Override
+    public Stream<PlayerData> getCurrentPlayers() {
+        var service = banMod.getEntityService();
+        return banMod.getServer()
+                .getOnlinePlayers().stream()
+                .map(player -> service.getOrCreatePlayerData(player.getUniqueId())
+                        .setUpdateOriginal(original -> original.pushKnownName(player.getName()))
+                        .complete(builder -> builder.knownName(player.getName(), now())));
+    }
 
     @Override
     public UUID getId(String name) {
@@ -60,34 +69,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public boolean checkOpLevel(UUID playerId, int $) {
-        if ($ > 1) banMod.log().warn("Spigot API does not properly support validating a certain OP level.");
-        var player = banMod.getServer().getPlayer(playerId);
-        return player != null && player.isOp();
-    }
-
-    @Override
-    public TriState checkPermission(UUID playerId, String key0, boolean explicit) {
-        var key = key0.endsWith(".*") ? key0.substring(0, key0.length() - 1) : key0;
-        var player = banMod.getServer().getPlayer(playerId);
-        if (player == null)
-            return TriState.NOT_SET;
-        if (explicit)
-            return player.getEffectivePermissions().stream()
-                    .filter(info -> info.getPermission().toLowerCase()
-                            .startsWith(key.toLowerCase()))
-                    .map(info -> info.getValue() ? TriState.TRUE : TriState.FALSE)
-                    .findAny()
-                    .orElse(TriState.NOT_SET);
-        return player.hasPermission(key)
-                ? TriState.TRUE
-                : player.isPermissionSet(key)
-                ? TriState.FALSE
-                : TriState.NOT_SET;
-    }
-
-    @Override
-    public void kick(UUID playerId, TextComponent component) {
+    public void kick(UUID playerId, Component component) {
         var player = Bukkit.getPlayer(playerId);
         if (player == null)
             return;
@@ -96,7 +78,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public void send(UUID playerId, TextComponent component) {
+    public void send(UUID playerId, Component component) {
         var player = banMod.getServer().getPlayer(playerId);
         if (player == null) return;
         var serialize = get().serialize(component);
@@ -130,12 +112,29 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     }
 
     @Override
-    public Stream<PlayerData> getCurrentPlayers() {
-        var service = banMod.getEntityService();
-        return banMod.getServer()
-                .getOnlinePlayers().stream()
-                .map(player -> service.getOrCreatePlayerData(player.getUniqueId())
-                        .setUpdateOriginal(original -> original.pushKnownName(player.getName()))
-                        .complete(builder -> builder.knownName(player.getName(), now())));
+    public boolean checkOpLevel(UUID playerId, int $) {
+        if ($ > 1) banMod.log().warn("Spigot API does not properly support validating a certain OP level.");
+        var player = banMod.getServer().getPlayer(playerId);
+        return player != null && player.isOp();
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String _key, boolean explicit) {
+        var key    = _key.endsWith(".*") ? _key.substring(0, _key.length() - 1) : _key;
+        var player = banMod.getServer().getPlayer(playerId);
+        if (player == null)
+            return TriState.NOT_SET;
+        if (explicit)
+            return player.getEffectivePermissions().stream()
+                    .filter(info -> info.getPermission().toLowerCase()
+                            .startsWith(key.toLowerCase()))
+                    .map(info -> info.getValue() ? TriState.TRUE : TriState.FALSE)
+                    .findAny()
+                    .orElse(TriState.NOT_SET);
+        return player.hasPermission(key)
+               ? TriState.TRUE
+               : player.isPermissionSet(key)
+                 ? TriState.FALSE
+                 : TriState.NOT_SET;
     }
 }

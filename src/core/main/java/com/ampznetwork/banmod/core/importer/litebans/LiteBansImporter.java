@@ -16,7 +16,7 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
+import static java.time.Instant.*;
 
 @Value
 public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Importer {
@@ -30,8 +30,8 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
 
     @Override
     public ImportResult run() {
-        int[] count = new int[]{0, 0, 0};
-        var service = mod.getEntityService();
+        int[] count   = new int[]{ 0, 0, 0 };
+        var   service = mod.getEntityService();
         Stream.concat(
                         unit.manager().createQuery("select m from Mute m", Mute.class)
                                 .getResultStream(),
@@ -54,6 +54,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                             .punishment(punishment)
                             .issuer(it.getBannedByUuid())
                             .revoker(it.getRemovedByUuid())
+                            .revokedAt(it.getRemovedByDate())
                             .timestamp(Instant.ofEpochMilli(it.getTime()))
                             .expires(Instant.ofEpochMilli(it.getUntil()))
                             .reason(it.getReason())

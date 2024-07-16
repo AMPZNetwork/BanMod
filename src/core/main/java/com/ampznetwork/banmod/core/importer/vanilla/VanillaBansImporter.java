@@ -20,7 +20,7 @@ public class VanillaBansImporter implements Importer {
 
     @Override
     public ImportResult run() {
-        var c = new int[]{0};
+        var c = new int[]{ 0 };
         var mapper = new ObjectMapper();
         try (
                 var banFile = new FileInputStream("banned-players.json");

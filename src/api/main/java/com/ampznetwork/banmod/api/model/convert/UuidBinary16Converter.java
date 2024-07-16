@@ -28,7 +28,7 @@ public class UuidBinary16Converter implements AttributeConverter<UUID, byte[]> {
         }
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         long high = byteBuffer.getLong();
-        long low = byteBuffer.getLong();
+        long low  = byteBuffer.getLong();
         return new UUID(high, low);
     }
 }

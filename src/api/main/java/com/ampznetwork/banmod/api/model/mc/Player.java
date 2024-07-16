@@ -14,7 +14,7 @@ import org.comroid.api.net.REST;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static org.comroid.api.net.REST.Method.GET;
+import static org.comroid.api.net.REST.Method.*;
 
 @Value
 @AllArgsConstructor

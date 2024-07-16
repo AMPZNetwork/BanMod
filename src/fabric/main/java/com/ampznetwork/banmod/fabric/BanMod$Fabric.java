@@ -10,7 +10,6 @@ import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -26,7 +25,7 @@ import org.slf4j.Logger;
 
 import java.util.stream.Stream;
 
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
@@ -35,23 +34,17 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final FabricPlayerAdapter playerAdapter = new FabricPlayerAdapter(this);
-    private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);
-    private Config config = Config.createAndLoad();
-    private MinecraftServer server;
-    private Command.Manager cmdr;
-    private Command$Manager$Adapter$Fabric adapter;
-    private EntityService entityService;
-    private PunishmentCategory defaultCategory;
-
     public static Text component2text(Component component) {
         return Text.Serializer.fromJson(gson().serialize(component));
     }
-
-    @Override
-    public Logger log() {
-        return log;
-    }
+    private final FabricPlayerAdapter            playerAdapter = new FabricPlayerAdapter(this);
+    private final FabricEventDispatch            eventDispatch = new FabricEventDispatch(this);
+    private       Config                         config        = Config.createAndLoad();
+    private       MinecraftServer                server;
+    private       Command.Manager                cmdr;
+    private       Command$Manager$Adapter$Fabric adapter;
+    private       EntityService                  entityService;
+    private       PunishmentCategory             defaultCategory;
 
     @Override
     public DatabaseInfo getDatabaseInfo() {
@@ -63,8 +56,24 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     }
 
     @Override
+    public Logger log() {
+        return log;
+    }
+
+    @Override
     public void reload() {
-        config = Config.createAndLoad();
+        terminate();
+        initialize();
+    }
+
+    @Override
+    public boolean allowUnsafeConnections() {
+        return config.allowUnsafeConnections();
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        task.run(); // todo: is this safe on fabric?
     }
 
     @Override
@@ -95,18 +104,17 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     }
 
     @Override
-    @SneakyThrows
     public void terminate() {
-        entityService.terminate();
+        try {
+            if (entityService != null)
+                entityService.terminate();
+        } catch (Throwable t) {
+            log().error("Error while disabling", t);
+        }
     }
 
     @Override
     public @Nullable String getBanAppealUrl() {
         return config.banAppealUrl();
-    }
-
-    @Override
-    public boolean allowUnsafeConnections() {
-        return config.allowUnsafeConnections();
     }
 }

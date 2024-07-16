@@ -24,17 +24,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.base;
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.event.ClickEvent.openUrl;
-import static net.kyori.adventure.text.event.HoverEvent.showText;
+import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.*;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.event.ClickEvent.*;
+import static net.kyori.adventure.text.event.HoverEvent.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
-import static org.comroid.api.Polyfill.ordinal;
-import static org.comroid.api.Polyfill.parseDuration;
-import static org.comroid.api.func.util.Command.Arg;
+import static net.kyori.adventure.text.format.TextDecoration.*;
+import static org.comroid.api.Polyfill.*;
+import static org.comroid.api.func.util.Command.*;
 
 @UtilityClass
 public class BanModCommands {
@@ -49,8 +47,8 @@ public class BanModCommands {
     public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
-        var text = text();
-        var c = 0;
+        var      text = text();
+        var      c    = 0;
         Object[] buffer;
         switch (method) {
             case everything:
@@ -85,7 +83,7 @@ public class BanModCommands {
                 if (method != CleanupMethod.everything)
                     break;
             case players:
-                var c0 = new int[]{0, 0};
+                var c0 = new int[]{ 0, 0 };
                 buffer = service.getPlayerData()
                         .filter(data -> {
                             var name = data.getKnownNames().size() > 1;
@@ -171,22 +169,24 @@ public class BanModCommands {
                     .append(infraction.getPunishment().toComponent(true))
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
-                            ? "Server"
-                            : mod.getPlayerAdapter().getName(infraction.getIssuer()))
+                                 ? "Server"
+                                 : mod.getPlayerAdapter().getName(infraction.getIssuer()))
                             .color(AQUA));
         return text;
     }
 
     @Command
-    public Component punish(BanMod mod,
-                            UUID issuer,
-                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                            @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String category,
-                            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component punish(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String category,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
-        var cat = mod.getEntityService().findCategory(category)
+        var cat = mod.getEntityService().getCategory(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
         var infraction = mod.getEntityService().createInfraction()
                 .complete(base(mod, tgt, cat, issuer)
@@ -205,20 +205,24 @@ public class BanModCommands {
             });
         else mod.getPlayerAdapter().send(tgt, BanMod.Displays.mutedTextUser(result));
 
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component mutelist(BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
+    public Component mutelist(
+            BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
+    ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Mute);
     }
 
     @Command
-    public Component tempmute(BanMod mod,
-                              UUID issuer,
-                              @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                              @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                              @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component tempmute(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
@@ -229,14 +233,16 @@ public class BanModCommands {
                         .duration(parseDuration(durationText))
                         .reason(reason)
                         .build());
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component mute(BanMod mod,
-                          UUID issuer,
-                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                          @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component mute(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
@@ -247,16 +253,18 @@ public class BanModCommands {
                         .permanent(true)
                         .reason(reason)
                         .build());
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component unmute(BanMod mod,
-                            UUID issuer,
-                            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name) {
+    public Component unmute(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
+    ) {
         var tgt = mod.getPlayerAdapter().getId(name);
         var infraction = mod.getEntityService().getInfractions(tgt)
-                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
+                .filter(Infraction.IS_IN_EFFECT)
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
@@ -265,10 +273,12 @@ public class BanModCommands {
     }
 
     @Command
-    public Component kick(BanMod mod,
-                          UUID issuer,
-                          @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                          @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component kick(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
@@ -276,23 +286,27 @@ public class BanModCommands {
                 .complete(base(mod, tgt, Punishment.Kick, issuer)
                         .reason(reason)
                         .build());
-        
+
         var text = BanMod.Displays.kickedTextUser(infraction.toResult());
         mod.getPlayerAdapter().kick(tgt, text);
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component banlist(BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page) {
+    public Component banlist(
+            BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
+    ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
     }
 
     @Command
-    public Component tempban(BanMod mod,
-                             UUID issuer,
-                             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                             @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
-                             @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component tempban(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
@@ -304,14 +318,16 @@ public class BanModCommands {
                         .reason(reason)
                         .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component ban(BanMod mod,
-                         UUID issuer,
-                         @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-                         @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason) {
+    public Component ban(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
+            @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
+    ) {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getPlayerAdapter().getId(name);
@@ -323,13 +339,15 @@ public class BanModCommands {
                         .reason(reason)
                         .build());
         mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
-        return BanMod.Displays.textPunishmentFull(infraction);
+        return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
     @Command
-    public Component unban(BanMod mod,
-                           UUID issuer,
-                           @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name) {
+    public Component unban(
+            BanMod mod,
+            UUID issuer,
+            @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
+    ) {
         var tgt = mod.getPlayerAdapter().getId(name);
         var infraction = mod.getEntityService().getInfractions(tgt)
                 .filter(Infraction.IS_IN_EFFECT)
@@ -352,7 +370,8 @@ public class BanModCommands {
         public static Component list(
                 BanMod mod,
                 @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false) String query,
-                @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page) {
+                @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page
+        ) {
             if (query != null)
                 throw new Command.Error("query unimplemented");
             return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
@@ -363,7 +382,8 @@ public class BanModCommands {
                 BanMod mod,
                 @NotNull @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class) String query,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
-                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value) {
+                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value
+        ) {
             throw new Command.Error("unimplemented");
         }
     }
@@ -376,7 +396,8 @@ public class BanModCommands {
                 BanMod mod,
                 @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "player", autoFillProvider = AutoFillProvider.Players.class) String playerName,
-                @Nullable @Arg(value = "repetition", required = false) Integer repetition) {
+                @Nullable @Arg(value = "repetition", required = false) Integer repetition
+        ) {
             throw new Command.Error("unimplemented");
         }
 
@@ -399,12 +420,12 @@ public class BanModCommands {
                         .findFirst()
                         .orElse(0) - 1;
                 for (int i = 0; i < thresholds.size(); i++) {
-                    var e = thresholds.get(i);
+                    var e          = thresholds.get(i);
                     var punishment = e.getValue();
                     int startsAtRepetition = e.getKey();
                     text.append(text("\n-> From the "))
                             .append(text(startsAtRepetition == 0 ? "first"
-                                    : ordinal(startsAtRepetition + 1)).color(AQUA))
+                                                                 : ordinal(startsAtRepetition + 1)).color(AQUA))
                             .append(text(" time: "))
                             .append(punishment.toComponent(false));
                     if (!punishment.isInherentlyTemporary()) {
@@ -446,13 +467,14 @@ public class BanModCommands {
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
                 @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
-                @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase) {
+                @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase
+        ) {
             var duration = parseDuration(baseDuration);
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
             else repetitionBase = 2d;
-            var update = new boolean[]{false};
-            var category = mod.getEntityService().findCategory(name)
+            var update = new boolean[]{ false };
+            var category = mod.getEntityService().getCategory(name)
                     .map(it -> {
                         update[0] = true;
                         return it.toBuilder();
@@ -475,7 +497,8 @@ public class BanModCommands {
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
-                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value) {
+                @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value
+        ) {
             throw new Command.Error("unimplemented");
         }
 
@@ -484,12 +507,11 @@ public class BanModCommands {
             if ("default".equals(name))
                 throw new Command.Error("Cannot delete the default category!");
             var service = mod.getEntityService();
-            var cat = service.findCategory(name);
+            var cat = service.getCategory(name);
             return service.delete(cat) > 0
-                    ? text("Deleted category " + name).color(RED)
-                    : text("Could not delete category " + name).color(DARK_RED);
+                   ? text("Deleted category " + name).color(RED)
+                   : text("Could not delete category " + name).color(DARK_RED);
         }
-
     }
 
     @UtilityClass
@@ -539,6 +561,5 @@ public class BanModCommands {
                 throw new Command.Error(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
         }
-
     }
 }

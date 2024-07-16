@@ -9,7 +9,6 @@ import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
@@ -31,18 +30,44 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
-    private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
-    private FileConfiguration config;
-    private Command.Manager cmdr;
-    @Delegate(types = {TabCompleter.class, CommandExecutor.class})
-    private Command.Manager.Adapter$Spigot adapter;
-    private EntityService entityService;
-    private PunishmentCategory defaultCategory;
+    private final SpigotPlayerAdapter            playerAdapter = new SpigotPlayerAdapter(this);
+    private final SpigotEventDispatch            eventDispatch = new SpigotEventDispatch(this);
+    private       FileConfiguration              config;
+    private       Command.Manager                cmdr;
+    @Delegate(types = { TabCompleter.class, CommandExecutor.class })
+    private       Command.Manager.Adapter$Spigot adapter;
+    private       EntityService                  entityService;
+    private       PunishmentCategory             defaultCategory;
+
+    @Override
+    public DatabaseInfo getDatabaseInfo() {
+        var dbType = EntityService.DatabaseType.valueOf(config.getString("database.type", "h2"));
+        var dbUrl  = config.getString("database.url", "jdbc:h2:file:./BanMod.h2");
+        var dbUser = config.getString("database.username", "sa");
+        var dbPass = config.getString("database.password", "");
+        return new DatabaseInfo(dbType, dbUrl, dbUser, dbPass);
+    }
 
     @Override
     public Logger log() {
         return log;
+    }
+
+    @Override
+    public void reload() {
+        try {
+            onDisable();
+        } catch (Throwable ignored) {
+        }
+        reloadConfig();
+        config = getConfig();
+        onEnable();
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        Bukkit.getScheduler()
+                .runTask(this, task);
     }
 
     @Override
@@ -64,7 +89,6 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     }
 
     @Override
-    @SneakyThrows
     public void onEnable() {
         this.entityService = new HibernateEntityService(this);
         defaultCategory = entityService.defaultCategory();
@@ -73,20 +97,13 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     }
 
     @Override
-    @SneakyThrows
     public void onDisable() {
-        this.entityService.terminate();
-    }
-
-    @Override
-    public void reload() {
         try {
-            onDisable();
-        } catch (Throwable ignored) {
+            if (entityService != null)
+                this.entityService.terminate();
+        } catch (Throwable t) {
+            log().error("Error while disabling", t);
         }
-        reloadConfig();
-        config = getConfig();
-        onEnable();
     }
 
     @Override
@@ -100,14 +117,5 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @Override
     public boolean allowUnsafeConnections() {
         return config.getBoolean("allow-unsafe-connections", false);
-    }
-
-    @Override
-    public DatabaseInfo getDatabaseInfo() {
-        var dbType = EntityService.DatabaseType.valueOf(config.getString("database.type", "h2"));
-        var dbUrl = config.getString("database.url", "jdbc:h2:file:./BanMod.h2");
-        var dbUser = config.getString("database.username", "sa");
-        var dbPass = config.getString("database.password", "");
-        return new DatabaseInfo(dbType, dbUrl, dbUser, dbPass);
     }
 }

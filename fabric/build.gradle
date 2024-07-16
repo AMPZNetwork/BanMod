@@ -103,11 +103,8 @@ dependencies {
 	include 'org.jboss:jandex:2.4.5.Final'
 	include 'com.zaxxer:HikariCP:4.0.3'
 	include 'com.fasterxml.jackson.core:jackson-core:2.17.2'
-
-
 	include 'org.hibernate.common:hibernate-commons-annotations:5.1.2.Final'
 	include 'net.java.dev.jna:jna-platform:5.13.0'
-	include 'com.github.oshi:oshi-core:6.2.2'
 	include 'com.zaxxer:HikariCP:4.0.3'
 	include 'net.bytebuddy:byte-buddy:1.11.20'
 	include 'com.google.errorprone:error_prone_annotations:2.10.0'

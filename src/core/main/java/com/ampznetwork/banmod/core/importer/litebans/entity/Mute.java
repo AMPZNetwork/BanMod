@@ -1,10 +1,20 @@
 package com.ampznetwork.banmod.core.importer.litebans.entity;
 
 import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -20,22 +30,22 @@ import java.util.UUID;
 public final class Mute implements LiteBansEntity {
     @Id
     @Column(columnDefinition = "bigint unsigned")
-    long id;
+    long   id;
     @Column(columnDefinition = "varchar(36)")
     @Convert(converter = UuidVarchar36Converter.class)
-    UUID uuid;
+    UUID   uuid;
     @Column(columnDefinition = "varchar(45)")
     String ip;
     @Column(columnDefinition = "varchar(2048)")
     String reason;
     @Column(name = "banned_by_uuid", columnDefinition = "varchar(36)")
     @Convert(converter = UuidVarchar36Converter.class)
-    UUID bannedByUuid;
+    UUID   bannedByUuid;
     @Column(name = "banned_by_name", columnDefinition = "varchar(128)")
     String bannedByName;
     @Column(name = "removed_by_uuid", columnDefinition = "varchar(36)")
     @Convert(converter = UuidVarchar36Converter.class)
-    UUID removedByUuid;
+    UUID   removedByUuid;
     @Column(name = "removed_by_name", columnDefinition = "varchar(128)")
     String removedByName;
     @Column(name = "removed_by_reason", columnDefinition = "varchar(2048)")
@@ -55,11 +65,11 @@ public final class Mute implements LiteBansEntity {
     boolean ipBanWildcard;
     boolean active;
 
-    public boolean equals(Object other) {
-        return other instanceof Mute mute && mute.getId() == getId();
-    }
-
     public int hashCode() {
         return Objects.hashCode(getId());
+    }
+
+    public boolean equals(Object other) {
+        return other instanceof Mute mute && mute.getId() == getId();
     }
 }
