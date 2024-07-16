@@ -11,22 +11,23 @@ import org.comroid.api.func.util.Debug;
 import org.comroid.api.func.util.Stopwatch;
 import org.comroid.api.tree.Component;
 import org.hibernate.Session;
-import org.hibernate.type.StandardBasicTypes;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 @Value
 public class PollingMessagingService extends Component.Base implements MessagingService {
     HibernateEntityService service;
     EntityManager          manager;
-    Session session;
-    long    ident;
+    Session    session;
+    BigInteger ident;
 
     public PollingMessagingService(HibernateEntityService service, EntityManager manager, Duration interval) {
         this.service = service;
@@ -38,28 +39,27 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
         // find recently used idents
         //noinspection unchecked
-        var occupied = service.wrapQuery(Query::getResultList, session.createSQLQuery("""
-                                select BIT_OR(ne.ident) as x
-                                from banmod_notify ne
-                                group by ne.ident, ne.timestamp
-                                order by ne.timestamp desc
-                                limit 50
-                                """)
-                        .addScalar("x", StandardBasicTypes.LONG))
-                .stream()
-                .mapToLong(x -> (long) x)
-                .filter(x -> x != 0)
+        var occupied = ((Stream<BigInteger>) service.wrapQuery(Query::getResultList, session.createSQLQuery("""
+                select BIT_OR(ne.ident) as x
+                from banmod_notify ne
+                group by ne.ident, ne.timestamp
+                order by ne.timestamp desc
+                limit 50
+                """)).stream())
+                .map(BigInteger.class::cast)
+                .filter(x -> x.intValue() != 0)
                 .findAny()
-                .orElse(0xFFFF_FFFFL);
+                .orElse(BigInteger.valueOf(0xFFFF_FFFFL));
 
         // randomly try to get a new ident
-        long x;
-        var c = 0;
-        var  rng = new Random();
+        BigInteger x;
+        var        c   = 0;
+        var        rng = new Random();
         do {
             c += 1;
-            x = 1L << rng.nextInt(64);
-        } while (c < 64 || x == 0 || (x & ~occupied) == 0 || x == occupied);
+            x = BigInteger.ONE.shiftLeft(rng.nextInt(64));
+        } while (c < 64 && (x.and(occupied.not()).intValue() == 0 || x.equals(occupied) || x.intValue() == 0));
+
         this.ident = x;
 
         // send HELLO

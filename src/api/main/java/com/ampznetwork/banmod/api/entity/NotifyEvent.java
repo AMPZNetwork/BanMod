@@ -17,6 +17,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -31,13 +32,13 @@ import java.util.UUID;
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
 public final class NotifyEvent implements DbObject {
-    @Id @Column(columnDefinition = "bigint") long       ident;
+    @Id @Column(columnDefinition = "bigint") BigInteger ident;
     @Id @lombok.Builder.Default              Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                  Type       type        = Type.SYNC;
     @lombok.Builder.Default @Nullable        UUID       relatedId   = null;
     @lombok.Builder.Default @Nullable        EntityType relatedType = null;
     @lombok.Builder.Default
-    @Column(columnDefinition = "bigint")     long       acknowledge = 0;
+    @Column(columnDefinition = "bigint")     BigInteger acknowledge = BigInteger.valueOf(0);
 
     @Override
     public UUID getId() {
@@ -63,7 +64,7 @@ public final class NotifyEvent implements DbObject {
 
     @Data
     public static class CompositeKey implements Serializable {
-        long ident;
-        Instant timestamp;
+        BigInteger ident;
+        Instant    timestamp;
     }
 }
