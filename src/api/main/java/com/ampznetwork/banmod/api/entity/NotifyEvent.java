@@ -30,7 +30,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
-public final class NotifyEvent {
+public final class NotifyEvent implements DbObject {
     @Id @Column(columnDefinition = "bigint(64)") long       ident;
     @Id @lombok.Builder.Default                  Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                      Type       type        = Type.SYNC;
@@ -38,6 +38,16 @@ public final class NotifyEvent {
     @lombok.Builder.Default @Nullable EntityType relatedType = null;
     @lombok.Builder.Default
     @Column(columnDefinition = "bigint(64)")     long       acknowledge = 0;
+
+    @Override
+    public UUID getId() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        throw new UnsupportedOperationException();
+    }
 
     public enum Type implements Named {
         /**

@@ -66,7 +66,13 @@ public class PollingMessagingService extends Component.Base implements Messaging
         push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
     }
 
-    public void pollNotifier() {
+    @Override
+    public AlmostComplete<NotifyEvent.Builder> push() {
+        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(ident)
+                .build()));
+    }
+
+    private void pollNotifier() {
         var stopwatch = Stopwatch.start(this);
         var events = service.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
             var handle = Polyfill.<List<NotifyEvent>>uncheckedCast(manager.createNativeQuery("""
@@ -113,12 +119,6 @@ public class PollingMessagingService extends Component.Base implements Messaging
                 .execute(() -> dispatch(events));
     }
 
-    @Override
-    public AlmostComplete<NotifyEvent.Builder> push() {
-        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(ident)
-                .build()));
-    }
-
     private void dispatch(NotifyEvent... events) {
         if (events.length == 0) return;
         if (events.length > 1) for (var event : events)
@@ -126,9 +126,11 @@ public class PollingMessagingService extends Component.Base implements Messaging
         var event = events[0];
         if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
         // handle SYNC
-        if (event.getRelatedId() == null)
+        if (event.getRelatedId() == null || event.getRelatedType() == null) {
             service.getBanMod().log().error("Invalid SYNC event received; data was null");
-        //service.refresh(event.getInfraction().getId());
+            return;
+        }
+        service.refresh(event.getRelatedType(), event.getRelatedId());
         if (event.getRelatedType() == EntityType.Infraction)
             service.getInfraction(event.getRelatedId()).ifPresent(service.getBanMod()::realize);
     }

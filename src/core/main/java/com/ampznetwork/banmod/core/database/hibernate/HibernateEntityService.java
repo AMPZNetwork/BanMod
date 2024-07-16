@@ -5,6 +5,7 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.DbObject;
 import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
@@ -21,6 +22,7 @@ import org.comroid.api.tree.UncheckedCloseable;
 import org.hibernate.Session;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -30,9 +32,11 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.sql.Connection;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,13 +44,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static org.comroid.api.Polyfill.*;
 import static org.comroid.api.func.util.Debug.*;
 
 @Value
 @Log4j2
 @EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
-    private static final PersistenceProvider               SPI = new HibernatePersistenceProvider();
+    private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
 
     public static Unit buildPersistenceUnit(
             DatabaseInfo info, Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
@@ -78,13 +83,14 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return new Unit(dataSource, manager);
     }
 
-    public Cache<UUID, PlayerData>           Players;
-    public Cache<UUID, Infraction>           Infractions;
-    Cache<UUID, PunishmentCategory> categories;
-    BanMod                   banMod;
-    EntityManager            manager;
-    ScheduledExecutorService scheduler;
-    PollingMessagingService  messagingService;
+    Cache<UUID, PlayerData>                players;
+    Cache<UUID, Infraction>                infractions;
+    Cache<UUID, PunishmentCategory>        categories;
+    Map<EntityType, Cache<UUID, DbObject>> caches;
+    BanMod                                 banMod;
+    EntityManager                          manager;
+    ScheduledExecutorService               scheduler;
+    PollingMessagingService                messagingService;
 
     public HibernateEntityService(BanMod mod) {
         // boot up hibernate
@@ -98,9 +104,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup
-        this.players     = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData);
-        this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction);
-        this.categories  = new Cache<>(PunishmentCategory::getId, this::uncache, SoftReference::new, this::getCategory);
+        var caches = new ConcurrentHashMap<EntityType, Cache<UUID, ? extends DbObject>>();
+        caches.put(EntityType.PlayerData, this.players = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData));
+        caches.put(EntityType.Infraction, this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction));
+        caches.put(EntityType.PunishmentCategory,
+                this.categories = new Cache<>(PunishmentCategory::getId, this::uncache, SoftReference::new, this::getCategory));
+        this.caches = uncheckedCast(Collections.unmodifiableMap(caches));
         scheduler.scheduleAtFixedRate(() -> Stream.of(players, infractions, categories)
                 .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
     }
@@ -182,8 +191,8 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public <T> T save(T object) {
-        return wrapTransaction(() -> {
+    public <T extends DbObject> T save(T object) {
+        var persistent = wrapTransaction(() -> {
             try {
                 manager.persist(object);
                 // now a persistent object!
@@ -194,6 +203,9 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 return manager.merge(object);
             }
         });
+        if (!(object instanceof NotifyEvent))
+            caches.get(object.getEntityType()).push(persistent);
+        return persistent;
     }
 
     @Override
@@ -280,6 +292,19 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 if (transaction.isActive()) transaction.rollback();
                 throw t;
             }
+        }
+    }
+
+    public void refresh(@NotNull EntityType relatedType, @NotNull UUID... relatedIds) {
+        var cache = caches.get(relatedType);
+        for (var id : relatedIds) {
+            var obj = cache.get(id);
+            if (obj != null) {
+                manager.refresh(obj);
+                continue;
+            }
+            var value = relatedType.fetch(this, id).orElse(null);
+            save(value);
         }
     }
 

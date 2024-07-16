@@ -81,7 +81,7 @@ public interface EntityService extends LifeCycle {
         return getOrCreateCategory("default").get();
     }
 
-    <T> T save(T object);
+    <T extends DbObject> T save(T object);
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
