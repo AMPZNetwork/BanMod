@@ -28,13 +28,13 @@ import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import org.comroid.api.Polyfill;
 import org.comroid.api.data.seri.type.EnumValueType;
 import org.comroid.api.data.seri.type.StandardValueType;
 import org.comroid.api.data.seri.type.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -296,7 +296,10 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                             .toList();
                 })
                 .thenApply(ls -> new Suggestions(range, ls))
-                .exceptionally(Polyfill.exceptionLogger());
+                .exceptionally(t -> {
+                    log.error("Could not compute autofill suggestions", t);
+                    return new Suggestions(range, List.of());
+                });
     }
 
     @Value
