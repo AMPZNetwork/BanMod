@@ -323,7 +323,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     private <T extends DbObject> Stream<T> getFromCacheOrSupply(EntityType type, UUID id, Stream<T> fallback) {
-        return Stream.ofNullable(caches.get(type).getOrDefault(id, null))
+        return caches.get(type).wrap(id).stream()
                 .map(Polyfill::<T>uncheckedCast)
                 .collect(Streams.or(() -> fallback.peek(caches.get(type)::push)));
     }
