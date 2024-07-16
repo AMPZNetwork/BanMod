@@ -31,11 +31,12 @@ import java.util.UUID;
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class NotifyEvent implements DbObject {
-    @Id @Column(columnDefinition = "bigint")                     long    ident;
-    @Id @lombok.Builder.Default                                  Instant timestamp   = Instant.now();
-    @lombok.Builder.Default                                      Type    type        = Type.SYNC;
-    @lombok.Builder.Default @Nullable                            UUID    data        = null;
-    @lombok.Builder.Default @Column(columnDefinition = "bigint") long    acknowledge = 0;
+    @Id @Column(columnDefinition = "bigint(64)") long    ident;
+    @Id @lombok.Builder.Default                  Instant timestamp   = Instant.now();
+    @lombok.Builder.Default                      Type    type        = Type.SYNC;
+    @lombok.Builder.Default @Nullable            UUID    data        = null;
+    @lombok.Builder.Default
+    @Column(columnDefinition = "bigint(64)")     long    acknowledge = 0;
 
     public enum Type implements Named {
         /**
