@@ -76,8 +76,7 @@ public interface EntityService extends LifeCycle {
     }
 
     default PunishmentCategory defaultCategory() {
-        return save(findCategory("default")
-                .orElseGet(() -> PunishmentCategory.standard("default").build()));
+        return getOrCreateCategory("default").get();
     }
 
     <T> T save(T object);
