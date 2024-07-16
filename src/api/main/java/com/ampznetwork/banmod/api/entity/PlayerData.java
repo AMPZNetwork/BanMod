@@ -69,10 +69,7 @@ public class PlayerData implements DbObject {
                 .thenApply(REST.Response::validate2xxOK)
                 .thenApply(rsp -> rsp.getBody().get("name").asString());
         future.thenAccept(name -> CACHE_NAME.accept(id, name));
-        return future.exceptionally(t -> {
-            log.warn("Could not retrieve Minecraft Username; returning 'Steve' for ID {}", id, t);
-            return "Steve";
-        });
+        return future;
     }
     @Id
     @lombok.Builder.Default
