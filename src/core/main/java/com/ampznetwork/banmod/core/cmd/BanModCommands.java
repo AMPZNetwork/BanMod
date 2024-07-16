@@ -264,7 +264,7 @@ public class BanModCommands {
     ) {
         var tgt = mod.getPlayerAdapter().getId(name);
         var infraction = mod.getEntityService().getInfractions(tgt)
-                .filter(i -> i.getRevoker() == null && (i.getExpires() == null || i.getExpires().isAfter(now())))
+                .filter(Infraction.IS_IN_EFFECT)
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
