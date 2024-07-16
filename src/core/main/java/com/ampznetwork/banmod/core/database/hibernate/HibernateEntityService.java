@@ -46,6 +46,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.time.Instant.*;
 import static org.comroid.api.Polyfill.*;
 import static org.comroid.api.func.util.Debug.*;
 
@@ -105,7 +106,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
         addChildren(unit, scheduler, messagingService);
 
-        // caches & cleanup
+        // caches & cleanup task
         var caches = new ConcurrentHashMap<EntityType, Cache<UUID, ? extends DbObject>>();
         caches.put(EntityType.PlayerData, this.players = new Cache<>(PlayerData::getId, this::uncache, WeakReference::new, this::getPlayerData));
         caches.put(EntityType.Infraction, this.infractions = new Cache<>(Infraction::getId, this::uncache, WeakReference::new, this::getInfraction));
@@ -114,6 +115,10 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.caches = uncheckedCast(Collections.unmodifiableMap(caches));
         scheduler.scheduleAtFixedRate(() -> Stream.of(players, infractions, categories)
                 .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
+
+        PlayerData.CACHE_NAME = (uuid, name) -> getOrCreatePlayerData(uuid)
+                .setUpdateOriginal(merge -> merge.pushKnownName(name))
+                .complete(build -> build.id(uuid).knownName(name, now()));
     }
 
     @Override
