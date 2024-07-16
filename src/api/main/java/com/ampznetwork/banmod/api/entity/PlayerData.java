@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
 import org.comroid.api.net.REST;
+import org.hibernate.annotations.GenericGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
@@ -73,9 +75,12 @@ public class PlayerData implements DbObject {
         });
     }
     @Id
+    @lombok.Builder.Default
+    @GeneratedValue(generator = "UUID")
     @Convert(converter = UuidBinary16Converter.class)
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(columnDefinition = "binary(16)", updatable = false, nullable = false)
-    UUID                                             id;
+    UUID id = UUID.randomUUID();
     @Nullable
     @lombok.Builder.Default
     Instant                                          lastSeen = null;

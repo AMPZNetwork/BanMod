@@ -30,7 +30,7 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "infraction" })
-public final class NotifyEvent implements DbObject {
+public final class NotifyEvent {
     @Id @Column(columnDefinition = "bigint(64)") long       ident;
     @Id @lombok.Builder.Default                  Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                      Type       type        = Type.SYNC;
