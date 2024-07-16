@@ -10,6 +10,7 @@ import org.comroid.api.func.util.Debug;
 import org.comroid.api.func.util.Stopwatch;
 import org.comroid.api.tree.Component;
 import org.hibernate.Session;
+import org.hibernate.type.StandardBasicTypes;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -37,12 +38,13 @@ public class PollingMessagingService extends Component.Base implements Messaging
         // find recently used idents
         //noinspection unchecked
         var occupied = service.wrapQuery(Query::getResultList, session.createSQLQuery("""
-                        select BIT_OR(ne.ident)
-                        from banmod_notify ne
-                        group by ne.ident, ne.timestamp
-                        order by ne.timestamp desc
-                        limit 50
-                        """))
+                                select BIT_OR(ne.ident) as x
+                                from banmod_notify ne
+                                group by ne.ident, ne.timestamp
+                                order by ne.timestamp desc
+                                limit 50
+                                """)
+                        .addScalar("x", StandardBasicTypes.LONG))
                 .stream()
                 .mapToLong(x -> (long) x)
                 .filter(x -> x != 0)
