@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.DbObject;
+import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -22,6 +23,7 @@ import org.hibernate.dialect.MySQL57Dialect;
 import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 import static java.time.Instant.*;
@@ -33,6 +35,8 @@ public interface EntityService extends LifeCycle {
     }
 
     BanMod getBanMod();
+
+    ScheduledExecutorService getScheduler();
 
     Stream<PunishmentCategory> getCategories();
 
@@ -85,6 +89,8 @@ public interface EntityService extends LifeCycle {
     void revokeInfraction(UUID id, UUID revoker);
 
     <T extends DbObject> T save(T object);
+
+    void refresh(EntityType type, UUID... ids);
 
     void uncache(Object id, DbObject obj);
 

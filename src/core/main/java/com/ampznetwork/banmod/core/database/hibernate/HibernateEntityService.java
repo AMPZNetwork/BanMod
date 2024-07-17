@@ -9,7 +9,7 @@ import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
-import com.ampznetwork.banmod.core.database.PollingMessagingService;
+import com.ampznetwork.banmod.core.messaging.PollingMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -272,6 +272,20 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         return c;
     }
 
+    @Override
+    public void refresh(@NotNull EntityType relatedType, @NotNull UUID... relatedIds) {
+        var cache = caches.get(relatedType);
+        for (var id : relatedIds) {
+            var obj = cache.get(id);
+            if (obj != null) {
+                manager.refresh(obj);
+                continue;
+            }
+            var value = relatedType.fetch(this, id).orElse(null);
+            save(value);
+        }
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public <T> T wrapQuery(Function<Query, T> executor, Query query) {
         return wrapTransaction(new Supplier<>() {
@@ -316,19 +330,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 if (transaction.isActive()) transaction.rollback();
                 throw t;
             }
-        }
-    }
-
-    public void refresh(@NotNull EntityType relatedType, @NotNull UUID... relatedIds) {
-        var cache = caches.get(relatedType);
-        for (var id : relatedIds) {
-            var obj = cache.get(id);
-            if (obj != null) {
-                manager.refresh(obj);
-                continue;
-            }
-            var value = relatedType.fetch(this, id).orElse(null);
-            save(value);
         }
     }
 
