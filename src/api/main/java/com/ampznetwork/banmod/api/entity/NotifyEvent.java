@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
@@ -21,7 +22,9 @@ import javax.persistence.Table;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Data
 @Entity
@@ -53,7 +56,8 @@ public final class NotifyEvent implements DbObject {
         throw new UnsupportedOperationException();
     }
 
-    public enum Type implements Named {
+    @Getter
+    public enum Type implements Named, Predicate<EntityType> {
         /**
          * sent immediately after connecting for the first time, together with an {@code ident} value
          */
@@ -62,7 +66,18 @@ public final class NotifyEvent implements DbObject {
          * sent with an infraction ID as {@code data} after storing an infraction
          * after polling SYNC, it is expected to merge thyself into ident
          */
-        SYNC
+        SYNC(EntityType.values());
+
+        private final Set<EntityType> allowedTypes;
+
+        Type(EntityType... allowedTypes) {
+            this.allowedTypes = Set.of(allowedTypes);
+        }
+
+        @Override
+        public boolean test(EntityType entityType) {
+            return allowedTypes.contains(entityType);
+        }
     }
 
     @Data

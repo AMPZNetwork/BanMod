@@ -68,8 +68,14 @@ public class PollingMessagingService extends Component.Base implements Messaging
 
     @Override
     public AlmostComplete<NotifyEvent.Builder> push() {
-        return new AlmostComplete<>(NotifyEvent::builder, builder -> service.save(builder.ident(ident)
-                .build()));
+        return new AlmostComplete<>(NotifyEvent::builder, builder -> {
+            var event       = builder.ident(ident).build();
+            var relatedType = event.getRelatedType();
+            var eventType   = event.getType();
+            if (!eventType.test(relatedType))
+                throw new IllegalArgumentException("%s event does not allow %s payloads".formatted(eventType, relatedType));
+            service.save(event);
+        });
     }
 
     private void pollNotifier() {
@@ -84,6 +90,7 @@ public class PollingMessagingService extends Component.Base implements Messaging
                     .setParameter("me", ident)
                     .getResultList());
             for (var event : handle.toArray(new NotifyEvent[0])) {
+                // acknowledge
                 var ack = manager.createNativeQuery("""
                                 update banmod_notify ne
                                 set ne.acknowledge = (ne.acknowledge | :me)
@@ -97,6 +104,16 @@ public class PollingMessagingService extends Component.Base implements Messaging
                     service.getBanMod()
                             .log()
                             .warn("Failed to acknowledge notification {}; ignoring it", event);
+                    handle.remove(event);
+                    continue;
+                }
+
+                // validate
+                var relatedType = event.getRelatedType();
+                var eventType   = event.getType();
+                if (!eventType.test(relatedType)) {
+                    service.getBanMod().log().error("Invalid packet received; %s event type does not allow %s payloads; ignoring it"
+                            .formatted(eventType, relatedType));
                     handle.remove(event);
                 }
             }
@@ -115,14 +132,14 @@ public class PollingMessagingService extends Component.Base implements Messaging
                 .log()
                 .debug(msg);
 
-        service.getScheduler()
-                .execute(() -> dispatch(events));
+        service.getScheduler().execute(() -> dispatch(events));
     }
 
     private void dispatch(NotifyEvent... events) {
         if (events.length == 0) return;
-        if (events.length > 1) for (var event : events)
-            dispatch(event);
+        if (events.length > 1)
+            for (var event : events)
+                dispatch(event);
         var event = events[0];
         if (event.getType() == NotifyEvent.Type.HELLO) return; // nothing to do
         // handle SYNC
