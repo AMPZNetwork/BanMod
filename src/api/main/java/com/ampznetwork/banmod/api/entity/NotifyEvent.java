@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
+import org.comroid.api.data.seri.DataNode;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
@@ -36,7 +37,7 @@ import java.util.function.Predicate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(of = { "ident", "timestamp" })
 @ToString(of = { "type", "timestamp", "relatedId", "relatedType" })
-public final class NotifyEvent implements DbObject {
+public final class NotifyEvent implements DbObject, DataNode {
     @Id @Column(columnDefinition = "bigint")          BigInteger ident;
     @Id @lombok.Builder.Default                       Instant    timestamp   = Instant.now();
     @lombok.Builder.Default                           Type       type        = Type.SYNC;
