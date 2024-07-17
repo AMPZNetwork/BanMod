@@ -80,7 +80,13 @@ public interface BanMod {
     final class Resources {
         public static final int ENTRIES_PER_PAGE = 8;
 
-        public static void notify(BanMod mod, UUID playerId, @Nullable Punishment punishment, PlayerResult result, BiConsumer<UUID, Component> forwarder) {
+        public static void notify(
+                BanMod mod,
+                UUID playerId,
+                @Nullable Punishment punishment,
+                PlayerResult result,
+                BiConsumer<UUID, Component> forwarder
+        ) {
             var    playerAdapter = mod.getPlayerAdapter();
             var    name          = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;

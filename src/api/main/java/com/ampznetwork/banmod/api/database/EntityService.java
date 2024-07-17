@@ -58,11 +58,11 @@ public interface EntityService extends LifeCycle {
                 .map(i -> new PlayerResult(playerId,
                         i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
                         i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
-                        i.getReason(), i.getTimestamp(), i.getExpires()))
+                        i.getReason(), i.getTimestamp(), i.getExpires(), i.getId()))
                 .findFirst()
                 .orElseGet(() -> {
                     var now = now();
-                    return new PlayerResult(playerId, false, false, null, now, now);
+                    return new PlayerResult(playerId, false, false, null, now, now, null);
                 });
     }
 

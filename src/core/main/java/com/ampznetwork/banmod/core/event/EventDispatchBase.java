@@ -65,7 +65,7 @@ public abstract class EventDispatchBase {
             BanMod.Resources.notify(mod, playerId, null,
                     new PlayerResult(playerId, false, false,
                             "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
-                            null, null),
+                            null, null, null),
                     (uuid, component) -> {
                         var serialize = componentSerializer.apply(component);
                         if (!mod.allowUnsafeConnections())

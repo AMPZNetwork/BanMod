@@ -118,6 +118,7 @@ public class Infraction implements DbObject {
                 punishment == Punishment.Ban,
                 reason,
                 timestamp,
-                expires);
+                expires,
+                this.getId());
     }
 }
