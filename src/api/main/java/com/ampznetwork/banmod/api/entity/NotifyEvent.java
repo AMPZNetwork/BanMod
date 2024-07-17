@@ -12,6 +12,7 @@ import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.comroid.api.attr.Named;
 import org.comroid.api.data.seri.DataNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
@@ -30,6 +31,7 @@ import java.util.function.Predicate;
 @Data
 @Entity
 @Builder
+@ApiStatus.Internal
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Table(name = "banmod_notify")
