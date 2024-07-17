@@ -18,7 +18,7 @@ import static org.comroid.api.func.util.Streams.*;
 
 @UtilityClass
 public class AutoFillProvider {
-    enum PageNumber implements Command.AutoFillProvider {
+    public enum PageNumber implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -41,7 +41,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum Players implements Command.AutoFillProvider {
+    public enum Players implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -55,7 +55,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum PlayersByInfractionPunishment implements Command.AutoFillProvider {
+    public enum PlayersByInfractionPunishment implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -82,7 +82,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum Categories implements Command.AutoFillProvider {
+    public enum Categories implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -96,7 +96,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum InfractionQuery implements Command.AutoFillProvider {
+    public enum InfractionQuery implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -105,7 +105,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum ObjectProperties implements Command.AutoFillProvider {
+    public enum ObjectProperties implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
@@ -114,7 +114,7 @@ public class AutoFillProvider {
         }
     }
 
-    enum ObjectPropertyValues implements Command.AutoFillProvider {
+    public enum ObjectPropertyValues implements Command.AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
