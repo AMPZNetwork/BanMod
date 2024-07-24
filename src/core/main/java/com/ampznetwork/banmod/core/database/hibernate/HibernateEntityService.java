@@ -327,8 +327,11 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public <T> T wrapQuery(Function<Query, T> executor, Query query) {
-        return wrapTransaction(new Supplier<>() {
+    public <T> T wrapQuery(Function<Query, T> executor, Query query) {return wrapQuery(Connection.TRANSACTION_READ_COMMITTED, executor, query);}
+
+    @SuppressWarnings("UnusedReturnValue")
+    public <T> T wrapQuery(@MagicConstant(valuesFromClass = Connection.class) int isolation, Function<Query, T> executor, Query query) {
+        return wrapTransaction(isolation, new Supplier<>() {
             @Override
             public T get() {
                 return executor.apply(query);

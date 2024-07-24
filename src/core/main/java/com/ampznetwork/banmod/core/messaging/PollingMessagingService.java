@@ -31,7 +31,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
 
         // find recently used idents
         //noinspection unchecked
-        var occupied = ((Stream<BigInteger>) service.wrapQuery(Query::getResultList, session.createSQLQuery("""
+        var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
                 select BIT_OR(ne.ident) as x
                 from banmod_notify ne
                 group by ne.ident, ne.timestamp
