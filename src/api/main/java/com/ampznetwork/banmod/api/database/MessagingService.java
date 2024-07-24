@@ -26,7 +26,7 @@ public interface MessagingService {
         record Config(@Nullable DatabaseInfo dbInfo, Duration interval) implements MessagingService.Config {
             @Override
             public boolean inheritDatasource() {
-                return dbInfo == null;
+                return dbInfo == null || dbInfo.type() == null;
             }
         }
     }

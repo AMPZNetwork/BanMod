@@ -33,7 +33,7 @@ public class ConfigModel {
         @Comment("polling-db or rabbit-mq")
         public String type     = "polling-db";
         @Comment("use with 'type=polling-db', setting 'null' will inherit the main database") @Nest
-        public Database database = null;
+        public Database database = new Database(null, null, null, null);
         @Comment("use with 'type=polling-db'")
         public String interval = "2s";
         @Comment("use with 'type=rabbit-mq', example: amqp://anonymous:anonymous@localhost:5672/banmod_messaging")
