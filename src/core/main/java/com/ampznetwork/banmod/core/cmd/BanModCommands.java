@@ -24,15 +24,23 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.*;
-import static java.time.Instant.*;
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.event.ClickEvent.*;
-import static net.kyori.adventure.text.event.HoverEvent.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.*;
-import static org.comroid.api.Polyfill.*;
-import static org.comroid.api.func.util.Command.*;
+import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.base;
+import static java.time.Instant.now;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.event.ClickEvent.openUrl;
+import static net.kyori.adventure.text.event.HoverEvent.showText;
+import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GREEN;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
+import static net.kyori.adventure.text.format.TextDecoration.BOLD;
+import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
+import static org.comroid.api.Polyfill.ordinal;
+import static org.comroid.api.Polyfill.parseDuration;
+import static org.comroid.api.func.util.Command.Arg;
 
 @UtilityClass
 public class BanModCommands {
@@ -268,6 +276,8 @@ public class BanModCommands {
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
+        if (infraction.getPlayer().getId() == issuer)
+            throw new Command.Error("You cannot unmute yourself!");
         mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unmuted").color(GREEN);
     }
@@ -354,6 +364,8 @@ public class BanModCommands {
                 .filter(i -> i.getPunishment() == Punishment.Ban)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not banned"));
+        if (infraction.getPlayer().getId() == issuer)
+            throw new Command.Error("You cannot unban yourself!");
         mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unbanned").color(GREEN);
     }
