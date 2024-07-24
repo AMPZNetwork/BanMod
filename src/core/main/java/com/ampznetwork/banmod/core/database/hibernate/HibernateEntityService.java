@@ -10,6 +10,7 @@ import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.banmod.core.database.hibernate.unit.BanModMessagingPersistenceUnit;
 import com.ampznetwork.banmod.core.messaging.PollingMessagingService;
 import com.ampznetwork.banmod.core.messaging.RabbitMessagingService;
 import com.zaxxer.hikari.HikariDataSource;

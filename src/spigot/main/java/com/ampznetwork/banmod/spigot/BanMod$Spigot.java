@@ -6,8 +6,9 @@ import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
-import com.ampznetwork.banmod.core.database.hibernate.BanModPersistenceUnit;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.banmod.core.database.hibernate.unit.BanModCombinedPersistenceUnit;
+import com.ampznetwork.banmod.core.database.hibernate.unit.BanModEntityPersistenceUnit;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
@@ -59,8 +60,6 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
                 var interval = parseDuration(config.getString("messaging-service.interval", "2s"));
                 var dbInfo = getDatabaseInfo(config.getConfigurationSection("messaging-service"),
                         "MySQL", null, "anonymous", "anonymous");
-                if (dbInfo.url() == null)
-                    dbInfo = getDatabaseInfo();
                 return new MessagingService.PollingDatabase.Config(dbInfo, interval);
             case "rabbit-mq":
                 return new MessagingService.RabbitMQ.Config(config.getString("messaging-service.uri",
@@ -140,7 +139,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public void onEnable() {
-        this.entityService = new HibernateEntityService(this, BanModPersistenceUnit::new);
+        this.entityService = new HibernateEntityService(this,
+                getMessagingServiceConfig().inheritDatasource() ? BanModCombinedPersistenceUnit::new : BanModEntityPersistenceUnit::new);
         defaultCategory    = entityService.defaultCategory();
 
         Bukkit.getPluginManager().registerEvents(eventDispatch, this);

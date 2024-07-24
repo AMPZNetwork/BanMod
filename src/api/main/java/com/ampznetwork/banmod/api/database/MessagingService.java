@@ -18,14 +18,26 @@ import java.util.Set;
 public interface MessagingService {
     AlmostComplete<NotifyEvent.Builder> push();
 
-    interface Config {}
+    interface Config {
+        boolean inheritDatasource();
+    }
 
     interface PollingDatabase extends MessagingService {
-        record Config(DatabaseInfo dbInfo, Duration interval) implements MessagingService.Config {}
+        record Config(DatabaseInfo dbInfo, Duration interval) implements MessagingService.Config {
+            @Override
+            public boolean inheritDatasource() {
+                return dbInfo.url() == null;
+            }
+        }
     }
 
     interface RabbitMQ extends MessagingService {
-        record Config(String uri) implements MessagingService.Config {}
+        record Config(String uri) implements MessagingService.Config {
+            @Override
+            public boolean inheritDatasource() {
+                return false;
+            }
+        }
     }
 
     @Value
