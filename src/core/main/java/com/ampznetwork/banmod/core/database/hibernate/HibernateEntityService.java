@@ -63,9 +63,9 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         new MessagingService.Type<MessagingService.PollingDatabase.Config, PollingMessagingService>("polling-db") {
             @Override
             public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
-                var configDbInfo = config.dbInfo();
-                if (configDbInfo.url() != null && !configDbInfo.equals(mod.getDatabaseInfo()))
-                    entities = new HibernateEntityService(mod, BanModMessagingPersistenceUnit::new, configDbInfo);
+                var dbInfo = config.dbInfo();
+                if (dbInfo != null)
+                    entities = new HibernateEntityService(mod, BanModMessagingPersistenceUnit::new, dbInfo);
                 if (entities instanceof HibernateEntityService hibernate)
                     return new PollingMessagingService(hibernate, config.interval());
                 return null;

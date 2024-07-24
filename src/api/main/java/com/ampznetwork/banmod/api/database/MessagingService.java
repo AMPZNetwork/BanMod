@@ -23,10 +23,10 @@ public interface MessagingService {
     }
 
     interface PollingDatabase extends MessagingService {
-        record Config(DatabaseInfo dbInfo, Duration interval) implements MessagingService.Config {
+        record Config(@Nullable DatabaseInfo dbInfo, Duration interval) implements MessagingService.Config {
             @Override
             public boolean inheritDatasource() {
-                return dbInfo.url() == null;
+                return dbInfo == null;
             }
         }
     }

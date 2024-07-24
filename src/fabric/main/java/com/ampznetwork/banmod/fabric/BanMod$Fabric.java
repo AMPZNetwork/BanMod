@@ -25,6 +25,7 @@ import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -44,6 +45,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     public static Text component2text(Component component) {
         return Text.Serializer.fromJson(gson().serialize(component));
     }
+
     private final FabricPlayerAdapter            playerAdapter = new FabricPlayerAdapter(this);
     private final FabricEventDispatch            eventDispatch = new FabricEventDispatch(this);
     private       Config                         config        = Config.createAndLoad();
@@ -55,11 +57,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
 
     @Override
     public DatabaseInfo getDatabaseInfo() {
-        return new DatabaseInfo(
-                config.database.type(),
-                config.database.url(),
-                config.database.username(),
-                config.database.password());
+        return getDatabaseInfo(config.database);
     }
 
     @Override
@@ -72,10 +70,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         switch (getMessagingServiceTypeName()) {
             case "polling-db":
                 var interval = parseDuration(config.messagingService.interval());
-                var dbInfo = new DatabaseInfo(EntityService.DatabaseType.MySQL,
-                        config.messagingService.url(),
-                        config.messagingService.username(),
-                        config.messagingService.password());
+                var dbInfo = getDatabaseInfo(config.messagingService.database);
                 return new MessagingService.PollingDatabase.Config(dbInfo, interval);
             case "rabbit-mq":
                 return new MessagingService.RabbitMQ.Config(config.messagingService.uri());
@@ -165,5 +160,10 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
             case DEFAULT -> TriState.NOT_SET;
             case TRUE -> TriState.TRUE;
         };
+    }
+
+    @Contract("null -> null; !null -> new")
+    private DatabaseInfo getDatabaseInfo(Config.Database config) {
+        return config == null ? null : new DatabaseInfo(config.type(), config.url(), config.username(), config.password());
     }
 }

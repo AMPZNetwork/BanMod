@@ -19,11 +19,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -58,7 +58,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         switch (getMessagingServiceTypeName()) {
             case "polling-db":
                 var interval = parseDuration(config.getString("messaging-service.interval", "2s"));
-                var dbInfo = getDatabaseInfo(config.getConfigurationSection("messaging-service"),
+                var dbInfo = getDatabaseInfo(config.getConfigurationSection("messaging-service.database"),
                         "MySQL", null, "anonymous", "anonymous");
                 return new MessagingService.PollingDatabase.Config(dbInfo, interval);
             case "rabbit-mq":
@@ -162,8 +162,9 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
         return null;
     }
 
+    @Contract("null,_,_,_,_ -> null; !null,_,_,_,_ -> new")
     private DatabaseInfo getDatabaseInfo(@Nullable ConfigurationSection config, String defType, String defUrl, String defUser, String defPass) {
-        if (config == null) config = new MemorySection() {};
+        if (config == null) return null;
         var dbType = EntityService.DatabaseType.valueOf(config.getString("type", defType));
         var dbUrl  = config.getString("url", defUrl);
         var dbUser = config.getString("username", defUser);

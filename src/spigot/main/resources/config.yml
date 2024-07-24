@@ -1,6 +1,6 @@
 # database for storing punishments and userdata
 database:
-  type: h2 # h2 or MySQL
+  type: h2 # h2, MariaDB or MySQL
   url: jdbc:h2:file:./banmod.h2 # default is a local h2 database
   username: sa
   password:
@@ -9,10 +9,14 @@ database:
 messaging-service:
   type: polling-db # polling-db or rabbit-mq
 
-  # uncomment this example config for polling-db with a custom database
-  #url: jdbc:mariadb://localhost:3306/banmod_messaging
-  #username: anonymous
-  #password: anonymous
+  # uncomment this example section to use polling-db with a different database
+  #database:
+  #  type: MariaDB
+  #  url: jdbc:mariadb://localhost:3306/banmod_messaging
+  #  username: anonymous
+  #  password: anonymous
+
+  # you can adjust the interval of polling. this will define how long punishments will lag between servers
   #interval: 2s
 
   # uncomment this example config for rabbit-mq

@@ -18,7 +18,7 @@ public class RabbitMessagingService extends MessagingServiceBase<EntityService> 
     Rabbit.Exchange.Route<NotifyEvent> route;
 
     public RabbitMessagingService(String uri, EntityService service) {
-        super(service, Duration.ofSeconds(1));
+        super(service, Duration.ofMillis(100));
 
         var rabbit   = Rabbit.of(uri).orElseThrow();
         var exchange = rabbit.exchange("banmod");
