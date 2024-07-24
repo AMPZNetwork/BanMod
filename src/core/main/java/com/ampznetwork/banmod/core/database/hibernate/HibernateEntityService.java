@@ -301,8 +301,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     }
 
     @Override
-    public void uncache(Object id, DbObject obj) {
-
+    public void uncache(Object id, @Nullable DbObject obj) {
     }
 
     @Override

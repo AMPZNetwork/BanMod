@@ -19,6 +19,7 @@ import org.h2.Driver;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.MariaDBDialect;
 import org.hibernate.dialect.MySQL57Dialect;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.util.Optional;
@@ -26,7 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
-import static java.time.Instant.*;
+import static java.time.Instant.now;
 
 @SuppressWarnings("UnusedReturnValue")
 public interface EntityService extends LifeCycle {
@@ -92,7 +93,7 @@ public interface EntityService extends LifeCycle {
 
     void refresh(EntityType type, UUID... ids);
 
-    void uncache(Object id, DbObject obj);
+    void uncache(Object id, @Nullable DbObject obj);
 
     int delete(Object... objects);
 

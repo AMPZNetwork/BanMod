@@ -61,7 +61,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
 
     default void realize(Infraction infraction) {
         var punish = infraction.getPunishment();
-        if (punish.isPassive())
+        if (punish.isPassive() || !Infraction.IS_IN_EFFECT.test(infraction))
             return;
         switch (punish) {
             case Kick, Ban:
