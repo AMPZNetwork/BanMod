@@ -46,8 +46,6 @@ public interface MessagingService {
         public static final Set<Type<?, ?>> REGISTRY = new HashSet<>();
         String name;
 
-        {REGISTRY.add(this);}
-
         public abstract @Nullable Implementation createService(BanMod mod, EntityService entities, Config config);
 
         public interface Provider {

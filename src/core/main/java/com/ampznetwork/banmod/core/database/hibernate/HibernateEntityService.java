@@ -38,6 +38,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.sql.Connection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +50,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.ampznetwork.banmod.api.database.MessagingService.Type.REGISTRY;
 import static java.time.Instant.now;
 import static org.comroid.api.Polyfill.uncheckedCast;
 import static org.comroid.api.func.util.Debug.isDebug;
@@ -60,23 +62,24 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
     static {
         // register messaging service types
-        new MessagingService.Type<MessagingService.PollingDatabase.Config, PollingMessagingService>("polling-db") {
-            @Override
-            public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
-                var dbInfo = config.dbInfo();
-                if (dbInfo != null)
-                    entities = new HibernateEntityService(mod, BanModMessagingPersistenceUnit::new, dbInfo);
-                if (entities instanceof HibernateEntityService hibernate)
-                    return new PollingMessagingService(hibernate, config.interval());
-                return null;
-            }
-        };
-        new MessagingService.Type<MessagingService.RabbitMQ.Config, RabbitMessagingService>("rabbit-mq") {
-            @Override
-            public RabbitMessagingService createService(BanMod mod, EntityService entities, MessagingService.RabbitMQ.Config config) {
-                return new RabbitMessagingService(config.uri(), entities);
-            }
-        };
+        REGISTRY.addAll(List.of(
+                new MessagingService.Type<MessagingService.PollingDatabase.Config, PollingMessagingService>("polling-db") {
+                    @Override
+                    public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
+                        var dbInfo = config.dbInfo();
+                        if (dbInfo != null)
+                            entities = new HibernateEntityService(mod, BanModMessagingPersistenceUnit::new, dbInfo);
+                        if (entities instanceof HibernateEntityService hibernate)
+                            return new PollingMessagingService(hibernate, config.interval());
+                        return null;
+                    }
+                },
+                new MessagingService.Type<MessagingService.RabbitMQ.Config, RabbitMessagingService>("rabbit-mq") {
+                    @Override
+                    public RabbitMessagingService createService(BanMod mod, EntityService entities, MessagingService.RabbitMQ.Config config) {
+                        return new RabbitMessagingService(config.uri(), entities);
+                    }
+                }));
     }
 
     public static Unit buildPersistenceUnit(
