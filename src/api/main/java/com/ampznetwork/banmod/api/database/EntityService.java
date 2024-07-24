@@ -22,6 +22,7 @@ import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
@@ -72,7 +73,18 @@ public interface EntityService extends LifeCycle {
     }
 
     default PunishmentCategory defaultCategory() {
-        return getOrCreateCategory("default").get();
+        return getOrCreateCategory("default")
+                .setUpdateOriginal(original -> {
+                    original.getPunishmentThresholds().putAll(Map.of(
+                            0, Punishment.Kick,
+                            2, Punishment.Mute,
+                            5, Punishment.Ban
+                    ));
+                    return original;
+                })
+                .complete(cat -> cat.punishmentThreshold(0, Punishment.Kick)
+                        .punishmentThreshold(2, Punishment.Mute)
+                        .punishmentThreshold(5, Punishment.Ban));
     }
 
     Stream<Infraction> getInfractions(UUID playerId);
