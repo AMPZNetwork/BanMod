@@ -4,7 +4,6 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import net.kyori.adventure.text.Component;
 import org.comroid.api.func.util.Command;
-import net.kyori.adventure.text.TextComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;

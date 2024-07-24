@@ -7,7 +7,6 @@ import com.ampznetwork.banmod.spigot.BanMod$Spigot;
 import lombok.Value;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
-import net.kyori.adventure.text.TextComponent;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -22,9 +21,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.time.Instant.*;
-import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.*;
-import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.*;
+import static java.time.Instant.now;
+import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 @Value
 public class SpigotPlayerAdapter implements PlayerAdapter {

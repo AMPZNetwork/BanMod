@@ -65,8 +65,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
             return;
         switch (punish) {
             case Kick, Ban:
-                getPlayerAdapter().kick(infraction.getPlayer()
-                        .getId(), Displays.textPunishmentFull(this, infraction));
+                BanMod.Resources.notify(this, infraction.getPlayer().getId(), punish, infraction.toResult(), getPlayerAdapter()::kick);
                 break;
             case Debuff:/*todo*/
                 break;
@@ -95,6 +94,8 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
                 BiConsumer<UUID, Component> forwarder
         ) {
             var    playerAdapter = mod.getPlayerAdapter();
+            if (!playerAdapter.isOnline(playerId))
+                return;
             var    name          = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
             String permission    = Permission.PluginErrorNotification;

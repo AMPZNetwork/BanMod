@@ -57,8 +57,9 @@ public class FabricPlayerAdapter implements PlayerAdapter {
     @Override
     public void kick(UUID playerId, Component reason) {
         var serialize = BanMod$Fabric.component2text(reason);
-        Optional.ofNullable(banMod.getServer().getPlayerManager()
-                        .getPlayer(playerId))
+        Optional.ofNullable(banMod.getServer())
+                .map(MinecraftServer::getPlayerManager)
+                .map(manager -> manager.getPlayer(playerId))
                 .orElseThrow(() -> new Command.Error("Player not found"))
                 .networkHandler
                 .disconnect(serialize);

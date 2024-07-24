@@ -202,16 +202,7 @@ public class BanModCommands {
                         .build());
 
         // apply infraction
-        var result = infraction.toResult();
-        var punishment = infraction.getPunishment();
-        if (punishment != Punishment.Mute)
-            mod.getPlayerAdapter().kick(tgt, switch (punishment) {
-                //case Mute -> ;
-                case Kick -> BanMod.Displays.kickedTextUser(result);
-                case Ban -> BanMod.Displays.bannedTextUser(mod, result);
-                default -> throw new IllegalStateException("Unexpected value: " + punishment);
-            });
-        else mod.getPlayerAdapter().send(tgt, BanMod.Displays.mutedTextUser(result));
+        mod.realize(infraction);
 
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
@@ -297,8 +288,7 @@ public class BanModCommands {
                         .reason(reason)
                         .build());
 
-        var text = BanMod.Displays.kickedTextUser(infraction.toResult());
-        mod.getPlayerAdapter().kick(tgt, text);
+        mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
@@ -327,7 +317,7 @@ public class BanModCommands {
                         .duration(parseDuration(durationText))
                         .reason(reason)
                         .build());
-        mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
+        mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
@@ -348,7 +338,7 @@ public class BanModCommands {
                         .permanent(true)
                         .reason(reason)
                         .build());
-        mod.getPlayerAdapter().kick(tgt, BanMod.Displays.bannedTextUser(mod, infraction.toResult()));
+        mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 

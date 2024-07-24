@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.comroid.api.func.util.AlmostComplete;
+import org.comroid.api.func.util.Debug;
 import org.comroid.api.tree.Component;
 
 import java.math.BigInteger;
@@ -16,17 +17,27 @@ import java.util.concurrent.TimeUnit;
 @Value
 @NonFinal
 public abstract class MessagingServiceBase<Entities extends EntityService> extends Component.Base implements MessagingService {
+    protected           Entities   entities;
     protected @NonFinal BigInteger ident;
-
-    protected Entities entities;
 
     public MessagingServiceBase(Entities entities, Duration interval) {
         this.entities = entities;
 
-        entities.getScheduler().scheduleWithFixedDelay(() -> dispatch(pollNotifier()), interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+        entities.getScheduler()
+                .scheduleWithFixedDelay(() -> {
+                            try {
+                                dispatch(pollNotifier());
+                            } catch (Throwable t) {
+                                Debug.log(entities.getBanMod().log(), "An error occurred during event dispatch", t);
+                            }
+                        },
+                        interval.toMillis(),
+                        interval.toMillis(),
+                        TimeUnit.MILLISECONDS);
     }
 
     protected abstract void push(NotifyEvent event);
+
     protected abstract NotifyEvent[] pollNotifier();
 
     @Override
