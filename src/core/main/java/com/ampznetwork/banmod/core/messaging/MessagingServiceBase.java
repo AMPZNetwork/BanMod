@@ -35,7 +35,7 @@ public abstract class MessagingServiceBase<Entities extends EntityService> exten
             var event       = builder.ident(ident).build();
             var relatedType = event.getRelatedType();
             var eventType   = event.getType();
-            if (!eventType.test(relatedType))
+            if (relatedType != null && !eventType.test(relatedType))
                 throw new IllegalArgumentException("%s event does not allow %s payloads".formatted(eventType, relatedType));
             push(event);
         });
