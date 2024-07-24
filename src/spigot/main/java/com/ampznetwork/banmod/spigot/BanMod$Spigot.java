@@ -11,6 +11,7 @@ import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
+import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
@@ -21,6 +22,7 @@ import org.comroid.api.java.StackTraceUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Getter
@@ -116,5 +118,21 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     @Override
     public boolean allowUnsafeConnections() {
         return config.getBoolean("allow-unsafe-connections", false);
+    }
+
+    @Override
+    public boolean checkOpLevel(UUID playerId) {
+        return getServer().getOfflinePlayer(playerId).isOp();
+    }
+
+    @Override
+    public boolean checkOpLevel(UUID playerId, int $) {
+        log.debug("Spigot does not support minimum OP levels");
+        return checkOpLevel(playerId);
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
+        return null;
     }
 }

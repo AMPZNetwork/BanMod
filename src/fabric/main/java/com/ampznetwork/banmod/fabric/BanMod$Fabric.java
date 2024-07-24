@@ -11,9 +11,11 @@ import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.util.TriState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
@@ -23,9 +25,10 @@ import org.comroid.api.tree.LifeCycle;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
@@ -87,6 +90,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
 
         this.cmdr = new Command.Manager() {{
             this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
+            addChildren(Command.PermissionChecker.minecraft(BanMod$Fabric.this));
         }};
         this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
         cmdr.register(BanModCommands.class);
@@ -117,5 +121,22 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     @Override
     public @Nullable String getBanAppealUrl() {
         return config.banAppealUrl();
+    }
+
+    @Override
+    public boolean checkOpLevel(UUID playerId, int minimum) {
+        var player = server.getPlayerManager().getPlayer(playerId);
+        if (player == null)
+            throw new Command.Error("Player not found: " + playerId);
+        return player.hasPermissionLevel(minimum);
+    }
+
+    @Override
+    public TriState checkPermission(UUID playerId, String key, boolean explicit) {
+        return switch (Permissions.getPermissionValue(playerId, key).join()) {
+            case FALSE -> TriState.FALSE;
+            case DEFAULT -> TriState.NOT_SET;
+            case TRUE -> TriState.TRUE;
+        };
     }
 }

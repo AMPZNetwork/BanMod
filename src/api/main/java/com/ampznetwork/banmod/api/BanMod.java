@@ -12,7 +12,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.util.TriState;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
@@ -25,16 +24,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
-
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.event.ClickEvent.*;
-import static net.kyori.adventure.text.event.HoverEvent.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.*;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
@@ -48,7 +40,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
-public interface BanMod {
+public interface BanMod extends Command.PermissionChecker.Adapter {
     Logger log();
 
     void reload();
