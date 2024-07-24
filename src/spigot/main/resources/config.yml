@@ -7,7 +7,7 @@ database:
 
 # messaging service for cross-server
 messaging-service:
-  type: auto # auto, polling-db or rabbit-mq
+  type: polling-db # polling-db or rabbit-mq
 
   # uncomment this example config for polling-db with a custom database
   #url: jdbc:mariadb://localhost:3306/banmod_messaging

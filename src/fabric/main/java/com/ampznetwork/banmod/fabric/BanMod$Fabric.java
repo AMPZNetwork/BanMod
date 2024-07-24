@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.fabric;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
@@ -29,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static org.comroid.api.Polyfill.parseDuration;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
@@ -56,6 +58,28 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
                 config.database.url(),
                 config.database.username(),
                 config.database.password());
+    }
+
+    @Override
+    public String getMessagingServiceTypeName() {
+        return config.messagingService.type();
+    }
+
+    @Override
+    public MessagingService.Config getMessagingServiceConfig() {
+        switch (getMessagingServiceTypeName()) {
+            case "polling-db":
+                var interval = parseDuration(config.messagingService.interval());
+                var dbInfo = new DatabaseInfo(EntityService.DatabaseType.MySQL,
+                        config.messagingService.url(),
+                        config.messagingService.username(),
+                        config.messagingService.password());
+                return new MessagingService.PollingDatabase.Config(dbInfo, interval);
+            case "rabbit-mq":
+                return new MessagingService.RabbitMQ.Config(config.messagingService.uri());
+            default:
+                throw new UnsupportedOperationException("Unknown messaging service type: " + getMessagingServiceTypeName());
+        }
     }
 
     @Override

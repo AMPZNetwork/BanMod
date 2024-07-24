@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.api;
 
 import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
@@ -40,7 +41,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
-public interface BanMod extends Command.PermissionChecker.Adapter {
+public interface BanMod extends Command.PermissionChecker.Adapter, MessagingService.Type.Provider {
     Logger log();
 
     void reload();

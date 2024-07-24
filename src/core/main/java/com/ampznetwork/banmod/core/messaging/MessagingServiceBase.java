@@ -1,11 +1,9 @@
 package com.ampznetwork.banmod.core.messaging;
 
-import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
-import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.comroid.api.func.util.AlmostComplete;
@@ -18,26 +16,6 @@ import java.util.concurrent.TimeUnit;
 @Value
 @NonFinal
 public abstract class MessagingServiceBase<Entities extends EntityService> extends Component.Base implements MessagingService {
-    static {
-        // register service types
-        new Type<PollingDatabase.Config, PollingMessagingService>("polling-db") {
-            @Override
-            public PollingMessagingService createService(BanMod mod, EntityService entities, PollingDatabase.Config config) {
-                var configDbInfo = config.dbInfo();
-                if (!mod.getDatabaseInfo().equals(configDbInfo))
-                    entities = new HibernateEntityService(mod, configDbInfo);
-                if (entities instanceof HibernateEntityService hibernate)
-                    return new PollingMessagingService(hibernate, config.interval());
-                return null;
-            }
-        };
-        new Type<RabbitMQ.Config, RabbitMessagingService>("rabbit-mq") {
-            @Override
-            public RabbitMessagingService createService(BanMod mod, EntityService entities, RabbitMQ.Config config) {
-                return new RabbitMessagingService(config.uri(), entities);
-            }
-        };
-    }
     protected @NonFinal BigInteger ident;
 
     protected Entities entities;

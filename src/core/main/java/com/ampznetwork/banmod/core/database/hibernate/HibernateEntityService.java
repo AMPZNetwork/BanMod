@@ -10,12 +10,14 @@ import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.banmod.core.messaging.PollingMessagingService;
+import com.ampznetwork.banmod.core.messaging.RabbitMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Level;
 import org.comroid.api.Polyfill;
+import org.comroid.api.func.exc.ThrowingFunction;
+import org.comroid.api.func.ext.Wrap;
 import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.func.util.Streams;
 import org.comroid.api.map.Cache;
@@ -51,10 +53,30 @@ import static org.comroid.api.Polyfill.uncheckedCast;
 import static org.comroid.api.func.util.Debug.isDebug;
 
 @Value
-@Log4j2
 @EqualsAndHashCode(of = "manager")
 public class HibernateEntityService extends Container.Base implements EntityService {
     private static final PersistenceProvider SPI = new HibernatePersistenceProvider();
+
+    static {
+        // register messaging service types
+        new MessagingService.Type<MessagingService.PollingDatabase.Config, PollingMessagingService>("polling-db") {
+            @Override
+            public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
+                var configDbInfo = config.dbInfo();
+                if (configDbInfo.url() != null)
+                    entities = new HibernateEntityService(mod, configDbInfo);
+                if (entities instanceof HibernateEntityService hibernate)
+                    return new PollingMessagingService(hibernate, config.interval());
+                return null;
+            }
+        };
+        new MessagingService.Type<MessagingService.RabbitMQ.Config, RabbitMessagingService>("rabbit-mq") {
+            @Override
+            public RabbitMessagingService createService(BanMod mod, EntityService entities, MessagingService.RabbitMQ.Config config) {
+                return new RabbitMessagingService(config.uri(), entities);
+            }
+        };
+    }
 
     public static Unit buildPersistenceUnit(
             DatabaseInfo info, Function<HikariDataSource, PersistenceUnitInfo> unitProvider,
@@ -105,7 +127,10 @@ public class HibernateEntityService extends Container.Base implements EntityServ
 
         // boot up messaging service
         this.scheduler        = Executors.newScheduledThreadPool(2);
-        this.messagingService = MessagingService.Type.find();
+        this.messagingService = mod.getMessagingServiceType()
+                .map(ThrowingFunction.fallback(type -> type.createService(mod, this, uncheckedCast(mod.getMessagingServiceConfig())), Wrap.empty()))
+                .orElse(null);
+        mod.log().info("Using MessagingService " + messagingService);
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup task
@@ -243,7 +268,9 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                     // now a persistent object!
                     return object;
                 } catch (Throwable t) {
-                    log.log(isDebug() ? Level.ERROR : Level.DEBUG, "persist() failed for " + object, t);
+                    if (isDebug())
+                        banMod.log().warn("persist() failed for " + object, t);
+                    else banMod.log().debug("persist() failed for " + object, t);
                 }
             // try merging as a fallback action
             return manager.merge(object);
