@@ -46,9 +46,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static java.time.Instant.*;
-import static org.comroid.api.Polyfill.*;
-import static org.comroid.api.func.util.Debug.*;
+import static java.time.Instant.now;
+import static org.comroid.api.Polyfill.uncheckedCast;
+import static org.comroid.api.func.util.Debug.isDebug;
 
 @Value
 @Log4j2
@@ -98,12 +98,16 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     public HibernateEntityService(BanMod mod) {
         // boot up hibernate
         this.banMod = mod;
-        var unit = buildPersistenceUnit(mod.getDatabaseInfo(), BanModPersistenceUnit::new, "update");
+        var dbInfo = mod.getDatabaseInfo();
+        var unit   = buildPersistenceUnit(dbInfo, BanModPersistenceUnit::new, "update");
         this.manager = unit.manager;
 
         // boot up messaging service
         this.scheduler        = Executors.newScheduledThreadPool(2);
         this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
+        if (dbInfo.url().startsWith("jdbc:h2:file:"))
+            log.warn("Messaging Service will not work with an h2 file based DB as it may only allow one connection at a time\n" +
+                     "\tTo enable cross server punishments, please switch to another database type.");
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup task
