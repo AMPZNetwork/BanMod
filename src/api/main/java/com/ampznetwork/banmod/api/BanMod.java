@@ -63,13 +63,11 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
         var punish = infraction.getPunishment();
         if (punish.isPassive() || (!punish.isInherentlyTemporary() && !Infraction.IS_IN_EFFECT.test(infraction)))
             return;
-        switch (punish) {
-            case Kick, Ban:
-                BanMod.Resources.notify(this, infraction.getPlayer().getId(), punish, infraction.toResult(), getPlayerAdapter()::kick);
-                break;
-            case Debuff:/*todo*/
-                break;
-        }
+        Resources.notify(this, infraction.getPlayer().getId(), punish, infraction.toResult(), switch (punish) {
+            case Kick, Ban -> (BiConsumer<UUID, Component>) getPlayerAdapter()::kick;
+            case Debuff -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send; // todo
+            default -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send;
+        });
     }
 
     void executeSync(Runnable task);
