@@ -50,7 +50,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         do {
             c += 1;
             x = BigInteger.ONE.shiftLeft(rng.nextInt(64));
-        } while (c < 64 && (x.and(occupied.not()).intValue() == 0 || x.equals(occupied) || x.intValue() == 0));
+        } while (c < 62 && (x.and(occupied.not()).intValue() == 0 || x.equals(occupied) || x.intValue() == 0));
 
         this.ident = x;
 
