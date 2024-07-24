@@ -5,12 +5,13 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import lombok.Value;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
-import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.*;
-import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.*;
+import static net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer.get;
+import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 @Value
 public class SpigotEventDispatch extends EventDispatchBase implements Listener {
@@ -18,7 +19,7 @@ public class SpigotEventDispatch extends EventDispatchBase implements Listener {
         super(banMod);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void handle(PlayerLoginEvent event) {
         var playerId = event.getPlayer().getUniqueId();
         try {
@@ -34,7 +35,7 @@ public class SpigotEventDispatch extends EventDispatchBase implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void handle(AsyncPlayerChatEvent event) {
         var playerId = event.getPlayer().getUniqueId();
         var result = player(playerId);
