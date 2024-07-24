@@ -63,7 +63,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             @Override
             public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
                 var configDbInfo = config.dbInfo();
-                if (configDbInfo.url() != null)
+                if (configDbInfo.url() != null && !configDbInfo.equals(mod.getDatabaseInfo()))
                     entities = new HibernateEntityService(mod, configDbInfo);
                 if (entities instanceof HibernateEntityService hibernate)
                     return new PollingMessagingService(hibernate, config.interval());
@@ -130,7 +130,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.messagingService = mod.getMessagingServiceType()
                 .map(ThrowingFunction.fallback(type -> type.createService(mod, this, uncheckedCast(mod.getMessagingServiceConfig())), Wrap.empty()))
                 .orElse(null);
-        mod.log().info("Using MessagingService " + messagingService);
+        mod.log().debug("Using MessagingService " + messagingService);
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup task
