@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.core.database.hibernate;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
+import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.DbObject;
 import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.Infraction;
@@ -9,7 +10,6 @@ import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
-import com.ampznetwork.banmod.core.messaging.PollingMessagingService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -25,6 +25,7 @@ import org.hibernate.Session;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -33,7 +34,6 @@ import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.sql.Connection;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -93,21 +93,19 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     BanMod                                 banMod;
     EntityManager                          manager;
     ScheduledExecutorService               scheduler;
-    PollingMessagingService                messagingService;
+    @Nullable MessagingService messagingService;
 
-    public HibernateEntityService(BanMod mod) {
+    public HibernateEntityService(BanMod mod) {this(mod, mod.getDatabaseInfo());}
+
+    public HibernateEntityService(BanMod mod, DatabaseInfo dbInfo) {
         // boot up hibernate
         this.banMod = mod;
-        var dbInfo = mod.getDatabaseInfo();
         var unit   = buildPersistenceUnit(dbInfo, BanModPersistenceUnit::new, "update");
         this.manager = unit.manager;
 
         // boot up messaging service
         this.scheduler        = Executors.newScheduledThreadPool(2);
-        this.messagingService = new PollingMessagingService(this, manager, Duration.ofSeconds(2));
-        if (dbInfo.url().startsWith("jdbc:h2:file:"))
-            log.warn("Messaging Service will not work with an h2 file based DB as it may only allow one connection at a time\n" +
-                     "\tTo enable cross server punishments, please switch to another database type.");
+        this.messagingService = MessagingService.Type.find();
         addChildren(unit, scheduler, messagingService);
 
         // caches & cleanup task
@@ -211,8 +209,11 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     public GetOrCreate<Infraction, Infraction.Builder> createInfraction() {
         return new GetOrCreate<>(null, Infraction::builder, Infraction.Builder::build, this::save)
                 .addCompletionCallback(infractions::push)
-                .addCompletionCallback(infraction -> messagingService.push()
-                        .complete(notif -> notif.relatedId(infraction.getId()).relatedType(EntityType.Infraction)));
+                .addCompletionCallback(infraction -> {
+                    if (messagingService != null)
+                        messagingService.push()
+                                .complete(notif -> notif.relatedId(infraction.getId()).relatedType(EntityType.Infraction));
+                });
     }
 
     @Override
@@ -226,8 +227,11 @@ public class HibernateEntityService extends Container.Base implements EntityServ
                 .setParameter("revoker", revoker)
                 .setParameter("now", now()));
         refresh(EntityType.Infraction, id);
-        getInfraction(id).ifPresent(infraction -> messagingService.push()
-                .complete(bld -> bld.relatedId(infraction.getId()).relatedType(EntityType.Infraction)));
+        getInfraction(id).ifPresent(infraction -> {
+            if (messagingService != null)
+                messagingService.push()
+                        .complete(bld -> bld.relatedId(infraction.getId()).relatedType(EntityType.Infraction));
+        });
     }
 
     @Override
@@ -247,6 +251,20 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         if (!(object instanceof NotifyEvent))
             caches.get(object.getEntityType()).push(persistent);
         return persistent;
+    }
+
+    @Override
+    public void refresh(@NotNull EntityType relatedType, @NotNull UUID... relatedIds) {
+        var cache = caches.get(relatedType);
+        for (var id : relatedIds) {
+            var obj = cache.get(id);
+            if (obj != null) {
+                manager.refresh(obj);
+                continue;
+            }
+            var value = relatedType.fetch(this, id).orElse(null);
+            save(value);
+        }
     }
 
     @Override
@@ -274,20 +292,6 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             }
         }
         return c;
-    }
-
-    @Override
-    public void refresh(@NotNull EntityType relatedType, @NotNull UUID... relatedIds) {
-        var cache = caches.get(relatedType);
-        for (var id : relatedIds) {
-            var obj = cache.get(id);
-            if (obj != null) {
-                manager.refresh(obj);
-                continue;
-            }
-            var value = relatedType.fetch(this, id).orElse(null);
-            save(value);
-        }
     }
 
     @SuppressWarnings("UnusedReturnValue")

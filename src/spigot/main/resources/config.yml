@@ -1,9 +1,25 @@
+# database for storing punishments and userdata
 database:
   type: h2 # h2 or MySQL
   url: jdbc:h2:file:./banmod.h2 # default is a local h2 database
   username: sa
   password:
+
+# messaging service for cross-server
+messaging-service:
+  type: auto # auto, polling-db or rabbit-mq
+
+  # uncomment this example config for polling-db with a custom database
+  #url: jdbc:mariadb://localhost:3306/banmod_messaging
+  #username: anonymous
+  #password: anonymous
+  #interval: 2s
+
+  # uncomment this example config for rabbit-mq
+  #uri: amqp://anonymous:anonymous@localhost:5672/banmod_messaging
+
 # you can put a URL here which players can use to appeal for being unbanned
 ban-appeal-url: ''
+
 # set to 'true' if you want to allow connecting while BanMod is experiencing a downtime, e.g. through a database downtime
 allow-unsafe-connections: false

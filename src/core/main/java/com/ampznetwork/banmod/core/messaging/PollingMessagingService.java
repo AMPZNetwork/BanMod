@@ -1,5 +1,6 @@
 package com.ampznetwork.banmod.core.messaging;
 
+import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
@@ -18,14 +19,14 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 @Value
-public class PollingMessagingService extends MessagingServiceBase<HibernateEntityService> {
+public class PollingMessagingService extends MessagingServiceBase<HibernateEntityService> implements MessagingService.PollingDatabase {
     EntityManager manager;
     Session       session;
 
-    public PollingMessagingService(HibernateEntityService service, EntityManager manager, Duration interval) {
+    public PollingMessagingService(HibernateEntityService service, Duration interval) {
         super(service, interval);
 
-        this.manager = manager;
+        this.manager = service.getManager();
         this.session = manager.unwrap(Session.class);
 
         // find recently used idents
@@ -59,13 +60,13 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
 
     @Override
     protected void push(NotifyEvent event) {
-        service.save(event);
+        entities.save(event);
     }
 
     @Override
     protected NotifyEvent[] pollNotifier() {
         var stopwatch = Stopwatch.start(this);
-        var events = service.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
+        var events = entities.wrapTransaction(Connection.TRANSACTION_REPEATABLE_READ, () -> {
             var handle = Polyfill.<List<NotifyEvent>>uncheckedCast(manager.createNativeQuery("""
                             select ne.*
                             from banmod_notify ne
@@ -86,7 +87,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
                         .setParameter("timestamp", event.getTimestamp())
                         .executeUpdate();
                 if (ack != 1) {
-                    service.getBanMod()
+                    entities.getBanMod()
                             .log()
                             .warn("Failed to acknowledge notification {}; ignoring it", event);
                     handle.remove(event);
@@ -100,10 +101,10 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
             return events;
         var msg = "Accepting %d events took %sms".formatted(events.length, duration.toMillis());
         if (Debug.isDebug()) // best log level handling EVER
-            service.getBanMod()
+            entities.getBanMod()
                     .log()
                     .info(msg);
-        else service.getBanMod()
+        else entities.getBanMod()
                 .log()
                 .debug(msg);
 

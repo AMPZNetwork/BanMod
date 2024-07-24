@@ -1,9 +1,11 @@
 package com.ampznetwork.banmod.core.messaging;
 
+import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.EntityType;
 import com.ampznetwork.banmod.api.entity.NotifyEvent;
+import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.comroid.api.func.util.AlmostComplete;
@@ -15,14 +17,35 @@ import java.util.concurrent.TimeUnit;
 
 @Value
 @NonFinal
-public abstract class MessagingServiceBase<Service extends EntityService> extends Component.Base implements MessagingService {
-    protected Service service;
+public abstract class MessagingServiceBase<Entities extends EntityService> extends Component.Base implements MessagingService {
+    static {
+        // register service types
+        new Type<PollingDatabase.Config, PollingMessagingService>("polling-db") {
+            @Override
+            public PollingMessagingService createService(BanMod mod, EntityService entities, PollingDatabase.Config config) {
+                var configDbInfo = config.dbInfo();
+                if (!mod.getDatabaseInfo().equals(configDbInfo))
+                    entities = new HibernateEntityService(mod, configDbInfo);
+                if (entities instanceof HibernateEntityService hibernate)
+                    return new PollingMessagingService(hibernate, config.interval());
+                return null;
+            }
+        };
+        new Type<RabbitMQ.Config, RabbitMessagingService>("rabbit-mq") {
+            @Override
+            public RabbitMessagingService createService(BanMod mod, EntityService entities, RabbitMQ.Config config) {
+                return new RabbitMessagingService(config.uri(), entities);
+            }
+        };
+    }
     protected @NonFinal BigInteger ident;
 
-    public MessagingServiceBase(Service service, Duration interval) {
-        this.service = service;
+    protected Entities entities;
 
-        service.getScheduler().scheduleWithFixedDelay(() -> dispatch(pollNotifier()), interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+    public MessagingServiceBase(Entities entities, Duration interval) {
+        this.entities = entities;
+
+        entities.getScheduler().scheduleWithFixedDelay(() -> dispatch(pollNotifier()), interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     protected abstract void push(NotifyEvent event);
@@ -55,18 +78,18 @@ public abstract class MessagingServiceBase<Service extends EntityService> extend
         // validate event
         var relatedType = event.getRelatedType();
         if (event.getRelatedId() == null || relatedType == null) {
-            service.getBanMod().log().error("Invalid event received; data was null\n" + event);
+            entities.getBanMod().log().error("Invalid event received; data was null\n" + event);
             return;
         }
         if (!eventType.test(relatedType)) {
-            service.getBanMod().log().error("Invalid packet received; %s event type does not allow %s payloads; ignoring it"
+            entities.getBanMod().log().error("Invalid packet received; %s event type does not allow %s payloads; ignoring it"
                     .formatted(eventType, relatedType));
             return;
         }
 
         // handle SYNC
-        service.refresh(event.getRelatedType(), event.getRelatedId());
+        entities.refresh(event.getRelatedType(), event.getRelatedId());
         if (event.getRelatedType() == EntityType.Infraction)
-            service.getInfraction(event.getRelatedId()).ifPresent(service.getBanMod()::realize);
+            entities.getInfraction(event.getRelatedId()).ifPresent(entities.getBanMod()::realize);
     }
 }
