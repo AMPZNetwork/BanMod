@@ -95,7 +95,7 @@ public interface EntityService extends LifeCycle {
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getInfractions(playerId)
-                .filter(i -> i.getCategory().equals(category) && i.getPunishment() != Punishment.Kick)
+                .filter(i -> i.getCategory().equals(category) && !i.getPunishment().isInherentlyTemporary())
                 .count();
     }
 
