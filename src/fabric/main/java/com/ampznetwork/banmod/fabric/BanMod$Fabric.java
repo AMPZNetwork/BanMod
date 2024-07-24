@@ -6,6 +6,7 @@ import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
+import com.ampznetwork.banmod.core.database.hibernate.BanModPersistenceUnit;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
@@ -128,7 +129,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     public void initialize() {
         //config.load();
 
-        this.entityService = new HibernateEntityService(this);
+        this.entityService = new HibernateEntityService(this, BanModPersistenceUnit::new);
         defaultCategory = entityService.defaultCategory();
     }
 

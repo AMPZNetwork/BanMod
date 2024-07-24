@@ -6,6 +6,7 @@ import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
+import com.ampznetwork.banmod.core.database.hibernate.BanModPersistenceUnit;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
@@ -139,7 +140,7 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public void onEnable() {
-        this.entityService = new HibernateEntityService(this);
+        this.entityService = new HibernateEntityService(this, BanModPersistenceUnit::new);
         defaultCategory    = entityService.defaultCategory();
 
         Bukkit.getPluginManager().registerEvents(eventDispatch, this);

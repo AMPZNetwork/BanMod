@@ -64,7 +64,7 @@ public class HibernateEntityService extends Container.Base implements EntityServ
             public PollingMessagingService createService(BanMod mod, EntityService entities, MessagingService.PollingDatabase.Config config) {
                 var configDbInfo = config.dbInfo();
                 if (configDbInfo.url() != null && !configDbInfo.equals(mod.getDatabaseInfo()))
-                    entities = new HibernateEntityService(mod, configDbInfo);
+                    entities = new HibernateEntityService(mod, BanModMessagingPersistenceUnit::new, configDbInfo);
                 if (entities instanceof HibernateEntityService hibernate)
                     return new PollingMessagingService(hibernate, config.interval());
                 return null;
@@ -117,12 +117,14 @@ public class HibernateEntityService extends Container.Base implements EntityServ
     ScheduledExecutorService               scheduler;
     @Nullable MessagingService messagingService;
 
-    public HibernateEntityService(BanMod mod) {this(mod, mod.getDatabaseInfo());}
+    public HibernateEntityService(BanMod mod, Function<HikariDataSource, PersistenceUnitInfo> persistenceUnitProvider) {
+        this(mod, persistenceUnitProvider, mod.getDatabaseInfo());
+    }
 
-    public HibernateEntityService(BanMod mod, DatabaseInfo dbInfo) {
+    public HibernateEntityService(BanMod mod, Function<HikariDataSource, PersistenceUnitInfo> persistenceUnitProvider, DatabaseInfo dbInfo) {
         // boot up hibernate
         this.banMod = mod;
-        var unit   = buildPersistenceUnit(dbInfo, BanModPersistenceUnit::new, "update");
+        var unit = buildPersistenceUnit(dbInfo, persistenceUnitProvider, "update");
         this.manager = unit.manager;
 
         // boot up messaging service
