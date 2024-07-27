@@ -35,7 +35,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         //noinspection unchecked
         var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
                 delete from banmod_notify
-                where timestamp < :expire;
+                where timestamp < :expire or (timestamp & ident) > 0;
                 select BIT_OR(ne.ident) as x
                 from banmod_notify ne
                 group by ne.ident, ne.timestamp
