@@ -32,16 +32,18 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         this.session = manager.unwrap(Session.class);
 
         // find recently used idents
-        //noinspection unchecked
-        var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
+        service.wrapQuery(Query::executeUpdate, session.createNativeQuery("""
                 delete from banmod_notify
                 where timestamp < :expire or (timestamp & ident) > 0;
+                """).setParameter("expire", Instant.now().minus(EventExpireTime)));
+        //noinspection unchecked
+        var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
                 select BIT_OR(ne.ident) as x
                 from banmod_notify ne
                 group by ne.ident, ne.timestamp
                 order by ne.timestamp desc
                 limit 50;
-                """).setParameter("expire", Instant.now().minus(EventExpireTime))).stream())
+                """)).stream())
                 .map(BigInteger.class::cast)
                 .filter(x -> x.intValue() != 0)
                 .findAny()
