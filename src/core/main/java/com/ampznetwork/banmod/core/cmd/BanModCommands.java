@@ -140,8 +140,8 @@ public class BanModCommands {
         var data = mod.getEntityService().getPlayerData(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
         var text = text("")
-                .append(text("Player ").decorate(UNDERLINED))
-                .append(text(name).color(AQUA).decorate(UNDERLINED))
+                .append(text("Player ").decorate(BOLD))
+                .append(text(name).color(AQUA).decorate(BOLD))
                 .append(text("\n"))
                 .append(text("ID: "))
                 .append(text(target.toString())
@@ -172,7 +172,7 @@ public class BanModCommands {
                 .toList();
         if (infractions.isEmpty())
             text = text.append(text("\n- (none)").color(GRAY));
-        else for (var infraction : infractions)
+        else for (var infraction : infractions) {
             text = text.append(text("\n- "))
                     .append(infraction.getPunishment().toComponent(true))
                     .append(text(" by "))
@@ -180,6 +180,11 @@ public class BanModCommands {
                                  ? "Server"
                                  : mod.getPlayerAdapter().getName(infraction.getIssuer()))
                             .color(AQUA));
+            var expires = infraction.getExpires();
+            if (expires != null)
+                text = text.append(text(" until "))
+                        .append(text(expires.toString()).color(YELLOW));
+        }
         return text;
     }
 
