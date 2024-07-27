@@ -97,7 +97,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         });
 
         var duration = stopwatch.stop();
-        if (events.length == 0)
+        if (!Debug.isDebug() && events.length == 0)
             return events;
         Debug.log(entities.getBanMod().log(), "Accepting %d events took %sms".formatted(events.length, duration.toMillis()));
 
