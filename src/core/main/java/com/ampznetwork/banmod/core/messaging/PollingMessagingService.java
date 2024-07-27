@@ -14,12 +14,14 @@ import javax.persistence.Query;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
 @Value
 public class PollingMessagingService extends MessagingServiceBase<HibernateEntityService> implements MessagingService.PollingDatabase {
+    public static final Duration EventExpireTime = Duration.ofHours(1);
     EntityManager manager;
     Session       session;
 
@@ -32,12 +34,14 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         // find recently used idents
         //noinspection unchecked
         var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
+                delete from banmod_notify
+                where timestamp < :expire;
                 select BIT_OR(ne.ident) as x
                 from banmod_notify ne
                 group by ne.ident, ne.timestamp
                 order by ne.timestamp desc
-                limit 50
-                """)).stream())
+                limit 50;
+                """).setParameter("expire", Instant.now().minus(EventExpireTime))).stream())
                 .map(BigInteger.class::cast)
                 .filter(x -> x.intValue() != 0)
                 .findAny()
@@ -53,6 +57,12 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         } while (c < 62 && (x.and(occupied.not()).intValue() == 0 || x.equals(occupied) || x.intValue() == 0));
 
         this.ident = x;
+
+        // ack all old events
+        service.wrapQuery(Query::executeUpdate, manager.createNativeQuery("""
+                update banmod_notify ne
+                set ne.acknowledge = (ne.acknowledge | :me)
+                """).setParameter("me", ident));
 
         // send HELLO
         push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
