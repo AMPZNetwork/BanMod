@@ -106,7 +106,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
             this.server = server;
 
             if (!server.isOnlineMode())
-                log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
+                log.warn(BanMod.Strings.OfflineModeInfo);
         });
 
         this.cmdr = new Command.Manager() {{

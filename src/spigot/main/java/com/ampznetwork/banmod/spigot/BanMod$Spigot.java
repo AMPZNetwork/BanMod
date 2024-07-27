@@ -106,14 +106,13 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
     @Override
     public void executeSync(Runnable task) {
-        Bukkit.getScheduler()
-                .runTask(this, task);
+        Bukkit.getScheduler().runTask(this, task);
     }
 
     @Override
     public void onLoad() {
         if (!getServer().getOnlineMode())
-            log.warn("Offline mode is not fully supported! Players can rejoin even after being banned.");
+            log.warn(BanMod.Strings.OfflineModeInfo);
 
         saveDefaultConfig();
         this.config = super.getConfig();

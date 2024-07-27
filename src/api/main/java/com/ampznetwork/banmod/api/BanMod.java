@@ -78,6 +78,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
         public static final String AddonId   = "banmod";
         public static final String IssuesUrl = "https://github.com/AMPZNetwork/BanMod/issues";
         public static final String PleaseCheckConsole = "Please check console for further information";
+        public static final String OfflineModeInfo = "Offline mode is not fully supported! Players may be able to rejoin even after being banned.";
     }
 
     @UtilityClass
