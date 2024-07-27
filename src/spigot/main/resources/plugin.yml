@@ -91,7 +91,7 @@ commands:
   infraction:
     aliases: punishment
     description: Interact with and manage Infractions
-    permission: banmod.unban
+    permission: banmod.infraction
   category:
     description: Modify Punishment Categories
     permission: banmod.category
