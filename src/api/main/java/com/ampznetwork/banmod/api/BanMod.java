@@ -42,10 +42,6 @@ import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
 public interface BanMod extends Command.PermissionChecker.Adapter, MessagingService.Type.Provider {
-    Logger log();
-
-    void reload();
-
     DatabaseInfo getDatabaseInfo();
 
     PunishmentCategory getDefaultCategory();
@@ -56,6 +52,10 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
     String getBanAppealUrl();
 
     PlayerAdapter getPlayerAdapter();
+
+    Logger log();
+
+    void reload();
 
     boolean allowUnsafeConnections();
 
@@ -74,9 +74,9 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
 
     @UtilityClass
     final class Strings {
-        public static final String AddonName = "BanMod";
-        public static final String AddonId   = "banmod";
-        public static final String IssuesUrl = "https://github.com/AMPZNetwork/BanMod/issues";
+        public static final String AddonName       = "BanMod";
+        public static final String AddonId         = "banmod";
+        public static final String IssuesUrl       = "https://github.com/AMPZNetwork/BanMod/issues";
         public static final String PleaseCheckConsole = "Please check console for further information";
         public static final String OfflineModeInfo = "Offline mode is not fully supported! Players may be able to rejoin even after being banned.";
     }
@@ -92,12 +92,12 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
                 PlayerResult result,
                 BiConsumer<UUID, Component> forwarder
         ) {
-            var    playerAdapter = mod.getPlayerAdapter();
+            var playerAdapter = mod.getPlayerAdapter();
             if (!playerAdapter.isOnline(playerId))
                 return;
-            var    name          = playerAdapter.getName(playerId);
+            var    name       = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
-            String permission    = Permission.PluginErrorNotification;
+            String permission = Permission.PluginErrorNotification;
             if (punishment == null) {
                 msgUser   = text("""
                         An internal server error occurred.
@@ -180,8 +180,8 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
                     .getInfractions()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
-                    .distinct()
-                    .toList();
+                    .sorted(Infraction.BY_NEWEST)
+                    .distinct().toList();
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
             return infractions.stream()
                     .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer()

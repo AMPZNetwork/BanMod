@@ -376,8 +376,9 @@ public class BanModCommands {
         @Command
         public static Component list(
                 BanMod mod,
-                @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false) String query,
-                @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page
+                @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page,
+                @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false, stringMode = StringMode.GREEDY)
+                String query
         ) {
             if (query != null)
                 throw new Command.Error("query unimplemented");
