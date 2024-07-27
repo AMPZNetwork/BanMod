@@ -42,12 +42,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static java.util.function.Predicate.*;
+import static java.util.function.Predicate.not;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static java.util.stream.Stream.*;
-import static net.minecraft.server.command.CommandManager.*;
-import static org.comroid.api.func.util.Debug.*;
-import static org.comroid.api.func.util.Streams.*;
+import static net.minecraft.server.command.CommandManager.RegistrationEnvironment;
+import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.server.command.CommandManager.literal;
+import static org.comroid.api.func.util.Debug.isDebug;
+import static org.comroid.api.func.util.Streams.expand;
+import static org.comroid.api.func.util.Streams.expandRecursive;
 
 @Value
 @Slf4j
@@ -191,10 +195,15 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
                     .peek(base::then)
                     .toList();
             return concat(of(base), subNodes.stream())
-                    .flatMap(expand(it -> createAliasRedirects(pad, node, it)));
+                    .flatMap(expand(it -> createAliasRedirects(pad, node, it)))
+                    .flatMap(expand(it -> rec == 0 && it.getLiteral().startsWith("banmod:") ? empty() :
+                                          of(literal("banmod:" + it.getLiteral()).redirect(it.build()))));
         }
 
-        return of(base).flatMap(expand(it -> createAliasRedirects(pad, node, it)));
+        return of(base).flatMap(expand(it -> createAliasRedirects(pad, node, it)))
+                .flatMap(expand(it -> rec == 0 && it.getLiteral().startsWith("banmod:")
+                                      ? empty()
+                                      : of(literal("banmod:" + it.getLiteral()).redirect(it.build()))));
     }
 
     private RequiredArgumentBuilder<ServerCommandSource, ?> convertParam(
