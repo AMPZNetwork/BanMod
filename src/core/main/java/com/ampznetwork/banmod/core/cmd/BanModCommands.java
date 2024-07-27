@@ -267,7 +267,7 @@ public class BanModCommands {
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
-        if (infraction.getPlayer().getId() == issuer)
+        if (infraction.getPlayer().getId().equals(issuer))
             throw new Command.Error("You cannot unmute yourself!");
         mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unmuted").color(GREEN);
