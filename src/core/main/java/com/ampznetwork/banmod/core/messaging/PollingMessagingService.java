@@ -31,11 +31,9 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         this.manager = service.getManager();
         this.session = manager.unwrap(Session.class);
 
+        cleanup();
+
         // find recently used idents
-        service.wrapQuery(Query::executeUpdate, session.createNativeQuery("""
-                delete from banmod_notify
-                where timestamp < :expire or (timestamp & ident) > 0;
-                """).setParameter("expire", Instant.now().minus(EventExpireTime)));
         //noinspection unchecked
         var occupied = ((Stream<BigInteger>) service.wrapQuery(Connection.TRANSACTION_SERIALIZABLE, Query::getResultList, session.createSQLQuery("""
                 select BIT_OR(ne.ident) as x
@@ -68,6 +66,13 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
 
         // send HELLO
         push().complete(bld -> bld.type(NotifyEvent.Type.HELLO));
+    }
+
+    public void cleanup() {
+        entities.wrapQuery(Query::executeUpdate, session.createNativeQuery("""
+                delete from banmod_notify
+                where timestamp < :expire or (timestamp & ident) > 0;
+                """).setParameter("expire", Instant.now().minus(EventExpireTime)));
     }
 
     @Override

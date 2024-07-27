@@ -147,8 +147,12 @@ public class HibernateEntityService extends Container.Base implements EntityServ
         this.caches = uncheckedCast(Collections.unmodifiableMap(caches));
 
         // cleanup task
-        scheduler.scheduleAtFixedRate(() -> Stream.of(players, infractions, categories)
-                .forEach(Cache::clear), 10, 10, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(() -> {
+            if (messagingService instanceof PollingMessagingService polling)
+                polling.cleanup();
+            Stream.of(players, infractions, categories)
+                    .forEach(Cache::clear);
+        }, 10, 10, TimeUnit.MINUTES);
 
         PlayerData.CACHE_NAME = (uuid, name) -> getOrCreatePlayerData(uuid)
                 .setUpdateOriginal(merge -> merge.pushKnownName(name))
