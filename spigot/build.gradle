@@ -46,7 +46,7 @@ tasks.register('dlLuckPermsJar', Download).configure {
 }
 
 tasks.register('dlSparkJar', Download).configure {
-    src 'https://ci.lucko.me/job/spark/419/artifact/spark-bukkit/build/libs/spark-1.10.74-bukkit.jar'
+    src 'https://ci.lucko.me/job/spark/lastSuccessfulBuild/artifact/spark-bukkit/build/libs/spark-1.10.86-bukkit.jar'
     dest "$projectDir/run/plugins/spark.jar"
     outputs.upToDateWhen {
         file("$projectDir/run/plugins/spark.jar").exists()
