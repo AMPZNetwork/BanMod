@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.core.database.hibernate.unit;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.PersistenceUnitBase;
+import com.ampznetwork.libmod.api.messaging.NotifyEvent;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Value;
 

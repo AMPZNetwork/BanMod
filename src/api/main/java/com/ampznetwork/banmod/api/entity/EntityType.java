@@ -5,6 +5,7 @@ import com.ampznetwork.banmod.api.database.EntityService;
 import java.util.Optional;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 public enum EntityType {
     PlayerData {
         @Override

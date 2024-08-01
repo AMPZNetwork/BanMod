@@ -6,6 +6,7 @@ import javax.persistence.Transient;
 import java.util.UUID;
 
 @Entity
+@Deprecated(forRemoval = true)
 public interface DbObject {
     @Id
     UUID getId();

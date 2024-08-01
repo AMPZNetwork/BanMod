@@ -2,15 +2,15 @@ package com.ampznetwork.banmod.spigot;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.core.database.hibernate.unit.BanModCombinedPersistenceUnit;
 import com.ampznetwork.banmod.core.database.hibernate.unit.BanModEntityPersistenceUnit;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
+import com.ampznetwork.libmod.api.messaging.MessagingService;
+import com.ampznetwork.libmod.api.model.model.info.DatabaseInfo;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;

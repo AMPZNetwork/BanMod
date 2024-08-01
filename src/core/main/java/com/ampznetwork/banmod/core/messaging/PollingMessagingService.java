@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.core.messaging;
 
-import com.ampznetwork.banmod.api.database.MessagingService;
-import com.ampznetwork.banmod.api.entity.NotifyEvent;
 import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.libmod.api.messaging.MessagingService;
+import com.ampznetwork.libmod.api.messaging.NotifyEvent;
 import lombok.Value;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Debug;

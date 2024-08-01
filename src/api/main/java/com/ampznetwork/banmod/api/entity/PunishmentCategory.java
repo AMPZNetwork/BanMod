@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
+import com.ampznetwork.libmod.api.model.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

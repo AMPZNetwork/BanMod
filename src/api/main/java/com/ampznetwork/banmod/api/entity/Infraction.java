@@ -2,8 +2,8 @@ package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
+import com.ampznetwork.libmod.api.model.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,9 +31,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import static java.time.Instant.*;
-import static java.util.function.Predicate.*;
-import static lombok.Builder.*;
+import static java.time.Instant.now;
+import static java.util.function.Predicate.not;
+import static lombok.Builder.Default;
 
 @Data
 @Entity

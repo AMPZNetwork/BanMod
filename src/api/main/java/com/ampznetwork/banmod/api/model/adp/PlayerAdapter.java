@@ -2,6 +2,7 @@ package com.ampznetwork.banmod.api.model.adp;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.PlayerData;
+import com.ampznetwork.libmod.api.adapter.BookAdapter;
 import net.kyori.adventure.text.Component;
 import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.Nullable;

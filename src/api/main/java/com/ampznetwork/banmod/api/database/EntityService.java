@@ -21,7 +21,6 @@ import org.hibernate.dialect.MariaDBDialect;
 import org.hibernate.dialect.MySQL57Dialect;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.InetAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,10 +30,8 @@ import java.util.stream.Stream;
 import static java.time.Instant.now;
 
 @SuppressWarnings("UnusedReturnValue")
+@Deprecated(forRemoval = true)
 public interface EntityService extends LifeCycle {
-    static String ip2string(InetAddress ip) {
-        return ip.toString().substring(1);
-    }
 
     BanMod getBanMod();
 

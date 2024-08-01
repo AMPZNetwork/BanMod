@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.api.entity;
 
-import com.ampznetwork.banmod.api.model.convert.UuidBinary16Converter;
-import com.ampznetwork.banmod.api.model.convert.UuidVarchar36Converter;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,17 +11,12 @@ import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
-import org.comroid.api.net.REST;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
@@ -32,13 +26,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 
-import static com.ampznetwork.banmod.api.database.EntityService.ip2string;
 import static java.time.Instant.now;
-import static org.comroid.api.net.REST.Method.GET;
+import static org.comroid.api.Polyfill.ip2string;
 
 @Data
 @Slf4j
@@ -49,35 +39,8 @@ import static org.comroid.api.net.REST.Method.GET;
 @EqualsAndHashCode(of = "id")
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PlayerData implements DbObject {
+public class PlayerData extends Player {
     public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
-    public static BiConsumer<UUID, String> CACHE_NAME = null;
-
-    public static CompletableFuture<UUID> fetchId(String name) {
-        var future = REST.get("https://api.mojang.com/users/profiles/minecraft/" + name)
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("id").asString())
-                .thenApply(UuidVarchar36Converter::fillDashes)
-                .thenApply(UUID::fromString);
-        future.thenAccept(id -> CACHE_NAME.accept(id, name));
-        return future;
-    }
-
-    public static CompletableFuture<String> fetchUsername(UUID id) {
-        var future = REST.request(GET, "https://sessionserver.mojang.com/session/minecraft/profile/" + id).execute()
-                .thenApply(REST.Response::validate2xxOK)
-                .thenApply(rsp -> rsp.getBody().get("name").asString());
-        future.thenAccept(name -> CACHE_NAME.accept(id, name));
-        return future;
-    }
-    @Id
-    @lombok.Builder.Default
-    @Convert(converter = UuidBinary16Converter.class)
-    @Column(columnDefinition = "binary(16)", updatable = false, nullable = false)
-    UUID id = UUID.randomUUID();
-    @Nullable
-    @lombok.Builder.Default
-    Instant                                          lastSeen = null;
     @Singular
     @ElementCollection
     @Column(name = "seen")
@@ -91,11 +54,6 @@ public class PlayerData implements DbObject {
     @CollectionTable(name = "banmod_playerdata_ips", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
 
-    public CompletableFuture<String> getOrFetchUsername() {
-        return getLastKnownName().map(CompletableFuture::completedFuture)
-                .orElseGet(() -> fetchUsername(id));
-    }
-
     public Optional<String> getLastKnownName() {
         return knownNames.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
@@ -106,11 +64,6 @@ public class PlayerData implements DbObject {
         return knownIPs.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
                 .map(Map.Entry::getKey);
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.PlayerData;
     }
 
     @Contract(value = "!null->this", pure = true)

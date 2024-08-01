@@ -6,6 +6,7 @@ import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
 import net.kyori.adventure.text.Component;
+import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.DelegateStream;
 import org.comroid.api.java.StackTraceUtils;
 
@@ -17,9 +18,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.ampznetwork.banmod.api.database.EntityService.*;
-import static java.time.Instant.*;
-import static org.comroid.api.java.StackTraceUtils.*;
+import static java.time.Instant.now;
+import static org.comroid.api.java.StackTraceUtils.lessSimpleDetailedName;
 
 @Log
 @Value
@@ -38,7 +38,7 @@ public abstract class EventDispatchBase {
                 .complete(builder -> builder.lastSeen(now())
                         .id(playerId)
                         .knownName(name, now())
-                        .knownIP(ip2string(address), now()));
+                        .knownIP(Polyfill.ip2string(address), now()));
         service.save(data);
 
         // queue player
