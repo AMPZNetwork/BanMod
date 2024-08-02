@@ -21,17 +21,23 @@ public class SpigotEventDispatch extends EventDispatchBase implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void handle(PlayerLoginEvent event) {
-        var playerId = event.getPlayer().getUniqueId();
         try {
-            var result = playerLogin(playerId, event.getRealAddress());
-            if (result.isBanned())
-                BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
-                    var serialize = legacySection().serialize(msg);
-                    event.disallow(PlayerLoginEvent.Result.KICK_BANNED, serialize);
-                });
+            var playerId = event.getPlayer().getUniqueId();
+            try {
+                var result = playerLogin(playerId, event.getRealAddress());
+                if (result.isBanned())
+                    BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
+                        var serialize = legacySection().serialize(msg);
+                        event.disallow(PlayerLoginEvent.Result.KICK_BANNED, serialize);
+                    });
+            } catch (Throwable t) {
+                handleThrowable(playerId, t, legacySection()::serialize,
+                        component -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, component));
+            }
         } catch (Throwable t) {
-            handleThrowable(playerId, t, legacySection()::serialize,
-                    component -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, component));
+            if (mod.allowUnsafeConnections())
+                return;
+            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "Unable to log in");
         }
     }
 

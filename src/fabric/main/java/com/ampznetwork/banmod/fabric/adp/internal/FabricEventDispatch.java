@@ -14,12 +14,13 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerLoginNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 
 import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.ampznetwork.banmod.fabric.BanMod$Fabric.*;
+import static com.ampznetwork.banmod.fabric.BanMod$Fabric.component2text;
 
 @Value
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
@@ -44,27 +45,33 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
             PacketSender sender,
             ServerLoginNetworking.LoginSynchronizer synchronizer
     ) {
-        // thank you fabric devs for this very useful and reasonable method
-        var info = handler.getConnectionInfo();
-        var matcher = ConInfoPattern.matcher(info);
-
-        if (!matcher.matches()) {
-            mod.log().warn(("Could not parse connection info string. Please report this at %s" +
-                    "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
-            return;
-        }
-
-        var playerId = UUID.fromString(matcher.group("id"));
         try {
-            var ip = InetAddress.getByName(matcher.group("ip"));
-            var result = playerLogin(playerId, ip);
-            if (result.isBanned())
-                BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
-                    var serialize = component2text(msg);
-                    handler.disconnect(serialize);
-                });
+            // thank you fabric devs for this very useful and reasonable method
+            var info    = handler.getConnectionInfo();
+            var matcher = ConInfoPattern.matcher(info);
+
+            if (!matcher.matches()) {
+                mod.log().warn(("Could not parse connection info string. Please report this at %s" +
+                                "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
+                return;
+            }
+
+            var playerId = UUID.fromString(matcher.group("id"));
+            try {
+                var ip     = InetAddress.getByName(matcher.group("ip"));
+                var result = playerLogin(playerId, ip);
+                if (result.isBanned())
+                    BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
+                        var serialize = component2text(msg);
+                        handler.disconnect(serialize);
+                    });
+            } catch (Throwable t) {
+                handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
+            }
         } catch (Throwable t) {
-            handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
+            if (mod.allowUnsafeConnections())
+                return;
+            handler.disconnect(Text.of("Unable to log in"));
         }
     }
 
