@@ -66,8 +66,8 @@ public interface EntityService extends LifeCycle {
                     if (!isActive)
                         return Stream.empty();
                     return Stream.of(new PlayerResult(playerId,
-                            i.getPunishment() == Punishment.Mute && isActive,
-                            i.getPunishment() == Punishment.Ban && isActive,
+                            i.getPunishment() == Punishment.Mute,
+                            i.getPunishment() == Punishment.Ban,
                             i.getReason(), i.getTimestamp(), i.getExpires(), i.getId()));
                 })
                 .findFirst()
