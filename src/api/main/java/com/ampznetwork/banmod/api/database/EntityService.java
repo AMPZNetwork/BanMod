@@ -61,14 +61,21 @@ public interface EntityService extends LifeCycle {
         return getInfractions(playerId)
                 .filter(Infraction.IS_IN_EFFECT)
                 .sorted(Infraction.BY_SEVERITY)
-                .map(i -> new PlayerResult(playerId,
-                        i.getRevoker() == null && i.getPunishment() == Punishment.Mute,
-                        i.getRevoker() == null && i.getPunishment() == Punishment.Ban,
-                        i.getReason(), i.getTimestamp(), i.getExpires(), i.getId()))
+                .flatMap(i -> {
+                    var isActive = Infraction.IS_IN_EFFECT.test(i);
+                    if (!isActive)
+                        return Stream.empty();
+                    return Stream.of(new PlayerResult(playerId,
+                            i.getPunishment() == Punishment.Mute && isActive,
+                            i.getPunishment() == Punishment.Ban && isActive,
+                            i.getReason(), i.getTimestamp(), i.getExpires(), i.getId()));
+                })
                 .findFirst()
                 .orElseGet(() -> {
-                    var now = now();
-                    return new PlayerResult(playerId, false, false, null, now, now, null);
+                    var now    = now();
+                    var result = new PlayerResult(playerId, false, !getBanMod().allowUnsafeConnections(), null, now, now, null);
+                    BanMod.Resources.notify(getBanMod(), playerId, null, result, (x, y) -> {});
+                    return result;
                 });
     }
 
