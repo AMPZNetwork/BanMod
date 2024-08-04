@@ -31,9 +31,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import static java.time.Instant.*;
-import static java.util.function.Predicate.*;
-import static lombok.Builder.*;
+import static java.time.Instant.now;
+import static java.util.function.Predicate.not;
+import static lombok.Builder.Default;
 
 @Data
 @Entity
@@ -118,7 +118,7 @@ public class Infraction implements DbObject {
                 punishment == Punishment.Ban,
                 reason,
                 timestamp,
-                expires,
-                this.getId());
+                expires
+        );
     }
 }

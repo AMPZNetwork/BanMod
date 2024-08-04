@@ -11,7 +11,6 @@ public record PlayerResult(
         boolean isBanned,
         @Nullable String reason,
         @Nullable Instant timestamp,
-        @Nullable Instant expires,
-        @Nullable UUID detail
+        @Nullable Instant expires
 ) {
 }

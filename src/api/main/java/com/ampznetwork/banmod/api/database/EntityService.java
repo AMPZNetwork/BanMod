@@ -68,12 +68,12 @@ public interface EntityService extends LifeCycle {
                     return Stream.of(new PlayerResult(playerId,
                             i.getPunishment() == Punishment.Mute,
                             i.getPunishment() == Punishment.Ban,
-                            i.getReason(), i.getTimestamp(), i.getExpires(), i.getId()));
+                            i.getReason(), i.getTimestamp(), i.getExpires()));
                 })
                 .findFirst()
                 .orElseGet(() -> {
                     var now    = now();
-                    var result = new PlayerResult(playerId, false, !getBanMod().allowUnsafeConnections(), null, now, now, null);
+                    var result = new PlayerResult(playerId, false, !getBanMod().allowUnsafeConnections(), null, now, now);
                     BanMod.Resources.notify(getBanMod(), playerId, null, result, (x, y) -> {});
                     return result;
                 });
