@@ -93,7 +93,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
                 BiConsumer<UUID, Component> forwarder
         ) {
             var playerAdapter = mod.getPlayerAdapter();
-            if (!playerAdapter.isOnline(playerId))
+            if (!playerAdapter.isOnline(playerId) && mod.allowUnsafeConnections())
                 return;
             var    name       = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;

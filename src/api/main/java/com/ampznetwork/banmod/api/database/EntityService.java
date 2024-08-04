@@ -74,7 +74,8 @@ public interface EntityService extends LifeCycle {
                 .orElseGet(() -> {
                     var now    = now();
                     var result = new PlayerResult(playerId, false, !getBanMod().allowUnsafeConnections(), null, now, now);
-                    BanMod.Resources.notify(getBanMod(), playerId, null, result, (x, y) -> {});
+                    BanMod.Resources.notify(getBanMod(), playerId, null, result, (x, y) ->
+                            getBanMod().log().warn("This error may be a false-positive. Please report this at " + BanMod.Strings.IssuesUrl));
                     return result;
                 });
     }
