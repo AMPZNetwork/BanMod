@@ -12,5 +12,5 @@ public interface DbObject {
     UUID getId();
 
     @Transient
-    EntityType getEntityType();
+    BanModEntityType getEntityType();
 }

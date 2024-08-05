@@ -3,24 +3,21 @@ package com.ampznetwork.banmod.api.entity;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
-import com.ampznetwork.libmod.api.model.model.convert.UuidBinary16Converter;
+import com.ampznetwork.libmod.api.entity.DbObject;
+import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.GenericGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -41,10 +38,9 @@ import static lombok.Builder.Default;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
-@EqualsAndHashCode(of = "id")
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Infraction implements DbObject {
+public class Infraction extends DbObject {
     public static final Instant                TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
     public static final Predicate<Infraction>  IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
             && (i.getRevoker() == null
@@ -58,13 +54,6 @@ public class Infraction implements DbObject {
             i.expires == null
             ? Long.MIN_VALUE
             : i.expires.toEpochMilli()).reversed();
-    @Id
-    @Default
-    @GeneratedValue(generator = "UUID")
-    @Convert(converter = UuidBinary16Converter.class)
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(columnDefinition = "binary(16)", updatable = false, nullable = false)
-    UUID       id        = UUID.randomUUID();
     @NotNull
     @OneToOne
     PlayerData player;
@@ -108,8 +97,8 @@ public class Infraction implements DbObject {
     }
 
     @Override
-    public EntityType getEntityType() {
-        return EntityType.Infraction;
+    public BanModEntityType<Infraction, Builder> getEntityType() {
+        return BanModEntityType.INFRACTION;
     }
 
     public PlayerResult toResult() {

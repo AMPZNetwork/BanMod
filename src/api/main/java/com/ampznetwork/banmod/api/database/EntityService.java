@@ -1,8 +1,7 @@
 package com.ampznetwork.banmod.api.database;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.DbObject;
-import com.ampznetwork.banmod.api.entity.EntityType;
+import com.ampznetwork.banmod.api.entity.BanModEntityType;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
@@ -100,7 +99,7 @@ public interface EntityService extends LifeCycle {
 
     <T extends DbObject> T save(T object);
 
-    void refresh(EntityType type, UUID... ids);
+    void refresh(BanModEntityType type, UUID... ids);
 
     void uncache(Object id, @Nullable DbObject obj);
 

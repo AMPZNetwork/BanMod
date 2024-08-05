@@ -4,12 +4,14 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.banmod.core.importer.ImportResult;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Ban;
 import com.ampznetwork.banmod.core.importer.litebans.entity.History;
+import com.ampznetwork.banmod.core.importer.litebans.entity.LiteBansEntity;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
-import com.ampznetwork.libmod.api.model.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.libmod.core.database.hibernate.PersistenceUnitBase;
 import lombok.Value;
 
 import java.time.Instant;
@@ -24,14 +26,16 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
     HibernateEntityService.Unit unit;
 
     public LiteBansImporter(BanMod mod, DatabaseInfo info) {
-        this.mod = mod;
-        this.unit = HibernateEntityService.buildPersistenceUnit(info, LiteBansPersistenceUnit::new, "validate");
+        this.mod  = mod;
+        this.unit = HibernateEntityService.buildPersistenceUnit(info,
+                dataSource -> new PersistenceUnitBase("LiteBans", BanMod.class, dataSource, Mute.class, Ban.class, History.class),
+                "validate");
     }
 
     @Override
     public ImportResult run() {
         int[] count   = new int[]{ 0, 0, 0 };
-        var   service = mod.getEntityService();
+        var service = mod.getLib().getEntityService().getAccessor(LiteBansEntity.);
         Stream.concat(
                         unit.manager().createQuery("select m from Mute m", Mute.class)
                                 .getResultStream(),

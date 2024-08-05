@@ -1,13 +1,12 @@
 package com.ampznetwork.banmod.api;
 
-import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
+import com.ampznetwork.libmod.api.LibMod;
 import com.ampznetwork.libmod.api.messaging.MessagingService;
-import com.ampznetwork.libmod.api.model.model.info.DatabaseInfo;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -42,11 +41,9 @@ import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
 public interface BanMod extends Command.PermissionChecker.Adapter, MessagingService.Type.Provider {
-    DatabaseInfo getDatabaseInfo();
+    LibMod getLib();
 
     PunishmentCategory getDefaultCategory();
-
-    EntityService getEntityService();
 
     @Nullable
     String getBanAppealUrl();
@@ -176,8 +173,8 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
 
         @NotNull
         public Component infractionList(BanMod mod, int page, Punishment punishment) {
-            final var infractions = mod.getEntityService()
-                    .getInfractions()
+            final var infractions = mod.getLib().getEntityService()
+                    .getAccessor(Infraction.TYPE)
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
                     .sorted(Infraction.BY_NEWEST)

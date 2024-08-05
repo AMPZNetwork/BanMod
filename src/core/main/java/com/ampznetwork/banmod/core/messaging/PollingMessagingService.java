@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.core.messaging;
 
-import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.libmod.api.messaging.MessagingService;
 import com.ampznetwork.libmod.api.messaging.NotifyEvent;
+import com.ampznetwork.libmod.core.database.hibernate.hibernate.HibernateEntityService;
 import lombok.Value;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Debug;
@@ -104,7 +104,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
                         .setParameter("timestamp", event.getTimestamp())
                         .executeUpdate();
                 if (ack != 1) {
-                    entities.getBanMod()
+                    entities.getMod()
                             .log()
                             .warn("Failed to acknowledge notification {}; ignoring it", event);
                     handle.remove(event);
@@ -116,7 +116,7 @@ public class PollingMessagingService extends MessagingServiceBase<HibernateEntit
         var duration = stopwatch.stop();
         if (!Debug.isDebug() && events.length == 0)
             return events;
-        Debug.log(entities.getBanMod().log(), "Accepting %d events took %sms".formatted(events.length, duration.toMillis()));
+        Debug.log(entities.getMod().log(), "Accepting %d events took %sms".formatted(events.length, duration.toMillis()));
 
         return events;
     }

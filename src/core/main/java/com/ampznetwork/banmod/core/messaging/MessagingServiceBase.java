@@ -1,7 +1,7 @@
 package com.ampznetwork.banmod.core.messaging;
 
 import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.entity.EntityType;
+import com.ampznetwork.banmod.api.entity.BanModEntityType;
 import com.ampznetwork.libmod.api.messaging.MessagingService;
 import com.ampznetwork.libmod.api.messaging.NotifyEvent;
 import lombok.Value;
@@ -78,7 +78,7 @@ public abstract class MessagingServiceBase<Entities extends EntityService> exten
 
         // handle SYNC
         entities.refresh(event.getRelatedType(), event.getRelatedId());
-        if (event.getRelatedType() == EntityType.Infraction)
+        if (event.getRelatedType() == BanModEntityType.INFRACTION)
             entities.getInfraction(event.getRelatedId()).ifPresent(entities.getBanMod()::realize);
     }
 }

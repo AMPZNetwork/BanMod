@@ -4,13 +4,14 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.database.EntityService;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
-import com.ampznetwork.banmod.core.database.hibernate.HibernateEntityService;
-import com.ampznetwork.banmod.core.database.hibernate.unit.BanModCombinedPersistenceUnit;
-import com.ampznetwork.banmod.core.database.hibernate.unit.BanModEntityPersistenceUnit;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import com.ampznetwork.libmod.api.messaging.MessagingService;
-import com.ampznetwork.libmod.api.model.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.core.database.hibernate.hibernate.HibernateEntityService;
+import com.ampznetwork.libmod.core.database.hibernate.hibernate.unit.BanModCombinedPersistenceUnit;
+import com.ampznetwork.libmod.core.database.hibernate.hibernate.unit.BanModEntityPersistenceUnit;
+import com.ampznetwork.libmod.spigot.SubMod$Spigot;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +34,7 @@ import static org.comroid.api.Polyfill.parseDuration;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
-public class BanMod$Spigot extends JavaPlugin implements BanMod {
+public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
@@ -45,7 +45,6 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
     private       Command.Manager                cmdr;
     @Delegate(types = { TabCompleter.class, CommandExecutor.class })
     private       Command.Manager.Adapter$Spigot adapter;
-    private       EntityService                  entityService;
     private       PunishmentCategory             defaultCategory;
 
     @Override
@@ -116,6 +115,8 @@ public class BanMod$Spigot extends JavaPlugin implements BanMod {
 
         saveDefaultConfig();
         this.config = super.getConfig();
+
+        getPlugin(LibMod$Spigot.class).register(this);
 
         this.cmdr = new Command.Manager() {{
             this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Spigot.this));
