@@ -1,17 +1,13 @@
 package com.ampznetwork.banmod.fabric;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.entity.PunishmentCategory;
-import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricPlayerAdapter;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import com.ampznetwork.libmod.api.messaging.MessagingService;
-import com.ampznetwork.libmod.api.model.model.info.DatabaseInfo;
-import com.ampznetwork.libmod.core.database.hibernate.hibernate.HibernateEntityService;
-import com.ampznetwork.libmod.core.database.hibernate.hibernate.unit.BanModCombinedPersistenceUnit;
-import com.ampznetwork.libmod.core.database.hibernate.hibernate.unit.BanModEntityPersistenceUnit;
+import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.core.database.hibernate.HibernateEntityService;
+import com.ampznetwork.libmod.fabric.SubMod$Fabric;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.lucko.fabric.api.permissions.v0.Permissions;
@@ -22,7 +18,6 @@ import net.kyori.adventure.util.TriState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import org.comroid.api.func.util.Command;
-import org.comroid.api.func.util.Command$Manager$Adapter$Fabric;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
 import org.jetbrains.annotations.Contract;
@@ -30,14 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
 import static org.comroid.api.Polyfill.parseDuration;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
-public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
+public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
@@ -46,19 +40,10 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         return Text.Serializer.fromJson(gson().serialize(component));
     }
 
-    private final FabricPlayerAdapter            playerAdapter = new FabricPlayerAdapter(this);
-    private final FabricEventDispatch            eventDispatch = new FabricEventDispatch(this);
-    private       Config                         config        = Config.createAndLoad();
-    private       MinecraftServer                server;
-    private       Command.Manager                cmdr;
-    private       Command$Manager$Adapter$Fabric adapter;
-    private       EntityService                  entityService;
-    private       PunishmentCategory             defaultCategory;
-
-    @Override
-    public DatabaseInfo getDatabaseInfo() {
-        return getDatabaseInfo(config.database);
-    }
+    private final FabricPlayerAdapter playerAdapter = new FabricPlayerAdapter(this);
+    private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);
+    private       Config              config        = Config.createAndLoad();
+    private       MinecraftServer     server;
 
     @Override
     public String getMessagingServiceTypeName() {
@@ -77,6 +62,11 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
             default:
                 throw new UnsupportedOperationException("Unknown messaging service type: " + getMessagingServiceTypeName());
         }
+    }
+
+    @Override
+    public @Nullable String getBanAppealUrl() {
+        return config.banAppealUrl();
     }
 
     @Override
@@ -109,14 +99,7 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
                 log.warn(BanMod.Strings.OfflineModeInfo);
         });
 
-        this.cmdr = new Command.Manager() {{
-            this.<Command.ContextProvider>addChild($ -> Stream.of(BanMod$Fabric.this));
-            addChildren(Command.PermissionChecker.minecraft(BanMod$Fabric.this));
-        }};
-        this.adapter = new Command$Manager$Adapter$Fabric(cmdr);
-        cmdr.register(BanModCommands.class);
         cmdr.register(this);
-        cmdr.initialize();
 
         initialize();
     }
@@ -138,11 +121,6 @@ public class BanMod$Fabric implements BanMod, ModInitializer, LifeCycle {
         } catch (Throwable t) {
             log().error("Error while disabling", t);
         }
-    }
-
-    @Override
-    public @Nullable String getBanAppealUrl() {
-        return config.banAppealUrl();
     }
 
     @Override

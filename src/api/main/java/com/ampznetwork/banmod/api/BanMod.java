@@ -1,12 +1,14 @@
 package com.ampznetwork.banmod.api;
 
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.libmod.api.LibMod;
-import com.ampznetwork.libmod.api.messaging.MessagingService;
+import com.ampznetwork.libmod.api.adapter.SubMod;
+import com.ampznetwork.libmod.core.database.hibernate.PersistenceUnitBase;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -14,11 +16,14 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Command;
+import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.func.util.Streams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import javax.persistence.spi.PersistenceUnitInfo;
+import javax.sql.DataSource;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -40,10 +45,13 @@ import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
-public interface BanMod extends Command.PermissionChecker.Adapter, MessagingService.Type.Provider {
+public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     LibMod getLib();
 
-    PunishmentCategory getDefaultCategory();
+    default GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getDefaultCategory() {
+        return getEntityService().getAccessor(PunishmentCategory.TYPE)
+                .getOrCreate();
+    }
 
     @Nullable
     String getBanAppealUrl();
@@ -68,6 +76,11 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
     }
 
     void executeSync(Runnable task);
+
+    @Override
+    default PersistenceUnitInfo createPersistenceUnit(DataSource dataSource) {
+        return new PersistenceUnitBase("BanMod", BanMod.class, dataSource, Infraction.class, PlayerData.class, PunishmentCategory.class);
+    }
 
     @UtilityClass
     final class Strings {

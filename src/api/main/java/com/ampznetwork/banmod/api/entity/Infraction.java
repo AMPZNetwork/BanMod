@@ -7,11 +7,11 @@ import com.ampznetwork.libmod.api.entity.DbObject;
 import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import static lombok.Builder.Default;
 
 @Data
 @Entity
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -94,11 +94,6 @@ public class Infraction extends DbObject {
                         .map(DefaultReason::getDefaultReason)
                         .filter(not(String::isBlank)))
                 .orElseGet(() -> "You were " + punishment.getAdverb());
-    }
-
-    @Override
-    public BanModEntityType<Infraction, Builder> getEntityType() {
-        return BanModEntityType.INFRACTION;
     }
 
     public PlayerResult toResult() {

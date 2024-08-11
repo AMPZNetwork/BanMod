@@ -6,13 +6,14 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.comroid.api.func.util.GetOrCreate;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static java.time.Instant.*;
+import static java.time.Instant.now;
 
 @Value
 @Builder
@@ -22,12 +23,15 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
         return base(mod, playerId, null, punishment, issuer);
     }
 
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
+    public static Builder base(
+            BanMod mod, UUID playerId, GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> category, @Nullable Punishment punishment,
+            @Nullable UUID issuer
+    ) {
         if (category == null) category = mod.getDefaultCategory();
         return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
     }
 
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
+    public static Builder base(BanMod mod, UUID playerId, GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> category, @Nullable UUID issuer) {
         return base(mod, playerId, category, null, issuer);
     }
 

@@ -3,12 +3,11 @@ package com.ampznetwork.banmod.api.entity;
 import com.ampznetwork.libmod.api.entity.Player;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
 import org.jetbrains.annotations.Contract;
@@ -33,10 +32,9 @@ import static org.comroid.api.Polyfill.ip2string;
 @Data
 @Slf4j
 @Entity
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @RequiredArgsConstructor
-@EqualsAndHashCode(of = "id")
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {

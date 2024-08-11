@@ -3,14 +3,15 @@ package com.ampznetwork.banmod.api.entity;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import com.ampznetwork.libmod.api.entity.DbObject;
+import com.ampznetwork.libmod.api.model.EntityType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.comroid.api.attr.Described;
 import org.comroid.api.attr.Named;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,16 @@ import java.util.Optional;
 @Entity
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(of = "name")
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory extends DbObject implements Named, Described, DefaultReason {
+    public static final EntityType<PunishmentCategory, Builder> TYPE = new EntityType<>(
+            PunishmentCategory::builder,
+            null,
+            PunishmentCategory.class,
+            Builder.class);
     public static PunishmentCategory.Builder standard(String name) {
         return builder().name(name)
                 .punishmentThreshold(0, Punishment.Kick)
@@ -55,11 +61,6 @@ public class PunishmentCategory extends DbObject implements Named, Described, De
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "banmod_categories_thresholds")
     Map<@NotNull Integer, Punishment> punishmentThresholds;
-
-    @Override
-    public BanModEntityType<PunishmentCategory, Builder> getEntityType() {
-        return BanModEntityType.PUNISHMENT_CATEGORY;
-    }
 
     public Duration calculateDuration(int repetition) {
         var factor = Math.pow(repetitionExpBase, repetition);
