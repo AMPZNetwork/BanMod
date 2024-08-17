@@ -48,6 +48,11 @@ import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     LibMod getLib();
 
+    @Override
+    default Class<?> getModuleType() {
+        return BanMod.class;
+    }
+
     default GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getDefaultCategory() {
         return getEntityService().getAccessor(PunishmentCategory.TYPE)
                 .getOrCreate();

@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
+import com.ampznetwork.libmod.api.entity.Player;
 import com.ampznetwork.libmod.spigot.SubMod$Spigot;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,10 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
                 Set.of(Capability.Database),
                 Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class)
         );
+        Player.CACHE_NAME = (uuid, name) -> getEntityService().getAccessor(PlayerData.TYPE)
+                .getOrCreate(uuid)
+                .setUpdateOriginal(merge -> merge.pushKnownName(name))
+                .complete(build -> build.id(uuid), player -> player.pushKnownName(name));
     }
 
     @Override

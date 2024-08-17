@@ -6,7 +6,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -45,13 +44,12 @@ public class PlayerData extends Player {
             PlayerData.class,
             PlayerData.Builder.class);
     public static final Comparator<Map.Entry<?, Instant>>          MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
-    @Singular
     @ElementCollection
+    @lombok.Builder.Default
     @Column(name = "seen")
     @MapKeyColumn(name = "name")
     @CollectionTable(name = "banmod_playerdata_names", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
-    @Singular
     @ElementCollection
     @Column(name = "seen")
     @MapKeyColumn(name = "ip")
