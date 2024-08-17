@@ -1,6 +1,7 @@
 package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.libmod.api.entity.Player;
+import com.ampznetwork.libmod.api.model.EntityType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,7 +39,12 @@ import static org.comroid.api.Polyfill.ip2string;
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
-    public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+    public static final EntityType<PlayerData, PlayerData.Builder> TYPE
+                                                                                      = new EntityType<>(PlayerData::builder,
+            Player.TYPE,
+            PlayerData.class,
+            PlayerData.Builder.class);
+    public static final Comparator<Map.Entry<?, Instant>>          MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @Singular
     @ElementCollection
     @Column(name = "seen")

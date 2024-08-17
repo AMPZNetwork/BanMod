@@ -35,18 +35,17 @@ import java.util.Optional;
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory extends DbObject implements Named, Described, DefaultReason {
-    public static final EntityType<PunishmentCategory, Builder> TYPE = new EntityType<>(
-            PunishmentCategory::builder,
-            null,
-            PunishmentCategory.class,
-            Builder.class);
+    public static final EntityType<PunishmentCategory, Builder> TYPE
+            = new EntityType<>(PunishmentCategory::builder, null, PunishmentCategory.class, Builder.class);
+
     public static PunishmentCategory.Builder standard(String name) {
         return builder().name(name)
                 .punishmentThreshold(0, Punishment.Kick)
                 .punishmentThreshold(2, Punishment.Mute)
                 .punishmentThreshold(5, Punishment.Ban);
     }
-    String   name;
+
+    String name;
     @lombok.Builder.Default
     @Nullable
     String   description       = null;

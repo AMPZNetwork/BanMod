@@ -7,7 +7,7 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.libmod.api.LibMod;
-import com.ampznetwork.libmod.api.adapter.SubMod;
+import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.core.database.hibernate.PersistenceUnitBase;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
