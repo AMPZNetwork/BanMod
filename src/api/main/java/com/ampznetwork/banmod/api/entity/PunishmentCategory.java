@@ -34,8 +34,8 @@ import java.util.Optional;
 @EqualsAndHashCode(of = "name")
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PunishmentCategory extends DbObject implements Named, Described, DefaultReason {
-    public static final EntityType<PunishmentCategory, Builder> TYPE
+public class PunishmentCategory extends DbObject.ByPoiName implements Named, Described, DefaultReason {
+    public static final EntityType<String, PunishmentCategory, Builder> TYPE
             = new EntityType<>(PunishmentCategory::builder, null, PunishmentCategory.class, Builder.class);
 
     public static PunishmentCategory.Builder standard(String name) {

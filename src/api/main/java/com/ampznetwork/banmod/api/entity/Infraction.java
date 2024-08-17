@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import com.ampznetwork.libmod.api.entity.DbObject;
+import com.ampznetwork.libmod.api.model.EntityType;
 import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -40,17 +41,23 @@ import static lombok.Builder.Default;
 @RequiredArgsConstructor
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Infraction extends DbObject {
-    public static final Instant                TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
-    public static final Predicate<Infraction>  IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
-            && (i.getRevoker() == null
-            && (i.getExpires() == null || i.getExpires().isAfter(now())
-            || i.getExpires().isBefore(TOO_EARLY))) /* fix for a conversion bug */;
-    public static       Comparator<Infraction> BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
+public class Infraction extends DbObject.ByUuid {
+    public static final EntityType<UUID, Infraction, Infraction.Builder> TYPE
+                                                                                      = new EntityType<>(Infraction::builder,
+            null,
+            Infraction.class,
+            Infraction.Builder.class);
+    public static final Instant                                          TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
+    public static final Predicate<Infraction>                            IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
+                                                                                             && (i.getRevoker() == null
+                                                                                                 && (i.getExpires() == null || i.getExpires().isAfter(now())
+                                                                                                     || i.getExpires()
+                                                                                                             .isBefore(TOO_EARLY))) /* fix for a conversion bug */;
+    public static       Comparator<Infraction>                           BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
             i.getPunishment().ordinal()).reversed();
-    public static       Comparator<Infraction> BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
+    public static       Comparator<Infraction>                           BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
             i.timestamp.toEpochMilli()).reversed();
-    public static       Comparator<Infraction> BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
+    public static       Comparator<Infraction>                           BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
             i.expires == null
             ? Long.MIN_VALUE
             : i.expires.toEpochMilli()).reversed();

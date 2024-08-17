@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.time.Instant.now;
 import static org.comroid.api.Polyfill.ip2string;
@@ -38,12 +39,12 @@ import static org.comroid.api.Polyfill.ip2string;
 @Table(name = "banmod_playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
-    public static final EntityType<PlayerData, PlayerData.Builder> TYPE
-                                                                                      = new EntityType<>(PlayerData::builder,
+    public static final EntityType<UUID, PlayerData, Builder> TYPE
+                                                                                 = new EntityType<>(PlayerData::builder,
             Player.TYPE,
             PlayerData.class,
             PlayerData.Builder.class);
-    public static final Comparator<Map.Entry<?, Instant>>          MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+    public static final Comparator<Map.Entry<?, Instant>>     MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @ElementCollection
     @lombok.Builder.Default
     @Column(name = "seen")

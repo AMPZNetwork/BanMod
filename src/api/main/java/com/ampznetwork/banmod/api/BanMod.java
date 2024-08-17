@@ -8,7 +8,7 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.libmod.api.LibMod;
 import com.ampznetwork.libmod.api.SubMod;
-import com.ampznetwork.libmod.core.database.hibernate.PersistenceUnitBase;
+import com.ampznetwork.libmod.api.entity.DbObject;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -16,19 +16,18 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Command;
-import org.comroid.api.func.util.GetOrCreate;
 import org.comroid.api.func.util.Streams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import javax.persistence.spi.PersistenceUnitInfo;
-import javax.sql.DataSource;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
@@ -53,9 +52,20 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         return BanMod.class;
     }
 
-    default GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> getDefaultCategory() {
+    default @NotNull PunishmentCategory getDefaultCategory() {
         return getEntityService().getAccessor(PunishmentCategory.TYPE)
-                .getOrCreate();
+                .getOrCreate("default")
+                .setUpdateOriginal(original -> {
+                    original.getPunishmentThresholds().putAll(Map.of(
+                            0, Punishment.Kick,
+                            2, Punishment.Mute,
+                            5, Punishment.Ban
+                    ));
+                    return original;
+                })
+                .complete(cat -> cat.punishmentThreshold(0, Punishment.Kick)
+                        .punishmentThreshold(2, Punishment.Mute)
+                        .punishmentThreshold(5, Punishment.Ban));
     }
 
     @Nullable
@@ -83,8 +93,8 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     void executeSync(Runnable task);
 
     @Override
-    default PersistenceUnitInfo createPersistenceUnit(DataSource dataSource) {
-        return new PersistenceUnitBase("BanMod", BanMod.class, dataSource, Infraction.class, PlayerData.class, PunishmentCategory.class);
+    default Set<Class<? extends DbObject>> getEntityTypes() {
+        return Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class);
     }
 
     @UtilityClass
@@ -193,6 +203,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         public Component infractionList(BanMod mod, int page, Punishment punishment) {
             final var infractions = mod.getLib().getEntityService()
                     .getAccessor(Infraction.TYPE)
+                    .all()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
                     .sorted(Infraction.BY_NEWEST)
