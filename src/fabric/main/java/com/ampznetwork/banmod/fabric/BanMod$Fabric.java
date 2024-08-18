@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson;
+import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)

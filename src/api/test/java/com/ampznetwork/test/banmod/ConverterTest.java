@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 public class ConverterTest {
-    final UUID   Uuid = UUID.fromString("30c408a8-31df-4c13-bf92-416288300613");
+    final UUID Uuid = UUID.fromString("30c408a8-31df-4c13-bf92-416288300613");
     final byte[] UuidBytes = new byte[]{ 48, -60, 8, -88, 49, -33, 76, 19, -65, -110, 65, 98, -120, 48, 6, 19 };
 
     @Test

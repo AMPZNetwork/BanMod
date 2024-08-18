@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import static java.time.Instant.now;
+import static java.time.Instant.*;
 
 @Value
 public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Importer {

@@ -28,9 +28,9 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final SpigotPlayerAdapter            playerAdapter = new SpigotPlayerAdapter(this);
-    private final SpigotEventDispatch            eventDispatch = new SpigotEventDispatch(this);
-    private       FileConfiguration              config;
+    private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
+    private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
+    private       FileConfiguration   config;
 
     public BanMod$Spigot() {
         super(
@@ -44,8 +44,26 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
     }
 
     @Override
+    public @Nullable String getBanAppealUrl() {
+        var url = getConfig().get("ban-appeal-url", null);
+        var txt = url == null ? null : url.toString();
+        if (txt != null && txt.isBlank()) txt = null;
+        return txt;
+    }
+
+    @Override
     public Logger log() {
         return log;
+    }
+
+    @Override
+    public boolean allowUnsafeConnections() {
+        return config.getBoolean("allow-unsafe-connections", false);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        Bukkit.getScheduler().runTask(this, task);
     }
 
     @Override
@@ -57,24 +75,6 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
         reloadConfig();
         config = getConfig();
         onEnable();
-    }
-
-    @Override
-    public @Nullable String getBanAppealUrl() {
-        var url = getConfig().get("ban-appeal-url", null);
-        var txt = url == null ? null : url.toString();
-        if (txt != null && txt.isBlank()) txt = null;
-        return txt;
-    }
-
-    @Override
-    public boolean allowUnsafeConnections() {
-        return config.getBoolean("allow-unsafe-connections", false);
-    }
-
-    @Override
-    public void executeSync(Runnable task) {
-        Bukkit.getScheduler().runTask(this, task);
     }
 
     @Override

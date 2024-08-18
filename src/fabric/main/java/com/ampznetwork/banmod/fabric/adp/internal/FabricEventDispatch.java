@@ -50,7 +50,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
 
         if (!matcher.matches()) {
             mod.log().warn(("Could not parse connection info string. Please report this at %s" +
-                    "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
+                            "\n\tString: %s").formatted(BanMod.Strings.IssuesUrl, info));
             return;
         }
 

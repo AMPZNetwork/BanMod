@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static java.time.Instant.now;
-import static org.comroid.api.Polyfill.ip2string;
+import static java.time.Instant.*;
+import static org.comroid.api.Polyfill.*;
 
 @Data
 @Slf4j

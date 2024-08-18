@@ -31,17 +31,11 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
-import static net.kyori.adventure.text.event.HoverEvent.showText;
-import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
-import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.event.ClickEvent.*;
+import static net.kyori.adventure.text.event.HoverEvent.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     LibMod getLib();
@@ -49,6 +43,11 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     @Override
     default Class<?> getModuleType() {
         return BanMod.class;
+    }
+
+    @Override
+    default Set<Class<? extends DbObject>> getEntityTypes() {
+        return Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class);
     }
 
     default @NotNull PunishmentCategory getDefaultCategory() {
@@ -86,11 +85,6 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     }
 
     void executeSync(Runnable task);
-
-    @Override
-    default Set<Class<? extends DbObject>> getEntityTypes() {
-        return Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class);
-    }
 
     @UtilityClass
     final class Strings {
