@@ -5,7 +5,6 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
 import com.ampznetwork.libmod.api.LibMod;
 import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.api.entity.DbObject;
@@ -71,11 +70,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     @Nullable
     String getBanAppealUrl();
 
-    PlayerAdapter getPlayerAdapter();
-
     Logger log();
-
-    void reload();
 
     boolean allowUnsafeConnections();
 
@@ -84,9 +79,9 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         if (punish.isPassive() || (!punish.isInherentlyTemporary() && !Infraction.IS_IN_EFFECT.test(infraction)))
             return;
         Resources.notify(this, infraction.getPlayer().getId(), punish, infraction.toResult(), switch (punish) {
-            case Kick, Ban -> (BiConsumer<UUID, Component>) getPlayerAdapter()::kick;
-            case Debuff -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send; // todo
-            default -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send;
+            case Kick, Ban -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::kick;
+            case Debuff -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::send; // todo
+            default -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::send;
         });
     }
 
@@ -117,7 +112,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 PlayerResult result,
                 BiConsumer<UUID, Component> forwarder
         ) {
-            var playerAdapter = mod.getPlayerAdapter();
+            var playerAdapter = mod.getLib().getPlayerAdapter();
             if (!playerAdapter.isOnline(playerId))
                 return;
             var    name       = playerAdapter.getName(playerId);
@@ -232,7 +227,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
         @NotNull
         public Component textPunishmentFull(BanMod mod, Infraction infraction) {
-            var username = mod.getPlayerAdapter().getName(infraction.getPlayer().getId());
+            var username = mod.getLib().getPlayerAdapter().getName(infraction.getPlayer().getId());
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))
