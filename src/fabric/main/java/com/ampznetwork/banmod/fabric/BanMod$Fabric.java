@@ -8,15 +8,18 @@ import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
 import com.ampznetwork.banmod.fabric.cfg.Config;
 import com.ampznetwork.libmod.fabric.LibMod$Fabric;
 import com.ampznetwork.libmod.fabric.SubMod$Fabric;
+import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
@@ -26,8 +29,6 @@ import org.slf4j.Logger;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.*;
-
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
 public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializer, LifeCycle {
@@ -35,8 +36,9 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    public static Text component2text(Component component) {
-        return Text.Serializer.fromJson(gson().serialize(component));
+    public static Text component2text(net.kyori.adventure.text.Component component) {
+        var json = GsonComponentSerializer.gson().serializeToTree(component);
+        return TextCodecs.STRINGIFIED_CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new);
     }
 
     private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);

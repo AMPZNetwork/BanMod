@@ -8,7 +8,6 @@ import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import com.ampznetwork.libmod.api.entity.Player;
-import com.ampznetwork.libmod.spigot.SubMod$Spigot;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.util.TriState;

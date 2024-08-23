@@ -19,8 +19,6 @@ import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.ampznetwork.banmod.fabric.BanMod$Fabric.*;
-
 @Value
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
     /**
@@ -60,11 +58,11 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
             var result = playerLogin(playerId, ip);
             if (result.isBanned())
                 BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
-                    var serialize = component2text(msg);
+                    var serialize = mod.as(BanMod$Fabric.class).assertion().component2text(msg);
                     handler.disconnect(serialize);
                 });
         } catch (Throwable t) {
-            handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
+            handleThrowable(playerId, t, mod.as(BanMod$Fabric.class).assertion()::component2text, handler::disconnect);
         }
     }
 
@@ -75,7 +73,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var maySend = !result.isMuted();
         if (!maySend)
             BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {
-                var serialize = component2text(msg);
+                var serialize = mod.as(BanMod$Fabric.class).assertion().component2text(msg);
                 sender.sendMessage(serialize);
             });
         return maySend;
