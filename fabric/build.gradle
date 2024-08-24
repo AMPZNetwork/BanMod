@@ -7,7 +7,7 @@ plugins {
 	id 'maven-publish'
 }
 
-group = project.maven_group
+group = project.maven_group + '.banmod'
 
 base {
 	archivesName = project.archives_base_name
