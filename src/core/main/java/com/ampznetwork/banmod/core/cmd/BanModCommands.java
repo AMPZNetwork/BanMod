@@ -37,13 +37,6 @@ import static org.comroid.api.func.util.Command.*;
 @UtilityClass
 public class BanModCommands {
     @Command
-    public Component reload(BanMod mod) {
-        mod.reload();
-        return text("Configuration reloaded!")
-                .color(GREEN);
-    }
-
-    @Command
     public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
@@ -221,13 +214,17 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        if (mod.getEntityService().queuePlayer(tgt).isMuted())
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        if (mod.queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
-        var infraction = mod.getEntityService().createInfraction()
-                .complete(base(mod, tgt, Punishment.Mute, issuer)
+        @Nullable String finalReason = reason;
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
+                .getOrCreate(UUID.randomUUID())
+                .setCreate(() -> base(mod, tgt, Punishment.Mute, issuer)
                         .duration(parseDuration(durationText))
-                        .reason(reason)
+                        .reason(finalReason))
+                .complete(bld ->)
+                .complete(
                         .build());
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }

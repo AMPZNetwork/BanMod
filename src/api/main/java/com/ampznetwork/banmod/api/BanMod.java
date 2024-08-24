@@ -86,6 +86,27 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     void executeSync(Runnable task);
 
+    default PlayerResult queuePlayer(UUID playerId) {
+        return getEntityService().getAccessor(Infraction.TYPE)
+                .querySelect("select i.* from banmod_infractions i where i.player_id = :playerId",
+                        Map.of("playerId", playerId))
+                .filter(Infraction.IS_IN_EFFECT)
+                .sorted(Infraction.BY_SEVERITY)
+                .map(i -> new PlayerResult(playerId,
+                        i.getPunishment() == Punishment.Mute,
+                        i.getPunishment() == Punishment.Ban,
+                        i.getReason(),
+                        i.getTimestamp(),
+                        i.getExpires(),
+                        i.getIssuer()))
+                .findFirst()
+                .orElseGet(() -> {
+                    var now = Instant.now();
+                    // no result means no ban or mute or anything, we SHOULD be returning false here
+                    return new PlayerResult(playerId, false, false, null, now, now, null);
+                });
+    }
+
     @UtilityClass
     final class Strings {
         public static final String AddonName       = "BanMod";

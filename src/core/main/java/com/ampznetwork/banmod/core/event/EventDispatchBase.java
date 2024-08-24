@@ -1,12 +1,12 @@
 package com.ampznetwork.banmod.core.event;
 
 import com.ampznetwork.banmod.api.BanMod;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
 import net.kyori.adventure.text.Component;
-import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.DelegateStream;
 import org.comroid.api.java.StackTraceUtils;
 
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,16 +30,20 @@ public abstract class EventDispatchBase {
 
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
         var service = mod.getEntityService();
-        var name = mod.getPlayerAdapter().getName(playerId);
-        var data = service.getOrCreatePlayerData(playerId)
+        var name = mod.getLib().getPlayerAdapter().getName(playerId);
+        var data = service.getAccessor(PlayerData.TYPE)
+                .getOrCreate(playerId)
                 .setUpdateOriginal(original -> original
-                        .setLastSeen(now())
+                        //.setLastSeen(now())
                         .pushKnownName(name)
                         .pushKnownIp(address))
-                .complete(builder -> builder.lastSeen(now())
-                        .id(playerId)
-                        .knownName(name, now())
-                        .knownIP(Polyfill.ip2string(address), now()));
+                .complete(builder -> {
+                    var now = now();
+                    builder//.lastSeen(now())
+                            .knownIPs(new HashMap<>() {{put(address, now);}})
+                            .knownNames(new HashMap<>() {{put(name, now);}})
+                            .id(playerId);
+                });
         service.save(data);
 
         // queue player
@@ -46,7 +51,7 @@ public abstract class EventDispatchBase {
     }
 
     protected PlayerResult player(UUID playerId) {
-        return mod.getEntityService().queuePlayer(playerId);
+        return mod.queuePlayer(playerId);
     }
 
     protected <C> void handleThrowable(
