@@ -2,11 +2,11 @@ package com.ampznetwork.banmod.api.model;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
+import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import org.comroid.api.func.util.GetOrCreate;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
@@ -18,21 +18,24 @@ import static java.time.Instant.*;
 @Value
 @Builder
 @RequiredArgsConstructor
-public class StandardInfractionFactory extends Infraction.Builder<Infraction, Infraction.Builder> implements Consumer<Infraction.Builder> {
+public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
+    public static Builder base(BanMod mod, UUID playerId, PunishmentCategory category, @Nullable UUID issuer) {
+        return base(mod, playerId, category, null, issuer);
+    }
+
     public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
         return base(mod, playerId, null, punishment, issuer);
     }
 
     public static Builder base(
-            BanMod mod, UUID playerId, GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> category, @Nullable Punishment punishment,
+            BanMod mod,
+            UUID playerId,
+            PunishmentCategory category,
+            @Nullable Punishment punishment,
             @Nullable UUID issuer
     ) {
         if (category == null) category = mod.getDefaultCategory();
         return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, GetOrCreate<PunishmentCategory, PunishmentCategory.Builder> category, @Nullable UUID issuer) {
-        return base(mod, playerId, category, null, issuer);
     }
 
     BanMod mod;
@@ -57,8 +60,8 @@ public class StandardInfractionFactory extends Infraction.Builder<Infraction, In
     @SuppressWarnings("ConstantValue")
     public void accept(Infraction.Builder builder) {
         var service = mod.getEntityService();
-        var rep    = service.findRepetition(playerId, category);
-        var target = service.getOrCreatePlayerData(playerId).requireNonNull();
+        var rep    = mod.findRepetition(playerId, category);
+        var target = service.getAccessor(PlayerData.TYPE).getOrCreate(playerId).requireNonNull();
         var punish = punishment != null ? punishment : category.calculatePunishment(rep).orElse(Punishment.Kick);
         var expire = duration != null ? duration : category.calculateDuration(rep);
         var now    = now();

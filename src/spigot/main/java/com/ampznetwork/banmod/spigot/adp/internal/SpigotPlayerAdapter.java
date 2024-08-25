@@ -58,7 +58,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
     public String getName(UUID playerId) {
         final var fetch = PlayerData.fetchUsername(playerId);
         return Optional.ofNullable(banMod.getServer().getOfflinePlayer(playerId).getName())
-                .or(() -> banMod.getEntityService().getPlayerData(playerId)
+                .or(() -> banMod.getEntityService().getAccessor(PlayerData.TYPE).get(playerId)
                         .flatMap(PlayerData::getLastKnownName))
                 .orElseGet(fetch::join);
     }

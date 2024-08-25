@@ -107,6 +107,15 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 });
     }
 
+    default int findRepetition(UUID playerId, PunishmentCategory category) {
+        return (int) getEntityService().getAccessor(Infraction.TYPE)
+                .querySelect("select i.* from banmod_infractions i where i.player_id = :playerId",
+                        Map.of("playerId", playerId))
+                .filter(i -> i.getCategory().equals(category) && !i.getPunishment().isInherentlyTemporary())
+                .count();
+    }
+
+
     @UtilityClass
     final class Strings {
         public static final String AddonName       = "BanMod";
