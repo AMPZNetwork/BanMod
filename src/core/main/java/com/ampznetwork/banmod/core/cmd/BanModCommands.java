@@ -266,7 +266,7 @@ public class BanModCommands {
                 .orElseThrow(() -> new Command.Error("User is not muted"));
         if (infraction.getPlayer().getId().equals(issuer))
             throw new Command.Error("You cannot unmute yourself!");
-        mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
+        mod.revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
@@ -354,7 +354,7 @@ public class BanModCommands {
                 .orElseThrow(() -> new Command.Error("User is not banned"));
         if (infraction.getPlayer().getId() == issuer)
             throw new Command.Error("You cannot unban yourself!");
-        mod.getEntityService().revokeInfraction(infraction.getId(), issuer);
+        mod.revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unbanned").color(GREEN);
     }
 

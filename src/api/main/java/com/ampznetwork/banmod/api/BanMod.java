@@ -115,6 +115,14 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 .count();
     }
 
+    default void revokeInfraction(UUID id, UUID revoker) {
+        var acs = getEntityService().getAccessor(Infraction.TYPE);
+        acs.queryUpdate(acs.getManager()
+                .createQuery("update Infraction i set i.revoker = :revoker, i.revokedAt = :now where i.id = :id")
+                .setParameter("revoker", revoker)
+                .setParameter("now", Instant.now())
+                .setParameter("id", id));
+    }
 
     @UtilityClass
     final class Strings {
