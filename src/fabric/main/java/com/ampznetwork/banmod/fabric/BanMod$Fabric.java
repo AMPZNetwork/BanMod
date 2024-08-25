@@ -5,9 +5,9 @@ import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
-import com.ampznetwork.banmod.fabric.cfg.Config;
 import com.ampznetwork.libmod.fabric.LibMod$Fabric;
 import com.ampznetwork.libmod.fabric.SubMod$Fabric;
+import com.ampznetwork.libmod.fabric.config.Config;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import lombok.Getter;
@@ -42,7 +42,7 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
     }
 
     private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);
-    private       Config              config        = Config.createAndLoad();
+    private BanModConfig config = Config.createAndLoad(BanModConfig.class);
     private       MinecraftServer     server;
 
     public BanMod$Fabric() {
@@ -51,7 +51,7 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
 
     @Override
     public @Nullable String getBanAppealUrl() {
-        return config.banAppealUrl();
+        return config.getBanAppealUrl();
     }
 
     @Override
@@ -61,12 +61,12 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
 
     @Override
     public boolean allowUnsafeConnections() {
-        return config.allowUnsafeConnections();
+        return config.isAllowUnsafeConnections();
     }
 
     @Override
     public void executeSync(Runnable task) {
-        task.run(); // todo: is this safe on fabric?
+        task.run(); // todo: is this safe on fabric? <-- it is not, fixme
     }
 
     @Override

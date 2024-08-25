@@ -1,0 +1,7 @@
+{
+  // NOTE: json5 is not fully supported, only comments
+  // you can put a URL here which players can use to appeal for being unbanned
+  "banAppealUrl": "",
+  //set to 'true' if you want to allow connecting while BanMod is experiencing a downtime, e.g. through a database downtime
+  "allowUnsafeConnections": false,
+}

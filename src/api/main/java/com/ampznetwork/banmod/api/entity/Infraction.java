@@ -41,13 +41,13 @@ import static lombok.Builder.*;
 @RequiredArgsConstructor
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Infraction extends DbObject.ByUuid {
-    public static final EntityType<UUID, Infraction, Infraction.Builder> TYPE
+public class Infraction extends DbObject {
+    public static final EntityType<Infraction, Builder> TYPE
                                                                                       = new EntityType<>(Infraction::builder,
             null,
             Infraction.class,
             Infraction.Builder.class);
-    public static final Instant                                          TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
+    public static final Instant                         TOO_EARLY                     = Instant.EPOCH.plus(Duration.ofDays(2));
     public static final Predicate<Infraction>                            IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
                                                                                              && (i.getRevoker() == null
                                                                                                  && (i.getExpires() == null || i.getExpires().isAfter(now())

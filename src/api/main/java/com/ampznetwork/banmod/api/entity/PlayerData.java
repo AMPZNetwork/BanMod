@@ -25,7 +25,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static java.time.Instant.*;
 import static org.comroid.api.Polyfill.*;
@@ -36,26 +35,25 @@ import static org.comroid.api.Polyfill.*;
 @SuperBuilder
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "banmod_playerdata")
+@Table(name = "playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
-    public static final EntityType<UUID, PlayerData, Builder> TYPE
-                                                                                 = new EntityType<>(PlayerData::builder,
+    public static final EntityType<PlayerData, Builder>   TYPE               = new EntityType<>(PlayerData::builder,
             Player.TYPE,
             PlayerData.class,
             PlayerData.Builder.class);
-    public static final Comparator<Map.Entry<?, Instant>>     MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+    public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @ElementCollection
     @lombok.Builder.Default
     @Column(name = "seen")
     @MapKeyColumn(name = "name")
-    @CollectionTable(name = "banmod_playerdata_names", joinColumns = @JoinColumn(name = "id"))
-    Map<@Doc("name") String, @Doc("lastSeen") Instant> knownNames = new HashMap<>();
+    @CollectionTable(name = "playerdata_names", joinColumns = @JoinColumn(name = "id"))
+    Map<@Doc("name") String, @Doc("seen") Instant> knownNames = new HashMap<>();
     @ElementCollection
     @Column(name = "seen")
     @MapKeyColumn(name = "ip")
-    @CollectionTable(name = "banmod_playerdata_ips", joinColumns = @JoinColumn(name = "id"))
-    Map<@Doc("ip") String, @Doc("lastSeen") Instant> knownIPs = new HashMap<>();
+    @CollectionTable(name = "playerdata_ips", joinColumns = @JoinColumn(name = "id"))
+    Map<@Doc("ip") String, @Doc("seen") Instant>   knownIPs   = new HashMap<>();
 
     public Optional<String> getLastKnownName() {
         return knownNames.entrySet().stream()
