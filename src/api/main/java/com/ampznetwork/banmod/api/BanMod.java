@@ -52,6 +52,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     default @NotNull PunishmentCategory getDefaultCategory() {
         return getEntityService().getAccessor(PunishmentCategory.TYPE)
+                .by(PunishmentCategory::getName)
                 .getOrCreate("default")
                 .setUpdateOriginal(original -> {
                     original.getPunishmentThresholds().putAll(Map.of(
