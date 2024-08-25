@@ -7,10 +7,12 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
+import com.ampznetwork.libmod.api.entity.DbObject;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
+import org.comroid.api.Polyfill;
 import org.comroid.api.attr.Named;
 import org.comroid.api.func.util.Bitmask;
 import org.comroid.api.func.util.Command;
@@ -38,20 +40,20 @@ import static org.comroid.api.func.util.Command.*;
 public class BanModCommands {
     @Command
     public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
-        mod.getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
+        mod.getLib().getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
         var      text = text();
         var      c    = 0;
-        Object[] buffer;
+        DbObject[] buffer;
         switch (method) {
             case everything:
             case infractions:
-                var infractions = service.getInfractions().toList();
+                var infractions = service.getAccessor(Infraction.TYPE).all().toList();
 
                 // remove expired infractions
                 buffer = infractions.stream()
                         .filter(Infraction.IS_IN_EFFECT.negate())
-                        .toArray();
+                        .toArray(DbObject[]::new);
                 c = service.delete(buffer);
                 text.append(text("\nRemoved ")
                         .append(text(c).color(GREEN))
@@ -65,7 +67,7 @@ public class BanModCommands {
                 buffer = infractions.stream()
                         .sorted(Infraction.BY_NEWEST)
                         .filter(infr -> !playerIds.add(infr.getPlayer().getId()))
-                        .toArray();
+                        .toArray(DbObject[]::new);
                 c = service.delete(buffer);
                 text.append(text("\nRemoved ")
                         .append(text(c).color(GREEN))
@@ -77,7 +79,7 @@ public class BanModCommands {
                     break;
             case players:
                 var c0 = new int[]{ 0, 0 };
-                buffer = service.getPlayerData()
+                buffer = service.getAccessor(PlayerData.TYPE).all()
                         .filter(data -> {
                             var name = data.getKnownNames().size() > 1;
                             var ip = data.getKnownIPs().size() > 1;
@@ -102,7 +104,7 @@ public class BanModCommands {
                             }});
                         })
                         .peek(service::save)
-                        .toArray();
+                        .toArray(DbObject[]::new);
 
                 text.append(text("\nCleaned up ")
                         .append(text(buffer.length).color(GREEN))
@@ -121,8 +123,8 @@ public class BanModCommands {
     @Command
     public Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
-        var target = mod.getPlayerAdapter().getId(name);
-        var data = mod.getEntityService().getPlayerData(target)
+        var target = mod.getLib().getPlayerAdapter().getId(name);
+        var data = mod.getEntityService().getAccessor(PlayerData.TYPE).get(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
         var text = text("")
                 .append(text("Player ").decorate(BOLD))
@@ -152,7 +154,7 @@ public class BanModCommands {
                             .hoverEvent(showText(text("Last seen: " + BanMod.Displays.formatTimestamp(knownIp.getValue()))))
                             .color(YELLOW));
         text = text.append(text("\nActive Infractions:"));
-        var infractions = mod.getEntityService().getInfractions(target)
+        var infractions = mod.getEntityService().getAccessor(Infraction.TYPE).all()
                 .filter(Infraction.IS_IN_EFFECT)
                 .toList();
         if (infractions.isEmpty())
@@ -163,7 +165,7 @@ public class BanModCommands {
                     .append(text(" by "))
                     .append(text(infraction.getIssuer() == null
                                  ? "Server"
-                                 : mod.getPlayerAdapter().getName(infraction.getIssuer()))
+                                 : mod.getLib().getPlayerAdapter().getName(infraction.getIssuer()))
                             .color(AQUA));
             var expires = infraction.getExpires();
             if (expires != null)
@@ -183,10 +185,11 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        var cat = mod.getEntityService().getCategory(category)
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).get(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
-        var infraction = mod.getEntityService().createInfraction()
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
+                .create()
                 .complete(base(mod, tgt, cat, issuer)
                         .reason(reason)
                         .build());
@@ -214,17 +217,16 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
-        if (mod.queuePlayer(tgt).isMuted())
+        var tgt          = mod.getLib().getPlayerAdapter().getId(name);
+        var playerResult = mod.queuePlayer(tgt);
+        if (playerResult.isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
         @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
-                .getOrCreate(UUID.randomUUID())
-                .setCreate(() -> base(mod, tgt, Punishment.Mute, issuer)
+                .create()
+                .complete(base(mod, tgt, Punishment.Mute, issuer)
                         .duration(parseDuration(durationText))
-                        .reason(finalReason))
-                .complete(bld ->)
-                .complete(
+                        .reason(finalReason)
                         .build());
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
@@ -238,10 +240,10 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        if (mod.getEntityService().queuePlayer(tgt).isMuted())
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        if (mod.queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
-        var infraction = mod.getEntityService().createInfraction()
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
                 .complete(base(mod, tgt, Punishment.Mute, issuer)
                         .permanent(true)
                         .reason(reason)
@@ -255,9 +257,10 @@ public class BanModCommands {
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
     ) {
-        var tgt = mod.getPlayerAdapter().getId(name);
-        var infraction = mod.getEntityService().getInfractions(tgt)
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).all()
                 .filter(Infraction.IS_IN_EFFECT)
+                .filter(i -> i.getPlayer().getId().equals(tgt))
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not muted"));
@@ -276,8 +279,8 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        var infraction = mod.getEntityService().createInfraction()
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
                 .complete(base(mod, tgt, Punishment.Kick, issuer)
                         .reason(reason)
                         .build());
@@ -303,10 +306,10 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        if (mod.getEntityService().queuePlayer(tgt).isBanned())
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
-        var infraction = mod.getEntityService().createInfraction()
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
                 .complete(base(mod, tgt, Punishment.Ban, issuer)
                         .duration(parseDuration(durationText))
                         .reason(reason)
@@ -324,10 +327,10 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getPlayerAdapter().getId(name);
-        if (mod.getEntityService().queuePlayer(tgt).isBanned())
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
-        var infraction = mod.getEntityService().createInfraction()
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
                 .complete(base(mod, tgt, Punishment.Ban, issuer)
                         .permanent(true)
                         .reason(reason)
@@ -342,9 +345,10 @@ public class BanModCommands {
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
     ) {
-        var tgt = mod.getPlayerAdapter().getId(name);
-        var infraction = mod.getEntityService().getInfractions(tgt)
+        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).all()
                 .filter(Infraction.IS_IN_EFFECT)
+                .filter(i -> i.getPlayer().getId().equals(tgt))
                 .filter(i -> i.getPunishment() == Punishment.Ban)
                 .findAny()
                 .orElseThrow(() -> new Command.Error("User is not banned"));
@@ -402,7 +406,7 @@ public class BanModCommands {
         public Component list(BanMod mod) {
             // todo: use book adapter
             var text = text().append(text("Available Punishment categories:").decorate(BOLD));
-            for (var category : mod.getEntityService().getCategories().toList()) {
+            for (var category : mod.getEntityService().getAccessor(PunishmentCategory.TYPE).all().toList()) {
                 text.append(text("\n"))
                         .append(text(category.getName())
                                 .color(AQUA).decorate(UNDERLINED))
@@ -471,12 +475,12 @@ public class BanModCommands {
                 repetitionBase = Math.max(2, repetitionBase);
             else repetitionBase = 2d;
             var update = new boolean[]{ false };
-            var category = mod.getEntityService().getCategory(name)
+            var category = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).get(name)
                     .map(it -> {
                         update[0] = true;
                         return it.toBuilder();
                     })
-                    .orElseGet(PunishmentCategory::builder)
+                    .orElseGet(() -> Polyfill.uncheckedCast(PunishmentCategory.builder()))
                     .name(name)
                     .baseDuration(duration)
                     .repetitionExpBase(repetitionBase)
@@ -504,7 +508,8 @@ public class BanModCommands {
             if ("default".equals(name))
                 throw new Command.Error("Cannot delete the default category!");
             var service = mod.getEntityService();
-            var cat = service.getCategory(name);
+            var cat = service.getAccessor(PunishmentCategory.TYPE).get(name)
+                    .orElseThrow(() -> new Command.Error("Could not find category named " + name));
             return service.delete(cat) > 0
                    ? text("Deleted category " + name).color(RED)
                    : text("Could not delete category " + name).color(DARK_RED);
@@ -517,7 +522,7 @@ public class BanModCommands {
 
         @Command
         public Component vanilla(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
-            mod.getPlayerAdapter().send(playerId, text("Starting import process..."));
+            mod.getLib().getPlayerAdapter().send(playerId, text("Starting import process..."));
             try (var importer = new VanillaBansImporter(mod)) {
                 var result = importer.run();
                 var text = text("Imported ")
@@ -536,8 +541,8 @@ public class BanModCommands {
 
         @Command
         public Component litebans(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
-            mod.getPlayerAdapter().send(playerId, text("Starting import process..."));
-            try (var importer = new LiteBansImporter(mod, mod.getDatabaseInfo())) {
+            mod.getLib().getPlayerAdapter().send(playerId, text("Starting import process..."));
+            try (var importer = new LiteBansImporter(mod, mod.getLib().getDatabaseInfo())) {
                 var result = importer.run();
                 var text = text("Imported ")
                         .append(text(result.muteCount() + " Mutes").color(Punishment.Mute.getColor()))
