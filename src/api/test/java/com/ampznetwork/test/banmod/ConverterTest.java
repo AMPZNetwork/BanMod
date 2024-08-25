@@ -1,10 +1,12 @@
 package com.ampznetwork.test.banmod;
 
-import com.ampznetwork.libmod.api.model.model.convert.UuidBinary16Converter;
-import com.ampznetwork.libmod.api.model.model.convert.UuidVarchar36Converter;
+import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
+import com.ampznetwork.libmod.api.model.convert.UuidVarchar36Converter;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConverterTest {
     final UUID Uuid = UUID.fromString("30c408a8-31df-4c13-bf92-416288300613");
