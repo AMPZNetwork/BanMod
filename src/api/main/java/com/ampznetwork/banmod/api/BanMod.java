@@ -85,8 +85,6 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         });
     }
 
-    void executeSync(Runnable task);
-
     default PlayerResult queuePlayer(UUID playerId) {
         return getEntityService().getAccessor(Infraction.TYPE)
                 .querySelect("select i.* from banmod_infractions i where i.player_id = :playerId",

@@ -62,11 +62,6 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
     }
 
     @Override
-    public void executeSync(Runnable task) {
-        Bukkit.getScheduler().runTask(this, task);
-    }
-
-    @Override
     public void onLoad() {
         cmdr.register(BanModCommands.class);
         cmdr.register(this);

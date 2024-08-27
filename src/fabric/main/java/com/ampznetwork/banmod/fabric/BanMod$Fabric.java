@@ -65,11 +65,6 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
     }
 
     @Override
-    public void executeSync(Runnable task) {
-        task.run(); // todo: is this safe on fabric? <-- it is not, fixme
-    }
-
-    @Override
     public void onInitialize() {
         (super.lib = LibMod$Fabric.INSTANCE).register(this);
 
