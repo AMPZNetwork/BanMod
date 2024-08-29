@@ -21,6 +21,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.kyori.adventure.text.Component;
 import net.minecraft.command.CommandRegistryAccess;
@@ -42,16 +43,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static java.util.function.Predicate.not;
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.empty;
+import static java.util.function.Predicate.*;
 import static java.util.stream.Stream.of;
-import static net.minecraft.server.command.CommandManager.RegistrationEnvironment;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-import static org.comroid.api.func.util.Debug.isDebug;
-import static org.comroid.api.func.util.Streams.expand;
-import static org.comroid.api.func.util.Streams.expandRecursive;
+import static java.util.stream.Stream.*;
+import static net.minecraft.server.command.CommandManager.*;
+import static org.comroid.api.func.util.Debug.*;
+import static org.comroid.api.func.util.Streams.*;
 
 @Value
 @Slf4j
@@ -165,6 +162,26 @@ public class Command$Manager$Adapter$Fabric extends Command.Manager.Adapter
         // this node
         final var base = literal(node.getName());
         if (isDebug()) System.out.printf("%s Command '%s'\n", pad, base.getLiteral());
+
+        perm:
+        if (node instanceof Command.Node.Callable callable) {
+            var perm = callable.getAttribute().permission();
+
+            if (Command.EmptyAttribute.equals(perm))
+                break perm;
+
+            if (perm.matches("\\d+")) {
+                // command wants OP level
+                var lv = Integer.parseInt(perm);
+                if (isDebug()) System.out.printf("%s-> Requires OP level %d\n", pad, lv);
+                //Constraint.Range.inside(0, 4, lv, "OP Level").run();
+                base.requires(scs -> scs.hasPermissionLevel(lv));
+            } else {
+                // assume permission string
+                if (isDebug()) System.out.printf("%s-> Requires permission %s\n", pad, perm);
+                base.requires(Permissions.require(perm, 3)); // op level 3 is minecraft's default for kick and ban
+            }
+        }
 
         if (node instanceof Command.Node.Call call) {
             var parameters = call.getParameters();

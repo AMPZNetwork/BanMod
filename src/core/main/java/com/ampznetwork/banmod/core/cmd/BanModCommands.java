@@ -24,35 +24,27 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.base;
-import static java.time.Instant.now;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.event.ClickEvent.openUrl;
-import static net.kyori.adventure.text.event.HoverEvent.showText;
-import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GREEN;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
-import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
-import static org.comroid.api.Polyfill.ordinal;
-import static org.comroid.api.Polyfill.parseDuration;
-import static org.comroid.api.func.util.Command.Arg;
+import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.*;
+import static java.time.Instant.*;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.event.ClickEvent.*;
+import static net.kyori.adventure.text.event.HoverEvent.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
+import static org.comroid.api.Polyfill.*;
+import static org.comroid.api.func.util.Command.*;
 
 @UtilityClass
 public class BanModCommands {
-    @Command
-    public Component reload(BanMod mod) {
+    @Command(permission = "banmod.reload")
+    public static Component reload(BanMod mod) {
         mod.reload();
         return text("Configuration reloaded!")
                 .color(GREEN);
     }
 
-    @Command
-    public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
+    @Command(permission = "banmod.cleanup")
+    public static Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
         var      text = text();
@@ -133,8 +125,8 @@ public class BanModCommands {
         return text.build();
     }
 
-    @Command
-    public Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
+    @Command(permission = "banmod.lookup")
+    public static Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
         var target = mod.getPlayerAdapter().getId(name);
         var data = mod.getEntityService().getPlayerData(target)
@@ -188,8 +180,8 @@ public class BanModCommands {
         return text;
     }
 
-    @Command
-    public Component punish(
+    @Command(permission = "banmod.punish")
+    public static Component punish(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -212,15 +204,15 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component mutelist(
+    @Command(permission = "banmod.mutelist")
+    public static Component mutelist(
             BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
     ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Mute);
     }
 
-    @Command
-    public Component tempmute(
+    @Command(permission = "banmod.tempmute")
+    public static Component tempmute(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -240,8 +232,8 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component mute(
+    @Command(permission = "banmod.mute")
+    public static Component mute(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -260,8 +252,8 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component unmute(
+    @Command(permission = "banmod.unmute")
+    public static Component unmute(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
@@ -278,8 +270,8 @@ public class BanModCommands {
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
-    @Command
-    public Component kick(
+    @Command(permission = "banmod.kick")
+    public static Component kick(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -297,15 +289,15 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component banlist(
+    @Command(permission = "banmod.banlist")
+    public static Component banlist(
             BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
     ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
     }
 
-    @Command
-    public Component tempban(
+    @Command(permission = "banmod.tempban")
+    public static Component tempban(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -326,8 +318,8 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component ban(
+    @Command(permission = "banmod.ban")
+    public static Component ban(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
@@ -347,8 +339,8 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command
-    public Component unban(
+    @Command(permission = "banmod.unban")
+    public static Component unban(
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
@@ -369,12 +361,12 @@ public class BanModCommands {
         infractions, players, everything
     }
 
-    @Command
+    @Command(permission = "banmod.infraction")
     @UtilityClass
     @Alias("punishment")
     public class infraction {
         @Command
-        public static Component list(
+        public Component list(
                 BanMod mod,
                 @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page,
                 @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false, stringMode = StringMode.GREEDY)
@@ -386,7 +378,7 @@ public class BanModCommands {
         }
 
         @Command
-        public static Component set(
+        public Component set(
                 BanMod mod,
                 @NotNull @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class) String query,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
@@ -396,11 +388,11 @@ public class BanModCommands {
         }
     }
 
-    @Command
+    @Command(permission = "banmod.category")
     @UtilityClass
     public class category {
         @Command
-        public static Component duration(
+        public Component duration(
                 BanMod mod,
                 @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "player", autoFillProvider = AutoFillProvider.Players.class) String playerName,
@@ -423,10 +415,10 @@ public class BanModCommands {
                         .sorted(Punishment.BY_SEVERITY)
                         .toList();
                 var fltpd = thresholds.stream()
-                        .filter(e -> !e.getValue().isInherentlyTemporary())
-                        .mapToInt(Map.Entry::getKey)
-                        .findFirst()
-                        .orElse(0) - 1;
+                                    .filter(e -> !e.getValue().isInherentlyTemporary())
+                                    .mapToInt(Map.Entry::getKey)
+                                    .findFirst()
+                                    .orElse(0) - 1;
                 for (int i = 0; i < thresholds.size(); i++) {
                     var e          = thresholds.get(i);
                     var punishment = e.getValue();
@@ -501,7 +493,7 @@ public class BanModCommands {
         }
 
         @Command
-        public static Component set(
+        public Component set(
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
@@ -525,7 +517,6 @@ public class BanModCommands {
     @UtilityClass
     @Command(value = "import", permission = "4")
     public class Import {
-
         @Command
         public Component vanilla(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
             mod.getPlayerAdapter().send(playerId, text("Starting import process..."));
