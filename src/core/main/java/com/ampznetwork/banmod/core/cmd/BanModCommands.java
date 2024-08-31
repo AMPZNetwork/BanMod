@@ -12,7 +12,6 @@ import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
-import org.comroid.api.Polyfill;
 import org.comroid.api.attr.Named;
 import org.comroid.api.func.util.Bitmask;
 import org.comroid.api.func.util.Command;
@@ -42,8 +41,8 @@ public class BanModCommands {
     public Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getLib().getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
-        var      text = text();
-        var      c    = 0;
+        var       text    = text();
+        var       c       = 0;
         DbObject[] buffer;
         switch (method) {
             case everything:
@@ -188,11 +187,13 @@ public class BanModCommands {
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
         var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
+        final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
                 .create()
-                .complete(base(mod, tgt, cat, issuer)
-                        .reason(reason)
-                        .build());
+                .complete(e -> base(mod, tgt, cat, issuer)
+                        .reason(finalReason)
+                        .build()
+                        .accept(e));
 
         // apply infraction
         mod.realize(infraction);
@@ -224,10 +225,11 @@ public class BanModCommands {
         @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
                 .create()
-                .complete(base(mod, tgt, Punishment.Mute, issuer)
+                .complete(e -> base(mod, tgt, Punishment.Mute, issuer)
                         .duration(parseDuration(durationText))
                         .reason(finalReason)
-                        .build());
+                        .build()
+                        .accept(e));
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
@@ -243,11 +245,13 @@ public class BanModCommands {
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
         if (mod.queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
+        final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
-                .complete(base(mod, tgt, Punishment.Mute, issuer)
+                .complete(e -> base(mod, tgt, Punishment.Mute, issuer)
                         .permanent(true)
-                        .reason(reason)
-                        .build());
+                        .reason(finalReason)
+                        .build()
+                        .accept(e));
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
@@ -280,10 +284,12 @@ public class BanModCommands {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
-                .complete(base(mod, tgt, Punishment.Kick, issuer)
-                        .reason(reason)
-                        .build());
+                .complete(e -> base(mod, tgt, Punishment.Kick, issuer)
+                        .reason(finalReason)
+                        .build()
+                        .accept(e));
 
         mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
@@ -309,11 +315,13 @@ public class BanModCommands {
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
         if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
+        final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
-                .complete(base(mod, tgt, Punishment.Ban, issuer)
+                .complete(e -> base(mod, tgt, Punishment.Ban, issuer)
                         .duration(parseDuration(durationText))
-                        .reason(reason)
-                        .build());
+                        .reason(finalReason)
+                        .build()
+                        .accept(e));
         mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
@@ -330,11 +338,13 @@ public class BanModCommands {
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
         if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
+        final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
-                .complete(base(mod, tgt, Punishment.Ban, issuer)
+                .complete(e -> base(mod, tgt, Punishment.Ban, issuer)
                         .permanent(true)
-                        .reason(reason)
-                        .build());
+                        .reason(finalReason)
+                        .build()
+                        .accept(e));
         mod.realize(infraction);
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
@@ -474,17 +484,14 @@ public class BanModCommands {
             if (repetitionBase != null)
                 repetitionBase = Math.max(2, repetitionBase);
             else repetitionBase = 2d;
-            var update = new boolean[]{ false };
-            var category = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(name)
-                    .map(it -> {
-                        update[0] = true;
-                        return it.toBuilder();
-                    })
-                    .orElseGet(() -> Polyfill.uncheckedCast(PunishmentCategory.builder()))
-                    .name(name)
-                    .baseDuration(duration)
-                    .repetitionExpBase(repetitionBase)
-                    .build();
+            var                    update              = new boolean[]{ false };
+            final @Nullable Double finalRepetitionBase = repetitionBase;
+            var category = mod.getEntityService()
+                    .getAccessor(PunishmentCategory.TYPE)
+                    .by(PunishmentCategory::getName)
+                    .getOrCreate(name)
+                    .setUpdateOriginal(cat -> cat.setName(name).setBaseDuration(duration).setRepetitionExpBase(finalRepetitionBase))
+                    .complete(build -> build.name(name).baseDuration(duration).repetitionExpBase(finalRepetitionBase));
             mod.getEntityService().save(category);
             return text("Category ")
                     .append(text(name).color(AQUA))

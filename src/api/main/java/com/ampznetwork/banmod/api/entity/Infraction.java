@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
+import org.comroid.api.Polyfill;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,6 @@ import java.util.function.Predicate;
 
 import static java.time.Instant.*;
 import static java.util.function.Predicate.*;
-import static lombok.Builder.*;
 
 @Data
 @Entity
@@ -42,22 +42,21 @@ import static lombok.Builder.*;
 @Table(name = "banmod_infractions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction extends DbObject {
-    public static final EntityType<Infraction, Builder> TYPE
-                                                                                      = new EntityType<>(Infraction::builder,
+    public static final EntityType<Infraction, Builder<Infraction, ?>> TYPE         = Polyfill.uncheckedCast(new EntityType<>(Infraction::builder,
             null,
             Infraction.class,
-            Infraction.Builder.class);
-    public static final Instant                         TOO_EARLY                     = Instant.EPOCH.plus(Duration.ofDays(2));
-    public static final Predicate<Infraction>                            IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
-                                                                                             && (i.getRevoker() == null
-                                                                                                 && (i.getExpires() == null || i.getExpires().isAfter(now())
-                                                                                                     || i.getExpires()
-                                                                                                             .isBefore(TOO_EARLY))) /* fix for a conversion bug */;
-    public static       Comparator<Infraction>                           BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
+            Infraction.Builder.class));
+    public static final Instant                                        TOO_EARLY    = Instant.EPOCH.plus(Duration.ofDays(2));
+    public static final Predicate<Infraction>                          IS_IN_EFFECT = i -> !i.getPunishment().isInherentlyTemporary()
+                                                                                           && (i.getRevoker() == null
+                                                                                               && (i.getExpires() == null || i.getExpires().isAfter(now())
+                                                                                                   || i.getExpires()
+                                                                                                           .isBefore(TOO_EARLY))) /* fix for a conversion bug */;
+    public static       Comparator<Infraction>                         BY_SEVERITY  = Comparator.<Infraction>comparingInt(i ->
             i.getPunishment().ordinal()).reversed();
-    public static       Comparator<Infraction>                           BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
+    public static       Comparator<Infraction>                         BY_NEWEST    = Comparator.<Infraction>comparingLong(i ->
             i.timestamp.toEpochMilli()).reversed();
-    public static       Comparator<Infraction>                           BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
+    public static       Comparator<Infraction>                         BY_SHORTEST  = Comparator.<Infraction>comparingLong(i ->
             i.expires == null
             ? Long.MIN_VALUE
             : i.expires.toEpochMilli()).reversed();
@@ -70,26 +69,26 @@ public class Infraction extends DbObject {
     @NotNull
     Punishment punishment;
     @NotNull
-    @Default
+    @lombok.Builder.Default
     Instant    timestamp = now();
     @Nullable
-    @Default
+    @lombok.Builder.Default
     Instant    expires   = null;
     @Nullable
-    @Default
+    @lombok.Builder.Default
     String     reason    = null;
     @Nullable
-    @Default
+    @lombok.Builder.Default
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
     UUID       issuer    = null;
     @Nullable
-    @Default
+    @lombok.Builder.Default
     @Column(columnDefinition = "binary(16)")
     @Convert(converter = UuidBinary16Converter.class)
     UUID       revoker   = null;
     @Nullable
-    @Default
+    @lombok.Builder.Default
     Instant    revokedAt = null;
 
     public @Nullable String getReason() {

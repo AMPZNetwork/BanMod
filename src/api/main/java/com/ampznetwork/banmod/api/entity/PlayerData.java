@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.comroid.annotations.Doc;
+import org.comroid.api.Polyfill;
 import org.jetbrains.annotations.Contract;
 
 import javax.persistence.CollectionTable;
@@ -39,11 +40,11 @@ import static org.comroid.api.Polyfill.*;
 @Table(name = "playerdata")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
-    public static final EntityType<PlayerData, Builder>   TYPE               = new EntityType<>(PlayerData::builder,
+    public static final EntityType<PlayerData, Builder<PlayerData, ?>> TYPE               = Polyfill.uncheckedCast(new EntityType<>(PlayerData::builder,
             Player.TYPE,
             PlayerData.class,
-            PlayerData.Builder.class);
-    public static final Comparator<Map.Entry<?, Instant>> MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
+            PlayerData.Builder.class));
+    public static final Comparator<Map.Entry<?, Instant>>              MOST_RECENTLY_SEEN = Comparator.comparingLong(e -> e.getValue().toEpochMilli());
     @Singular
     @ElementCollection
     @Column(name = "seen")

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
+import org.comroid.api.Polyfill;
 import org.comroid.api.attr.Described;
 import org.comroid.api.attr.Named;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +31,15 @@ import java.util.Optional;
 @Entity
 @AllArgsConstructor
 @RequiredArgsConstructor
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @EqualsAndHashCode(of = "name")
 @Table(name = "banmod_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory extends DbObject.WithName implements Named, Described, DefaultReason {
-    public static final EntityType<PunishmentCategory, Builder> TYPE
-            = new EntityType<>(PunishmentCategory::builder, null, PunishmentCategory.class, Builder.class);
+    public static final EntityType<PunishmentCategory, Builder<PunishmentCategory, ?>> TYPE = Polyfill.uncheckedCast(new EntityType<>(PunishmentCategory::builder,
+            null,
+            PunishmentCategory.class,
+            Builder.class));
 
     public static PunishmentCategory.Builder defaultBuilder(String name) {
         return builder().name(name)

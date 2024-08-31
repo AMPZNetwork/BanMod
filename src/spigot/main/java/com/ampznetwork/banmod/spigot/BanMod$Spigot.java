@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.core.cmd.BanModCommands;
 import com.ampznetwork.banmod.spigot.adp.internal.SpigotEventDispatch;
-import com.ampznetwork.banmod.spigot.adp.internal.SpigotPlayerAdapter;
 import com.ampznetwork.libmod.api.entity.Player;
 import com.ampznetwork.libmod.spigot.SubMod$Spigot;
 import lombok.Getter;
@@ -28,7 +27,6 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
 
-    private final SpigotPlayerAdapter playerAdapter = new SpigotPlayerAdapter(this);
     private final SpigotEventDispatch eventDispatch = new SpigotEventDispatch(this);
     private       FileConfiguration   config;
 
@@ -77,6 +75,7 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
 
     @Override
     public void onEnable() {
+        super.onEnable();
         Bukkit.getPluginManager().registerEvents(eventDispatch, this);
     }
 

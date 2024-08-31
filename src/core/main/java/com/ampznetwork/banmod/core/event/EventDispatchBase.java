@@ -40,7 +40,7 @@ public abstract class EventDispatchBase {
                 .complete(builder -> {
                     var now = now();
                     builder//.lastSeen(now())
-                            .knownIPs(new HashMap<>() {{put(address, now);}})
+                            .knownIPs(new HashMap<>() {{put(address.toString().substring(1), now);}})
                             .knownNames(new HashMap<>() {{put(name, now);}})
                             .id(playerId);
                 });

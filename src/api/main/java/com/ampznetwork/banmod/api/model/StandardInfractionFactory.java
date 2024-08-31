@@ -18,7 +18,7 @@ import static java.time.Instant.*;
 @Value
 @Builder
 @RequiredArgsConstructor
-public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
+public class StandardInfractionFactory implements Consumer<Infraction.Builder<?, ?>> {
     public static Builder base(BanMod mod, UUID playerId, PunishmentCategory category, @Nullable UUID issuer) {
         return base(mod, playerId, category, null, issuer);
     }
