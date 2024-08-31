@@ -34,7 +34,7 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
         var service = banMod.getEntityService();
         return banMod.getServer()
                 .getOnlinePlayers().stream()
-                .map(player -> service.getOrCreatePlayerData(player.getUniqueId())
+                .map(player -> service.getAccessor(PlayerData.TYPE).getOrCreate(player.getUniqueId())
                         .setUpdateOriginal(original -> original.pushKnownName(player.getName()))
                         .complete(builder -> builder.knownName(player.getName(), now())));
     }
@@ -46,7 +46,8 @@ public class SpigotPlayerAdapter implements PlayerAdapter {
                 .filter(player -> name.equals(player.getName()))
                 .findAny()
                 .map(OfflinePlayer::getUniqueId)
-                .or(() -> banMod.getEntityService().getPlayerData()
+                .or(() -> banMod.getEntityService()
+                        .getAccessor(PlayerData.TYPE).all()
                         .filter(pd -> pd.getKnownNames().keySet()
                                 .stream().anyMatch(name::equals))
                         .map(PlayerData::getId)

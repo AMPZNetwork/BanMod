@@ -21,7 +21,8 @@ public interface PlayerAdapter extends Command.PermissionChecker.Adapter {
 
     default String getName(UUID playerId) {
         return getBanMod().getEntityService()
-                .getOrCreatePlayerData(playerId).get()
+                .getAccessor(PlayerData.TYPE)
+                .getOrCreate(playerId).get()
                 .getOrFetchUsername().join();
     }
 

@@ -6,7 +6,7 @@ import com.ampznetwork.banmod.core.event.EventDispatchBase;
 import com.ampznetwork.banmod.fabric.BanMod$Fabric;
 import lombok.Value;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.minecraft.network.message.MessageType;
@@ -37,10 +37,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
 
     @Override
     public void onLoginStart(
-            ServerLoginNetworkHandler handler,
-            MinecraftServer server,
-            PacketSender sender,
-            ServerLoginNetworking.LoginSynchronizer synchronizer
+            ServerLoginNetworkHandler handler, MinecraftServer server, LoginPacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer
     ) {
         // thank you fabric devs for this very useful and reasonable method
         var info = handler.getConnectionInfo();
@@ -62,7 +59,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
                     handler.disconnect(serialize);
                 });
         } catch (Throwable t) {
-            handleThrowable(playerId, t, mod.as(BanMod$Fabric.class).assertion()::component2text, handler::disconnect);
+            handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
         }
     }
 

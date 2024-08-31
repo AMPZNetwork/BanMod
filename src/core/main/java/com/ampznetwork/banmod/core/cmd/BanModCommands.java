@@ -186,7 +186,7 @@ public class BanModCommands {
         if (reason == null || reason.isBlank())
             reason = null;
         var tgt = mod.getLib().getPlayerAdapter().getId(name);
-        var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).get(category)
+        var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
                 .create()
@@ -475,7 +475,7 @@ public class BanModCommands {
                 repetitionBase = Math.max(2, repetitionBase);
             else repetitionBase = 2d;
             var update = new boolean[]{ false };
-            var category = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).get(name)
+            var category = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(name)
                     .map(it -> {
                         update[0] = true;
                         return it.toBuilder();
@@ -508,7 +508,7 @@ public class BanModCommands {
             if ("default".equals(name))
                 throw new Command.Error("Cannot delete the default category!");
             var service = mod.getEntityService();
-            var cat = service.getAccessor(PunishmentCategory.TYPE).get(name)
+            var cat = service.getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(name)
                     .orElseThrow(() -> new Command.Error("Could not find category named " + name));
             return service.delete(cat) > 0
                    ? text("Deleted category " + name).color(RED)
