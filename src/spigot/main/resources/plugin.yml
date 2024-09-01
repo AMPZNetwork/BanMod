@@ -8,24 +8,10 @@ default-permission: op
 api-version: '1.18'
 database: true
 load: STARTUP
-softdepend:
+depend:
   - LibMod
+softdepend:
   - LuckPerms
-libraries:
-  # kyori
-  - net.kyori:adventure-api:4.14.0
-  - net.kyori:adventure-platform-bungeecord:4.3.3
-  # parsing
-  - com.fasterxml.jackson.core:jackson-databind:2.17.2
-  # database connector
-  - javax.persistence:javax.persistence-api:2.2
-  - org.hibernate:hibernate-core:5.6.0.Final
-  - org.jboss:jandex:2.4.5.Final
-  - com.zaxxer:HikariCP:4.0.3
-  # database drivers
-  - org.mariadb.jdbc:mariadb-java-client:3.4.0
-  - com.mysql:mysql-connector-j:8.4.0
-  - com.h2database:h2:2.2.224
 permissions:
   banmod.bypass.*:
     description: A tree of permission nodes to bypass certain punishments
