@@ -39,7 +39,7 @@ import static java.util.function.Predicate.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "banmod_infractions")
+@Table(name = "punishments")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Infraction extends DbObject {
     public static final EntityType<Infraction, Builder<Infraction, ?>> TYPE         = Polyfill.uncheckedCast(new EntityType<>(Infraction::builder,

@@ -19,9 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.CollectionTable;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import java.time.Duration;
 import java.util.Map;
@@ -33,7 +36,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(of = "name")
-@Table(name = "banmod_categories")
+@Table(name = "punishment_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory extends DbObject.WithName implements Named, Described, DefaultReason {
     public static final EntityType<PunishmentCategory, Builder<PunishmentCategory, ?>> TYPE = Polyfill.uncheckedCast(new EntityType<>(PunishmentCategory::builder,
@@ -61,7 +64,9 @@ public class PunishmentCategory extends DbObject.WithName implements Named, Desc
     double   repetitionExpBase = 3;
     @Singular
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "banmod_categories_thresholds")
+    @Column(name = "punishment_type")
+    @MapKeyColumn(name = "repetition")
+    @CollectionTable(name = "punishment_thresholds", joinColumns = @JoinColumn(name = "id"))
     Map<@NotNull Integer, Punishment> punishmentThresholds;
 
     public Duration calculateDuration(int repetition) {
