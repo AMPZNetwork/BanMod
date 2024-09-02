@@ -5,7 +5,7 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import com.ampznetwork.libmod.api.entity.DbObject;
 import com.ampznetwork.libmod.api.model.EntityType;
-import com.ampznetwork.libmod.api.model.convert.UuidBinary16Converter;
+import com.ampznetwork.libmod.api.model.convert.UuidVarchar36Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.comroid.api.Polyfill;
+import org.hibernate.annotations.Type;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,13 +80,15 @@ public class Infraction extends DbObject {
     String     reason    = null;
     @Nullable
     @lombok.Builder.Default
-    @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UuidBinary16Converter.class)
+    @Type(type = "uuid-char")
+    @Column(columnDefinition = "varchar(36)")
+    @Convert(converter = UuidVarchar36Converter.class, disableConversion = true)
     UUID       issuer    = null;
     @Nullable
     @lombok.Builder.Default
-    @Column(columnDefinition = "binary(16)")
-    @Convert(converter = UuidBinary16Converter.class)
+    @Type(type = "uuid-char")
+    @Column(columnDefinition = "varchar(36)")
+    @Convert(converter = UuidVarchar36Converter.class, disableConversion = true)
     UUID       revoker   = null;
     @Nullable
     @lombok.Builder.Default

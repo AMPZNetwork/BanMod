@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -32,7 +33,7 @@ public final class History {
     @Column(columnDefinition = "bigint(20) unsigned")
     long   id;
     @Column(columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class)
+    @Convert(converter = UuidVarchar36Converter.class) @Type(type = "uuid-char")
     UUID   uuid;
     @Column(columnDefinition = "varchar(45)")
     String ip;
