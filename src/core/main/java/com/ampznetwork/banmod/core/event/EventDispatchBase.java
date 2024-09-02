@@ -33,16 +33,19 @@ public abstract class EventDispatchBase {
         var name = mod.getLib().getPlayerAdapter().getName(playerId);
         var data = service.getAccessor(PlayerData.TYPE)
                 .getOrCreate(playerId)
-                .setUpdateOriginal(original -> original
-                        //.setLastSeen(now())
-                        .pushKnownName(name)
-                        .pushKnownIp(address))
+                .setUpdateOriginal(original -> {
+                    original.setName(name);
+                    return original
+                            .pushKnownName(name)
+                            .pushKnownIp(address);
+                })
                 .complete(builder -> {
                     var now = now();
                     builder//.lastSeen(now())
                             .knownIPs(new HashMap<>() {{put(address.toString().substring(1), now);}})
                             .knownNames(new HashMap<>() {{put(name, now);}})
-                            .id(playerId);
+                            .id(playerId)
+                            .name(name);
                 });
         service.save(data);
 
