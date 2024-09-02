@@ -4,8 +4,8 @@ import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.api.model.info.DefaultReason;
 import com.ampznetwork.libmod.api.entity.DbObject;
+import com.ampznetwork.libmod.api.entity.Player;
 import com.ampznetwork.libmod.api.model.EntityType;
-import com.ampznetwork.libmod.api.model.convert.UuidVarchar36Converter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,12 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.comroid.api.Polyfill;
-import org.hibernate.annotations.Type;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
@@ -28,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 import static java.time.Instant.*;
@@ -78,18 +74,8 @@ public class Infraction extends DbObject {
     @Nullable
     @lombok.Builder.Default
     String     reason    = null;
-    @Nullable
-    @lombok.Builder.Default
-    @Type(type = "uuid-char")
-    @Column(columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class, disableConversion = true)
-    UUID       issuer    = null;
-    @Nullable
-    @lombok.Builder.Default
-    @Type(type = "uuid-char")
-    @Column(columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class, disableConversion = true)
-    UUID       revoker   = null;
+    @ManyToOne Player issuer  = null;
+    @ManyToOne Player revoker = null;
     @Nullable
     @lombok.Builder.Default
     Instant    revokedAt = null;
@@ -106,12 +92,12 @@ public class Infraction extends DbObject {
     }
 
     public PlayerResult toResult() {
-        return new PlayerResult(player.getId(),
+        return new PlayerResult(player,
                 punishment == Punishment.Mute,
                 punishment == Punishment.Ban,
                 reason,
                 timestamp,
                 expires,
-                this.getId());
+                issuer);
     }
 }

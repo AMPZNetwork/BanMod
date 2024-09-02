@@ -68,10 +68,12 @@ public abstract class EventDispatchBase {
                 var out = new DelegateStream.Output(writer);
                 var printer = new PrintStream(out);
         ) {
+            var player = mod.getLib().getPlayerAdapter()
+                    .getPlayer(playerId).orElseThrow();
             mod.log().warn("An internal error occurred", t);
             StackTraceUtils.writeFilteredStacktrace(t, printer);
             BanMod.Resources.notify(mod, playerId, null,
-                    new PlayerResult(playerId, false, false,
+                    new PlayerResult(player, false, false,
                             "%s: %s".formatted(lessSimpleDetailedName(t.getClass()), t.getMessage()),
                             null, null, null),
                     (uuid, component) -> {

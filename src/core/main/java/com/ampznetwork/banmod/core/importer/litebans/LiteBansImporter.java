@@ -50,6 +50,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                         punishment = Punishment.Ban;
                         count[1] += 1;
                     } else throw new AssertionError("invalid entity type");
+                    var playerAdapter = mod.getLib().getPlayerAdapter();
                     return Infraction.builder()
                             .player(mod.getLib().getEntityService()
                                     .getAccessor(PlayerData.TYPE)
@@ -57,8 +58,8 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                                     .orElseThrow())
                             .category(mod.getDefaultCategory())
                             .punishment(punishment)
-                            .issuer(it.getBannedByUuid())
-                            .revoker(it.getRemovedByUuid())
+                            .issuer(playerAdapter.getPlayer(it.getBannedByUuid()).orElseThrow())
+                            .revoker(playerAdapter.getPlayer(it.getRemovedByUuid()).orElseThrow())
                             .revokedAt(it.getRemovedByDate())
                             .timestamp(Instant.ofEpochMilli(it.getTime()))
                             .expires(Instant.ofEpochMilli(it.getUntil()))

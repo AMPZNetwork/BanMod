@@ -4,6 +4,7 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -35,7 +36,8 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder<?,
             @Nullable UUID issuer
     ) {
         if (category == null) category = mod.getDefaultCategory();
-        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
+        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment)
+                .issuer(mod.getLib().getPlayerAdapter().getPlayer(issuer).orElseThrow());
     }
 
     BanMod mod;
@@ -46,10 +48,10 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder<?,
     Punishment punishment = null;
     @lombok.Builder.Default
     @Nullable
-    UUID     issuer    = null;
+    Player issuer = null;
     @lombok.Builder.Default
     @Nullable
-    String   reason    = null;
+    String reason = null;
     @lombok.Builder.Default
     @Nullable
     Duration duration  = null;

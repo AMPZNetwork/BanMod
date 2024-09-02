@@ -8,6 +8,7 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import com.ampznetwork.libmod.api.entity.DbObject;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.ampznetwork.banmod.api.model.StandardInfractionFactory.*;
@@ -162,9 +164,9 @@ public class BanModCommands {
             text = text.append(text("\n- "))
                     .append(infraction.getPunishment().toComponent(true))
                     .append(text(" by "))
-                    .append(text(infraction.getIssuer() == null
-                                 ? "Server"
-                                 : mod.getLib().getPlayerAdapter().getName(infraction.getIssuer()))
+                    .append(text(Optional.ofNullable(infraction.getIssuer())
+                            .map(Player::getName)
+                            .orElse("Server"))
                             .color(AQUA));
             var expires = infraction.getExpires();
             if (expires != null)
