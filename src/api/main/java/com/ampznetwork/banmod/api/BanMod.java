@@ -87,8 +87,8 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     default PlayerResult queuePlayer(UUID playerId) {
         return getEntityService().getAccessor(Infraction.TYPE)
-                .querySelect("select i.* from banmod_infractions i where i.player_id = :playerId",
-                        Map.of("playerId", playerId))
+                .querySelect("select i.* from punishments i where i.player_id = :playerId",
+                        Map.of("playerId", playerId.toString()))
                 .filter(Infraction.IS_IN_EFFECT)
                 .sorted(Infraction.BY_SEVERITY)
                 .map(i -> new PlayerResult(playerId,
@@ -108,7 +108,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     default int findRepetition(UUID playerId, PunishmentCategory category) {
         return (int) getEntityService().getAccessor(Infraction.TYPE)
-                .querySelect("select i.* from banmod_infractions i where i.player_id = :playerId",
+                .querySelect("select i.* from punishments i where i.player_id = :playerId",
                         Map.of("playerId", playerId))
                 .filter(i -> i.getCategory().equals(category) && !i.getPunishment().isInherentlyTemporary())
                 .count();
