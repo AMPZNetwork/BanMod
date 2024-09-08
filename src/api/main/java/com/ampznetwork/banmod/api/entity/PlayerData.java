@@ -2,9 +2,11 @@ package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.libmod.api.entity.Player;
 import com.ampznetwork.libmod.api.model.EntityType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.experimental.FieldDefaults;
@@ -38,6 +40,7 @@ import static org.comroid.api.Polyfill.*;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Table(name = "playerdata")
+@Getter(onMethod_ = @__(@JsonIgnore))
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
     public static final EntityType<PlayerData, Builder<PlayerData, ?>> TYPE               = Polyfill.uncheckedCast(new EntityType<>(PlayerData::builder,
@@ -58,12 +61,14 @@ public class PlayerData extends Player {
     @CollectionTable(name = "playerdata_ips", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("ip") String, @Doc("seen") Instant>   knownIPs   = new HashMap<>();
 
+    @JsonIgnore
     public Optional<String> getLastKnownName() {
         return knownNames.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
                 .map(Map.Entry::getKey);
     }
 
+    @JsonIgnore
     public Optional<String> getLastKnownIp() {
         return knownIPs.entrySet().stream()
                 .max(PlayerData.MOST_RECENTLY_SEEN)
