@@ -33,9 +33,9 @@ public class BanMod$Spigot extends SubMod$Spigot implements BanMod {
     public BanMod$Spigot() {
         super(
                 Set.of(Capability.Database),
-                Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class)
+                Set.of(Infraction.class, Player.class, PunishmentCategory.class)
         );
-        Player.CACHE_NAME = (uuid, name) -> getEntityService().getAccessor(PlayerData.TYPE)
+        Player.CACHE_NAME = (uuid, name) -> getEntityService().getAccessor(Player.TYPE)
                 .getOrCreate(uuid)
                 .setUpdateOriginal(merge -> merge.pushKnownName(name))
                 .complete(build -> build.id(uuid), player -> player.pushKnownName(name));

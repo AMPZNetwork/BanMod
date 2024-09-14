@@ -59,7 +59,7 @@ public class Infraction extends DbObject {
             : i.expires.toEpochMilli()).reversed();
     @NotNull
     @OneToOne
-    PlayerData player;
+    Player player;
     @NotNull
     @ManyToOne
     PunishmentCategory category;

@@ -46,7 +46,7 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
     private       MinecraftServer     server;
 
     public BanMod$Fabric() {
-        super(Set.of(Capability.Database), Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class));
+        super(Set.of(Capability.Database), Set.of(Infraction.class, Player.class, PunishmentCategory.class));
     }
 
     @Override

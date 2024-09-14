@@ -7,6 +7,7 @@ import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.ImportResult;
 import com.ampznetwork.banmod.core.importer.Importer;
 import com.ampznetwork.banmod.core.importer.vanilla.entry.Ban;
+import com.ampznetwork.libmod.api.entity.Player;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Value;
 import org.comroid.api.func.util.Command;
@@ -33,7 +34,7 @@ public class VanillaBansImporter implements Importer {
             mapper.readValues(mapper.createParser(banFile), Ban.class)
                     .forEachRemaining(ban -> service.save(Infraction.builder()
                             .player(mod.getLib().getEntityService()
-                                    .getAccessor(PlayerData.TYPE)
+                                    .getAccessor(Player.TYPE)
                                     .getOrCreate(ban.getUuid())
                                     .complete(build -> build
                                             .knownName(ban.getName(), Instant.now())

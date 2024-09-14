@@ -2,12 +2,12 @@ package com.ampznetwork.banmod.core.importer.litebans;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.ImportResult;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Ban;
 import com.ampznetwork.banmod.core.importer.litebans.entity.History;
 import com.ampznetwork.banmod.core.importer.litebans.entity.Mute;
+import com.ampznetwork.libmod.api.entity.Player;
 import com.ampznetwork.libmod.api.model.info.DatabaseInfo;
 import com.ampznetwork.libmod.core.database.hibernate.HibernateEntityService;
 import com.ampznetwork.libmod.core.database.hibernate.PersistenceUnitBase;
@@ -53,7 +53,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                     var playerAdapter = mod.getLib().getPlayerAdapter();
                     return Infraction.builder()
                             .player(mod.getLib().getEntityService()
-                                    .getAccessor(PlayerData.TYPE)
+                                    .getAccessor(Player.TYPE)
                                     .get(it.getUuid())
                                     .orElseThrow())
                             .category(mod.getDefaultCategory())
@@ -73,7 +73,7 @@ public class LiteBansImporter implements com.ampznetwork.banmod.core.importer.Im
                 .map(hist -> {
                     var now = now();
                     var data = mod.getLib().getEntityService()
-                            .getAccessor(PlayerData.TYPE)
+                            .getAccessor(Player.TYPE)
                             .getOrCreate(hist.getUuid())
                             .complete(build -> build
                                     .knownName(hist.getName(), now())

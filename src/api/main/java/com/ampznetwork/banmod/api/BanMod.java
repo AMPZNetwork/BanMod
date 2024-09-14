@@ -1,7 +1,6 @@
 package com.ampznetwork.banmod.api;
 
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
@@ -47,7 +46,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     @Override
     default Set<Class<? extends DbObject>> getEntityTypes() {
-        return Set.of(Infraction.class, PlayerData.class, PunishmentCategory.class);
+        return Set.of(Infraction.class, PunishmentCategory.class);
     }
 
     default @NotNull PunishmentCategory getDefaultCategory() {

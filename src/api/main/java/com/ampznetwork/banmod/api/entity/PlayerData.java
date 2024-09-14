@@ -29,10 +29,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.time.Instant.*;
 import static org.comroid.api.Polyfill.*;
 
+/**
+ * @deprecated use {@link Player}
+ */
 @Data
 @Slf4j
 @Entity
@@ -40,6 +44,7 @@ import static org.comroid.api.Polyfill.*;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Table(name = "playerdata")
+@Deprecated(forRemoval = true)
 @Getter(onMethod_ = @__(@JsonIgnore))
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlayerData extends Player {
@@ -60,6 +65,12 @@ public class PlayerData extends Player {
     @MapKeyColumn(name = "ip")
     @CollectionTable(name = "playerdata_ips", joinColumns = @JoinColumn(name = "id"))
     Map<@Doc("ip") String, @Doc("seen") Instant>   knownIPs   = new HashMap<>();
+
+    @JsonIgnore
+    public Optional<Instant> getLastSeen() {
+        return Stream.concat(knownNames.values().stream(), knownIPs.values().stream())
+                .max(Comparator.comparingLong(Instant::toEpochMilli));
+    }
 
     @JsonIgnore
     public Optional<String> getLastKnownName() {

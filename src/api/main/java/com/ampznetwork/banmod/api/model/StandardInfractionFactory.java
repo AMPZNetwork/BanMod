@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.api.model;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.libmod.api.entity.Player;
 import lombok.Builder;
@@ -63,7 +62,7 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder<?,
     public void accept(Infraction.Builder builder) {
         var service = mod.getEntityService();
         var rep    = mod.findRepetition(playerId, category);
-        var target = service.getAccessor(PlayerData.TYPE).getOrCreate(playerId).requireNonNull();
+        var target = service.getAccessor(Player.TYPE).getOrCreate(playerId).requireNonNull();
         var punish = punishment != null ? punishment : category.calculatePunishment(rep).orElse(Punishment.Kick);
         var expire = duration != null ? duration : category.calculateDuration(rep);
         var now    = now();

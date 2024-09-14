@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.core.cmd;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
@@ -80,7 +79,7 @@ public class BanModCommands {
                     break;
             case players:
                 var c0 = new int[]{ 0, 0 };
-                buffer = service.getAccessor(PlayerData.TYPE).all()
+                buffer = service.getAccessor(Player.TYPE).all()
                         .filter(data -> {
                             var name = data.getKnownNames().size() > 1;
                             var ip = data.getKnownIPs().size() > 1;
@@ -90,11 +89,11 @@ public class BanModCommands {
                         })
                         .peek(data -> {
                             var name = data.getKnownNames().entrySet().stream()
-                                    .min(PlayerData.MOST_RECENTLY_SEEN)
+                                    .min(Player.MOST_RECENTLY_SEEN)
                                     .map(Map.Entry::getKey)
                                     .orElseThrow();
                             var ip = data.getKnownIPs().entrySet().stream()
-                                    .min(PlayerData.MOST_RECENTLY_SEEN)
+                                    .min(Player.MOST_RECENTLY_SEEN)
                                     .map(Map.Entry::getKey)
                                     .orElseThrow();
                             data.setKnownNames(new HashMap<>() {{
@@ -125,7 +124,7 @@ public class BanModCommands {
     public Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
         var target = mod.getLib().getPlayerAdapter().getId(name);
-        var data = mod.getEntityService().getAccessor(PlayerData.TYPE).get(target)
+        var data = mod.getEntityService().getAccessor(Player.TYPE).get(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
         var text = text("")
                 .append(text("Player ").decorate(BOLD))

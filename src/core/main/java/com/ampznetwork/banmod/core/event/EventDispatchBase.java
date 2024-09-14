@@ -1,8 +1,8 @@
 package com.ampznetwork.banmod.core.event;
 
 import com.ampznetwork.banmod.api.BanMod;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.PlayerResult;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.java.Log;
@@ -31,7 +31,7 @@ public abstract class EventDispatchBase {
     protected PlayerResult playerLogin(UUID playerId, InetAddress address) {
         var service = mod.getEntityService();
         var name = mod.getLib().getPlayerAdapter().getName(playerId);
-        var data = service.getAccessor(PlayerData.TYPE)
+        var data = service.getAccessor(Player.TYPE)
                 .getOrCreate(playerId)
                 .setUpdateOriginal(original -> {
                     original.setName(name);
