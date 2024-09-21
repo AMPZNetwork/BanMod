@@ -16,7 +16,7 @@
   "environment": "server",
   "entrypoints": {
     "main": [
-      "com.ampznetwork.banmod.fabric.BanMod$Fabric"
+      "com.ampznetwork.banmod.fabric.BanModFabric"
     ]
   },
   "depends": {

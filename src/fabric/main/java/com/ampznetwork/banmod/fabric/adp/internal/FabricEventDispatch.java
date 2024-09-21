@@ -3,7 +3,7 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
-import com.ampznetwork.banmod.fabric.BanMod$Fabric;
+import com.ampznetwork.banmod.fabric.BanModFabric;
 import lombok.Value;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
@@ -55,11 +55,11 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
             var result = playerLogin(playerId, ip);
             if (result.isBanned())
                 BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
-                    var serialize = mod.as(BanMod$Fabric.class).assertion().component2text(msg);
+                    var serialize = mod.as(BanModFabric.class).assertion().component2text(msg);
                     handler.disconnect(serialize);
                 });
         } catch (Throwable t) {
-            handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
+            handleThrowable(playerId, t, BanModFabric::component2text, handler::disconnect);
         }
     }
 
@@ -70,7 +70,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var maySend = !result.isMuted();
         if (!maySend)
             BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {
-                var serialize = mod.as(BanMod$Fabric.class).assertion().component2text(msg);
+                var serialize = mod.as(BanModFabric.class).assertion().component2text(msg);
                 sender.sendMessage(serialize);
             });
         return maySend;

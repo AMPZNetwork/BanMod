@@ -2,10 +2,9 @@ package com.ampznetwork.banmod.fabric;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.fabric.adp.internal.FabricEventDispatch;
-import com.ampznetwork.libmod.fabric.LibMod$Fabric;
+import com.ampznetwork.libmod.fabric.LibModFabric;
 import com.ampznetwork.libmod.fabric.SubMod$Fabric;
 import com.ampznetwork.libmod.fabric.config.Config;
 import com.google.gson.JsonParseException;
@@ -31,7 +30,7 @@ import java.util.UUID;
 
 @Getter
 @Slf4j(topic = BanMod.Strings.AddonName)
-public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializer, LifeCycle {
+public class BanModFabric extends SubMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
     }
@@ -45,8 +44,8 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
     private BanModConfig config = Config.createAndLoad(BanModConfig.class);
     private       MinecraftServer     server;
 
-    public BanMod$Fabric() {
-        super(Set.of(Capability.Database), Set.of(Infraction.class, Player.class, PunishmentCategory.class));
+    public BanModFabric() {
+        super(Set.of(Capability.Database), Set.of(Infraction.class, PunishmentCategory.class));
     }
 
     @Override
@@ -66,7 +65,7 @@ public class BanMod$Fabric extends SubMod$Fabric implements BanMod, ModInitializ
 
     @Override
     public void onInitialize() {
-        (super.lib = LibMod$Fabric.INSTANCE).register(this);
+        (super.lib = LibModFabric.INSTANCE).register(this);
 
         super.onInitialize();
 

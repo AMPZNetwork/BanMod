@@ -33,14 +33,6 @@ dependencies {
     // banMod api
     api project("$prefix:api")
 
-    // database
-    api 'org.hibernate:hibernate-core:5.6.0.Final'
-    api 'org.jboss:jandex:2.4.5.Final'
-    api 'com.zaxxer:HikariCP:4.0.3'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.4.0'
-    runtimeOnly 'com.mysql:mysql-connector-j:8.4.0'
-    runtimeOnly 'com.h2database:h2:2.2.224'
-
     // logger
     compileOnly 'org.apache.logging.log4j:log4j-core:2.+'
 
