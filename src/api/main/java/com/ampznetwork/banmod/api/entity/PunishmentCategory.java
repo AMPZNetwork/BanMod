@@ -36,7 +36,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(of = "name")
-@Table(name = "punishment_categories")
+@Table(name = "banmod_punishment_categories")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PunishmentCategory extends DbObject.WithName implements Named, Described, DefaultReason {
     public static final EntityType<PunishmentCategory, Builder<PunishmentCategory, ?>> TYPE = Polyfill.uncheckedCast(new EntityType<>(PunishmentCategory::builder,
@@ -66,7 +66,7 @@ public class PunishmentCategory extends DbObject.WithName implements Named, Desc
     @ElementCollection(fetch = FetchType.EAGER)
     @Column(name = "punishment_type")
     @MapKeyColumn(name = "repetition")
-    @CollectionTable(name = "punishment_thresholds", joinColumns = @JoinColumn(name = "id"))
+    @CollectionTable(name = "banmod_punishment_thresholds", joinColumns = @JoinColumn(name = "id"))
     Map<@NotNull Integer, Punishment> punishmentThresholds;
 
     public Duration calculateDuration(int repetition) {
