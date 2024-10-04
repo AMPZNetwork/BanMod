@@ -3,10 +3,11 @@ package com.ampznetwork.banmod.fabric.adp.internal;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.event.EventDispatchBase;
-import com.ampznetwork.banmod.fabric.BanMod$Fabric;
+import com.ampznetwork.banmod.fabric.BanModFabric;
+import com.ampznetwork.libmod.fabric.LibModFabric;
 import lombok.Value;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.minecraft.network.message.MessageType;
@@ -20,7 +21,6 @@ import java.net.InetAddress;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static com.ampznetwork.banmod.fabric.BanMod$Fabric.component2text;
 
 @Value
 public class FabricEventDispatch extends EventDispatchBase implements ServerLoginConnectionEvents.QueryStart, ServerMessageEvents.AllowChatMessage {
@@ -40,10 +40,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
 
     @Override
     public void onLoginStart(
-            ServerLoginNetworkHandler handler,
-            MinecraftServer server,
-            PacketSender sender,
-            ServerLoginNetworking.LoginSynchronizer synchronizer
+            ServerLoginNetworkHandler handler, MinecraftServer server, LoginPacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer
     ) {
         try {
             // thank you fabric devs for this very useful and reasonable method
@@ -62,11 +59,11 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
                 var result = playerLogin(playerId, ip);
                 if (result.isBanned())
                     BanMod.Resources.notify(mod, playerId, Punishment.Ban, result, (id, msg) -> {
-                        var serialize = component2text(msg);
+                        var serialize = LibModFabric.component2text(msg);
                         handler.disconnect(serialize);
                     });
             } catch (Throwable t) {
-                handleThrowable(playerId, t, BanMod$Fabric::component2text, handler::disconnect);
+                handleThrowable(playerId, t, LibModFabric::component2text, handler::disconnect);
             }
         } catch (Throwable t) {
             if (mod.allowUnsafeConnections())
@@ -82,7 +79,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var maySend = !result.isMuted();
         if (!maySend)
             BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {
-                var serialize = component2text(msg);
+                var serialize = mod.as(BanModFabric.class).assertion().component2text(msg);
                 sender.sendMessage(serialize);
             });
         return maySend;

@@ -54,17 +54,12 @@ tasks.register('dlSparkJar', Download).configure {
 }
 
 shadowJar {
-    dependsOn project("$prefix:api").simplifyArtifact
+    // Specify which projects' classes to include
+    from(project(":${prefix}:api").sourceSets.main.output)
+    from(project(":${prefix}:core").sourceSets.main.output)
 
-    configurations = [project.configurations.runtimeClasspath]
-
-    dependencies {
-        include(dependency(':japi'))
-        include(dependency(':api'))
-        include(dependency(':core'))
-    }
-
-    //from(project("$prefix:subProject").sourceSets.main.output)
+    // Exclude dependencies by ensuring the JAR contains only the classes
+    configurations = [project.configurations.shadow]
 }
 
 tasks.register('testPlugin', Copy) {
@@ -108,7 +103,7 @@ dependencies {
     compileOnly 'net.kyori:adventure-platform-bungeecord:4.3.3'
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion

@@ -1,13 +1,12 @@
 package com.ampznetwork.banmod.api;
 
-import com.ampznetwork.banmod.api.database.EntityService;
-import com.ampznetwork.banmod.api.database.MessagingService;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
-import com.ampznetwork.banmod.api.model.adp.PlayerAdapter;
-import com.ampznetwork.banmod.api.model.info.DatabaseInfo;
+import com.ampznetwork.libmod.api.LibMod;
+import com.ampznetwork.libmod.api.SubMod;
+import com.ampznetwork.libmod.api.entity.DbObject;
 import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
@@ -25,37 +24,52 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.event.ClickEvent.clickEvent;
-import static net.kyori.adventure.text.event.HoverEvent.showText;
-import static net.kyori.adventure.text.format.NamedTextColor.AQUA;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_RED;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
-import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.event.ClickEvent.*;
+import static net.kyori.adventure.text.event.HoverEvent.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
-public interface BanMod extends Command.PermissionChecker.Adapter, MessagingService.Type.Provider {
-    DatabaseInfo getDatabaseInfo();
+public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
+    LibMod getLib();
 
-    PunishmentCategory getDefaultCategory();
+    @Override
+    default Class<?> getModuleType() {
+        return BanMod.class;
+    }
 
-    EntityService getEntityService();
+    @Override
+    default Set<Class<? extends DbObject>> getEntityTypes() {
+        return Set.of(Infraction.class, PunishmentCategory.class);
+    }
+
+    default @NotNull PunishmentCategory getDefaultCategory() {
+        return getEntityService().getAccessor(PunishmentCategory.TYPE)
+                .by(PunishmentCategory::getName)
+                .getOrCreate("default")
+                .setUpdateOriginal(original -> {
+                    original.getPunishmentThresholds().putAll(Map.of(
+                            0, Punishment.Kick,
+                            2, Punishment.Mute,
+                            5, Punishment.Ban
+                    ));
+                    return original;
+                })
+                .complete(cat -> cat.punishmentThreshold(0, Punishment.Kick)
+                        .punishmentThreshold(2, Punishment.Mute)
+                        .punishmentThreshold(5, Punishment.Ban));
+    }
 
     @Nullable
     String getBanAppealUrl();
 
-    PlayerAdapter getPlayerAdapter();
-
     Logger log();
-
-    void reload();
 
     boolean allowUnsafeConnections();
 
@@ -64,13 +78,51 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
         if (punish.isPassive() || (!punish.isInherentlyTemporary() && !Infraction.IS_IN_EFFECT.test(infraction)))
             return;
         Resources.notify(this, infraction.getPlayer().getId(), punish, infraction.toResult(), switch (punish) {
-            case Kick, Ban -> (BiConsumer<UUID, Component>) getPlayerAdapter()::kick;
-            case Debuff -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send; // todo
-            default -> (BiConsumer<UUID, Component>) getPlayerAdapter()::send;
+            case Kick, Ban -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::kick;
+            case Debuff -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::send; // todo
+            default -> (BiConsumer<UUID, Component>) getLib().getPlayerAdapter()::send;
         });
     }
 
-    void executeSync(Runnable task);
+    default PlayerResult queuePlayer(UUID playerId) {
+        var player = getLib().getPlayerAdapter()
+                .getPlayer(playerId).orElseThrow();
+        return getEntityService().getAccessor(Infraction.TYPE)
+                .querySelect("select i.* from banmod_punishments i where i.player_id = :playerId",
+                        Map.of("playerId", playerId.toString()))
+                .filter(Infraction.IS_IN_EFFECT)
+                .sorted(Infraction.BY_SEVERITY)
+                .map(i -> new PlayerResult(player,
+                        i.getPunishment() == Punishment.Mute,
+                        i.getPunishment() == Punishment.Ban,
+                        i.getReason(),
+                        i.getTimestamp(),
+                        i.getExpires(),
+                        i.getIssuer()))
+                .findFirst()
+                .orElseGet(() -> {
+                    var now = Instant.now();
+                    // no result means no ban or mute or anything, we SHOULD be returning false here
+                    return new PlayerResult(player, false, false, null, now, now, null);
+                });
+    }
+
+    default int findRepetition(UUID playerId, PunishmentCategory category) {
+        return (int) getEntityService().getAccessor(Infraction.TYPE)
+                .querySelect("select i.* from banmod_punishments i where i.player_id = :playerId",
+                        Map.of("playerId", playerId))
+                .filter(i -> i.getCategory().equals(category) && !i.getPunishment().isInherentlyTemporary())
+                .count();
+    }
+
+    default void revokeInfraction(UUID id, UUID revoker) {
+        var acs = getEntityService().getAccessor(Infraction.TYPE);
+        acs.queryUpdate(acs.getManager()
+                .createQuery("update Infraction i set i.revoker = :revoker, i.revokedAt = :now where i.id = :id")
+                .setParameter("revoker", revoker)
+                .setParameter("now", Instant.now())
+                .setParameter("id", id));
+    }
 
     @UtilityClass
     final class Strings {
@@ -92,7 +144,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
                 PlayerResult result,
                 BiConsumer<UUID, Component> forwarder
         ) {
-            var playerAdapter = mod.getPlayerAdapter();
+            var playerAdapter = mod.getLib().getPlayerAdapter();
             if (!playerAdapter.isOnline(playerId) && mod.allowUnsafeConnections())
                 return;
             var    name       = playerAdapter.getName(playerId);
@@ -176,8 +228,9 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
 
         @NotNull
         public Component infractionList(BanMod mod, int page, Punishment punishment) {
-            final var infractions = mod.getEntityService()
-                    .getInfractions()
+            final var infractions = mod.getLib().getEntityService()
+                    .getAccessor(Infraction.TYPE)
+                    .all()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
                     .sorted(Infraction.BY_NEWEST)
@@ -206,7 +259,7 @@ public interface BanMod extends Command.PermissionChecker.Adapter, MessagingServ
 
         @NotNull
         public Component textPunishmentFull(BanMod mod, Infraction infraction) {
-            var username = mod.getPlayerAdapter().getName(infraction.getPlayer().getId());
+            var username = mod.getLib().getPlayerAdapter().getName(infraction.getPlayer().getId());
             var text = text("User ")
                     .append(text(username).color(AQUA))
                     .append(text(" has been "))

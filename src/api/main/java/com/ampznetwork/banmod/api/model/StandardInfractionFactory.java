@@ -3,6 +3,7 @@ package com.ampznetwork.banmod.api.model;
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -17,18 +18,25 @@ import static java.time.Instant.*;
 @Value
 @Builder
 @RequiredArgsConstructor
-public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
+public class StandardInfractionFactory implements Consumer<Infraction.Builder<?, ?>> {
+    public static Builder base(BanMod mod, UUID playerId, PunishmentCategory category, @Nullable UUID issuer) {
+        return base(mod, playerId, category, null, issuer);
+    }
+
     public static Builder base(BanMod mod, UUID playerId, @Nullable Punishment punishment, @Nullable UUID issuer) {
         return base(mod, playerId, null, punishment, issuer);
     }
 
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable Punishment punishment, @Nullable UUID issuer) {
+    public static Builder base(
+            BanMod mod,
+            UUID playerId,
+            PunishmentCategory category,
+            @Nullable Punishment punishment,
+            @Nullable UUID issuer
+    ) {
         if (category == null) category = mod.getDefaultCategory();
-        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment).issuer(issuer);
-    }
-
-    public static Builder base(BanMod mod, UUID playerId, @Nullable PunishmentCategory category, @Nullable UUID issuer) {
-        return base(mod, playerId, category, null, issuer);
+        return builder().mod(mod).playerId(playerId).category(category).punishment(punishment)
+                .issuer(mod.getLib().getPlayerAdapter().getPlayer(issuer).orElseThrow());
     }
 
     BanMod mod;
@@ -39,10 +47,10 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
     Punishment punishment = null;
     @lombok.Builder.Default
     @Nullable
-    UUID     issuer    = null;
+    Player issuer = null;
     @lombok.Builder.Default
     @Nullable
-    String   reason    = null;
+    String reason = null;
     @lombok.Builder.Default
     @Nullable
     Duration duration  = null;
@@ -53,8 +61,8 @@ public class StandardInfractionFactory implements Consumer<Infraction.Builder> {
     @SuppressWarnings("ConstantValue")
     public void accept(Infraction.Builder builder) {
         var service = mod.getEntityService();
-        var rep    = service.findRepetition(playerId, category);
-        var target = service.getOrCreatePlayerData(playerId).requireNonNull();
+        var rep    = mod.findRepetition(playerId, category);
+        var target = service.getAccessor(Player.TYPE).getOrCreate(playerId).requireNonNull();
         var punish = punishment != null ? punishment : category.calculatePunishment(rep).orElse(Punishment.Kick);
         var expire = duration != null ? duration : category.calculateDuration(rep);
         var now    = now();

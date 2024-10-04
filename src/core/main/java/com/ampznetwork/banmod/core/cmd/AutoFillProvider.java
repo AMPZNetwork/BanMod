@@ -4,6 +4,8 @@ import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.libmod.api.SubMod;
+import com.ampznetwork.libmod.api.entity.Player;
 import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
 import org.comroid.api.func.util.Command;
@@ -31,7 +33,8 @@ public class AutoFillProvider {
                 case "banlist" -> Punishment.Ban;
                 default -> null;
             };
-            var infractions = mod.getEntityService().getInfractions()
+            var infractions = mod.getEntityService()
+                    .getAccessor(Infraction.TYPE).all()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> punishment == null || i.getPunishment() == punishment)
                     .toList();
@@ -47,10 +50,11 @@ public class AutoFillProvider {
         @Override
         public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
-                    .flatMap(cast(BanMod.class))
+                    .flatMap(cast(SubMod.class))
                     .findAny().orElseThrow();
-            return mod.getPlayerAdapter().getCurrentPlayers()
-                    .flatMap(data -> data.getLastKnownName().stream())
+            return mod.getLib().getPlayerAdapter()
+                    .getCurrentPlayers()
+                    .map(Player::getName)
                     .distinct();
         }
     }
@@ -75,7 +79,7 @@ public class AutoFillProvider {
                     .collect(atLeastOneOrElseFlatten(punishments::stream))
                     // by active infractions and their type; list all currently punished players
                     .flatMap(key -> mod.getEntityService()
-                            .getInfractions()
+                            .getAccessor(Infraction.TYPE).all()
                             .filter(Infraction.IS_IN_EFFECT)
                             .filter(infr -> infr.getPunishment() == key)
                             .flatMap(infr -> infr.getPlayer().getLastKnownName().stream()));
@@ -91,7 +95,7 @@ public class AutoFillProvider {
                 return empty();
             return usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
-                    .flatMap(mod -> mod.getEntityService().getCategories())
+                    .flatMap(mod -> mod.getEntityService().getAccessor(PunishmentCategory.TYPE).all())
                     .map(PunishmentCategory::getName);
         }
     }
