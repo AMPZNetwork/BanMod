@@ -9,7 +9,7 @@
       <env name="DEBUG" value="true" />
     </envs>
     <method v="2">
-      <option name="Gradle.BeforeRunTask" enabled="false" tasks="testPlugin" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="" />
+      <option name="Gradle.BeforeRunTask" enabled="false" tasks="prepareSpigotTest" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="" />
     </method>
   </configuration>
 </component>
