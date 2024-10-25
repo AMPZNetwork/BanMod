@@ -18,7 +18,6 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.java.StackTraceUtils;
 import org.comroid.api.tree.LifeCycle;
@@ -33,11 +32,6 @@ import java.util.UUID;
 public class BanModFabric extends SubMod$Fabric implements BanMod, ModInitializer, LifeCycle {
     static {
         StackTraceUtils.EXTRA_FILTER_NAMES.add("com.ampznetwork");
-    }
-
-    public static Text component2text(net.kyori.adventure.text.Component component) {
-        var json = GsonComponentSerializer.gson().serializeToTree(component);
-        return TextCodecs.STRINGIFIED_CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new);
     }
 
     private final FabricEventDispatch eventDispatch = new FabricEventDispatch(this);

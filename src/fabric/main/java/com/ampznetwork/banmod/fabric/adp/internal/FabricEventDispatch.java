@@ -7,7 +7,7 @@ import com.ampznetwork.banmod.fabric.BanModFabric;
 import com.ampznetwork.libmod.fabric.LibModFabric;
 import lombok.Value;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
-import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.minecraft.network.message.MessageType;
@@ -40,7 +40,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
 
     @Override
     public void onLoginStart(
-            ServerLoginNetworkHandler handler, MinecraftServer server, LoginPacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer
+            ServerLoginNetworkHandler handler, MinecraftServer server, PacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer
     ) {
         try {
             // thank you fabric devs for this very useful and reasonable method
@@ -79,7 +79,7 @@ public class FabricEventDispatch extends EventDispatchBase implements ServerLogi
         var maySend = !result.isMuted();
         if (!maySend)
             BanMod.Resources.notify(mod, playerId, Punishment.Mute, result, (id, msg) -> {
-                var serialize = mod.as(BanModFabric.class).assertion().component2text(msg);
+                var serialize = LibModFabric.component2text(msg);
                 sender.sendMessage(serialize);
             });
         return maySend;
