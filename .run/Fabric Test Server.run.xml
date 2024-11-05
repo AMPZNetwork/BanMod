@@ -1,15 +1,15 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Fabric Test Server" type="JarApplication">
-    <option name="JAR_PATH" value="$PROJECT_DIR$/fabric/run/server.jar" />
+    <option name="JAR_PATH" value="$PROJECT_DIR$/run/fabric/server.jar" />
     <option name="VM_PARAMETERS" value="-Xmx2G" />
     <option name="PROGRAM_PARAMETERS" value="nogui" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/fabric/run" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run/fabric" />
     <option name="ALTERNATIVE_JRE_PATH" />
     <envs>
       <env name="DEBUG" value="true" />
     </envs>
     <method v="2">
-      <option name="Gradle.BeforeRunTask" enabled="false" tasks="testMod" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters=""/>
+      <option name="Gradle.BeforeRunTask" enabled="false" tasks="testMod" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="" />
     </method>
   </configuration>
 </component>
