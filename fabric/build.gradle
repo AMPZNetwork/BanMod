@@ -87,9 +87,7 @@ dependencies {
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	// banMod
-	if (findProject("$prefix:japi") != null)
-		include project("$prefix:japi")
-	else include 'org.comroid:japi:+'
+	include project(":japi")
 	include project("$prefix:api")
 	implementation project("$prefix:core")
 	include project("$prefix:core")
