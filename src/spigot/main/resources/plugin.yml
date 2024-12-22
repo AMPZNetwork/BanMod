@@ -13,7 +13,7 @@ depend:
 softdepend:
   - LuckPerms
 permissions:
-  banmod.bypass.*:
+  banmod.bypass:
     description: A tree of permission nodes to bypass certain punishments
     children:
       banmod.bypass.kick:
@@ -22,7 +22,7 @@ permissions:
         description: /mute and /tempmute have no effect on you
       banmod.bypass.ban:
         description: /ban and /tempban have no effect on you
-  banmod.notify.*:
+  banmod.notify:
     description: A tree of permission nodes to control notifications in the
     children:
       banmod.notify.kick:
