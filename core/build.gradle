@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'org.comroid.codegen.spigot'
 }
 
 ext {
@@ -12,13 +13,6 @@ ext {
 group = 'com.ampznetwork.banmod'
 sourceCompatibility = 21
 targetCompatibility = 21
-
-sourceSets {
-    main.java.srcDirs = files(parent.projectDir.toString() + "/src/core/main/java")
-    main.resources.srcDirs = files(parent.projectDir.toString() + "/src/core/main/resources")
-    test.java.srcDirs = files(parent.projectDir.toString() + "/src/core/test/java")
-    test.resources.srcDirs = files(parent.projectDir.toString() + "/src/core/test/java")
-}
 
 apply from: "$parent.projectDir/gradle/publishing.gradle"
 

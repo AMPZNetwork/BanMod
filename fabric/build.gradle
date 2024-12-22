@@ -13,13 +13,6 @@ base {
 	archivesName = project.archives_base_name
 }
 
-sourceSets {
-	main.java.srcDirs       = files(parent.projectDir.toString() + "/src/fabric/main/java")
-	main.resources.srcDirs  = files(parent.projectDir.toString() + "/src/fabric/main/resources")
-	test.java.srcDirs       = files(parent.projectDir.toString() + "/src/fabric/test/java")
-	test.resources.srcDirs  = files(parent.projectDir.toString() + "/src/fabric/test/java")
-}
-
 tasks.register('dlServerJar', Download).configure {
 	src "https://meta.fabricmc.net/v2/versions/loader/1.20.1/0.15.11/1.0.1/server/jar"
 	//src "https://serverjars.com/api/fetchJar/modded/fabric/${minecraft_version}"
