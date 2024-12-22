@@ -12,6 +12,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.TextColor;
 import org.comroid.api.Polyfill;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
@@ -47,6 +48,11 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     @Override
     default Set<Class<? extends DbObject>> getEntityTypes() {
         return Set.of(Infraction.class, PunishmentCategory.class);
+    }
+
+    @Override
+    default TextColor getThemeColor() {
+        return RED;
     }
 
     default @NotNull PunishmentCategory getDefaultCategory() {
@@ -126,11 +132,11 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     @UtilityClass
     final class Strings {
-        public static final String AddonName       = "BanMod";
-        public static final String AddonId         = "banmod";
-        public static final String IssuesUrl       = "https://github.com/AMPZNetwork/BanMod/issues";
+        public static final String AddonName          = "BanMod";
+        public static final String AddonId            = "banmod";
+        public static final String IssuesUrl          = "https://github.com/AMPZNetwork/BanMod/issues";
         public static final String PleaseCheckConsole = "Please check console for further information";
-        public static final String OfflineModeInfo = "Offline mode is not fully supported! Players may be able to rejoin even after being banned.";
+        public static final String OfflineModeInfo    = "Offline mode is not fully supported! Players may be able to rejoin even after being banned.";
     }
 
     @UtilityClass
@@ -147,14 +153,14 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
             var playerAdapter = mod.getLib().getPlayerAdapter();
             if (!playerAdapter.isOnline(playerId) && mod.allowUnsafeConnections())
                 return;
-            var    name       = playerAdapter.getName(playerId);
+            var           name       = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
-            String permission = Permission.PluginErrorNotification;
+            String        permission = Permission.PluginErrorNotification;
             if (punishment == null) {
                 msgUser   = text("""
                         An internal server error occurred.
                         Please contact your server administrator and try again later.
-
+                        
                         %s""".formatted(result.reason())).color(RED);
                 msgNotify = text("An internal error is causing issues for players and they cannot join.").color(RED)
                         .append(text("To allow connecting anyway, please enable "))
@@ -209,12 +215,12 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     final class Permission {
         public static final String PlayerBypassMute = "banmod.bypass.mute";
         public static final String PlayerBypassKick = "banmod.bypass.kick";
-        public static final String PlayerBypassBan = "banmod.bypass.ban";
+        public static final String PlayerBypassBan  = "banmod.bypass.ban";
 
         public static final String PlayerJoinDeniedNotification = "banmod.notify.join";
         public static final String PlayerChatDeniedNotification = "banmod.notify.chat";
-        public static final String PlayerKickedNotification = "banmod.notify.kick";
-        public static final String PluginErrorNotification  = "banmod.notify.error";
+        public static final String PlayerKickedNotification     = "banmod.notify.kick";
+        public static final String PluginErrorNotification      = "banmod.notify.error";
     }
 
     @UtilityClass
