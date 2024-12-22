@@ -1,8 +1,8 @@
 plugins {
     id 'java-library'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
     //id 'org.comroid.codegen.spigot'
 }
+apply plugin: 'com.github.johnrengelman.shadow'
 
 ext {
     artifactName = 'banMod-core'
