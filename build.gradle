@@ -40,10 +40,10 @@ subprojects {
     }
 
     dependencies {
-        if (!project.name.endsWith('api'))
+        if (!name.endsWith('api'))
             api parent.project("$prefix:api")
 
-        if (project.name != 'japi') {
+        if (name != 'japi') {
             api project(":japi")
 
             // soft dependencies
