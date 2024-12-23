@@ -1,46 +1,16 @@
-plugins {
-    id 'java-library'
-    //id 'org.comroid.codegen.spigot'
-}
-apply plugin: 'com.github.johnrengelman.shadow'
+import org.comroid.codegen.spigot.GenerateSpigotResourceClassesTask
 
-ext {
-    artifactName = 'banMod-core'
-    projectDescription = 'Minecraft World Protection Mod'
-    userbase = 'AMPZNetwork'
+buildscript {
+    dependencies {
+        classpath 'com.ampznetwork.modsuite:spigotResourceGenerator'
+    }
 }
+
+plugins { id 'org.comroid.codegen.spigot' }
+apply from: "$rootProject.projectDir/gradle/scripts/java-lib.gradle"
 
 group = 'com.ampznetwork.banmod'
-sourceCompatibility = 21
-targetCompatibility = 21
 
-apply from: "$parent.projectDir/gradle/publishing.gradle"
-
-shadowJar { setProperty("zip64",true) }
-
-repositories {
-    maven { url 'https://maven.comroid.org' }
-    mavenLocal()
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    // banMod api
-    api project("$prefix:api")
-
-    // logger
-    compileOnly 'org.apache.logging.log4j:log4j-core:2.+'
-
-    // utility
-    compileOnly 'org.projectlombok:lombok:+'
-    annotationProcessor 'org.projectlombok:lombok:+'
-}
-
-task simplifyArtifact(type: Copy) {
-    // api module should be slim, and only contain banMod's own api
-    dependsOn test, jar
-    from jar.outputs.files.singleFile
-    into "$rootDir/build/libs/"
-    rename { n -> "BanMod-core.jar" }
+tasks.named('generateSpigotResourceClasses', GenerateSpigotResourceClassesTask) { GenerateSpigotResourceClassesTask task ->
+    task.resourceInputDirectory parent.project(':spigot').extensions.getByType(SourceSetContainer).named('main').get().resources
 }
