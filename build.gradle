@@ -44,7 +44,7 @@ subprojects {
             api parent.project("$prefix:api")
 
         if (name != 'japi') {
-            api project(":japi")
+            api 'org.comroid:japi:+'
 
             // soft dependencies
             compileOnly 'net.luckperms:api:5.4'
