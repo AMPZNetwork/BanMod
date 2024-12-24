@@ -4,6 +4,8 @@ import com.ampznetwork.banmod.api.entity.Infraction;
 import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.PlayerResult;
 import com.ampznetwork.banmod.api.model.Punishment;
+import com.ampznetwork.banmod.generated.PluginYml.Permission;
+import com.ampznetwork.banmod.generated.PluginYml.Permission.banmod;
 import com.ampznetwork.libmod.api.LibMod;
 import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.api.entity.DbObject;
@@ -155,7 +157,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 return;
             var           name       = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
-            String        permission = Permission.PluginErrorNotification;
+            Permission    permission = banmod.notify.error;
             if (punishment == null) {
                 msgUser   = text("""
                         An internal server error occurred.
@@ -174,24 +176,24 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 case Mute:
                     msgUser = Displays.mutedTextUser(result);
                     msgNotify = Displays.mutedTextNotify(name);
-                    permission = Permission.PlayerChatDeniedNotification;
+                    permission = banmod.notify.mute;
                     break;
                 case Kick:
                     msgUser = Displays.kickedTextUser(result);
                     msgNotify = Displays.kickedTextNotify(name);
-                    permission = Permission.PlayerKickedNotification;
+                    permission = banmod.notify.kick;
                     break;
                 case Ban:
                     msgUser = Displays.bannedTextUser(mod, result);
                     msgNotify = Displays.bannedTextNotify(name);
-                    permission = Permission.PlayerJoinDeniedNotification;
+                    permission = banmod.notify.ban;
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + punishment);
             }
 
             forwarder.accept(playerId, msgUser);
-            playerAdapter.broadcast(permission, msgNotify);
+            playerAdapter.broadcast(permission.toString(), msgNotify);
             if (punishment != null)
                 mod.log()
                         .info("User %s is %#s (%s)".formatted(name, punishment,
@@ -209,18 +211,6 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         public static Command.@NotNull Error couldNotSaveError() {
             return new Command.Error("Could not save changes");
         }
-    }
-
-    @UtilityClass
-    final class Permission {
-        public static final String PlayerBypassMute = "banmod.bypass.mute";
-        public static final String PlayerBypassKick = "banmod.bypass.kick";
-        public static final String PlayerBypassBan  = "banmod.bypass.ban";
-
-        public static final String PlayerJoinDeniedNotification = "banmod.notify.join";
-        public static final String PlayerChatDeniedNotification = "banmod.notify.chat";
-        public static final String PlayerKickedNotification     = "banmod.notify.kick";
-        public static final String PluginErrorNotification      = "banmod.notify.error";
     }
 
     @UtilityClass

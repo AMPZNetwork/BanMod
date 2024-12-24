@@ -12,28 +12,6 @@ depend:
   - LibMod
 softdepend:
   - LuckPerms
-permissions:
-  banmod.bypass:
-    description: A tree of permission nodes to bypass certain punishments
-    children:
-      banmod.bypass.kick:
-        description: /kick has no effect on you
-      banmod.bypass.mute:
-        description: /mute and /tempmute have no effect on you
-      banmod.bypass.ban:
-        description: /ban and /tempban have no effect on you
-  banmod.notify:
-    description: A tree of permission nodes to control notifications in the
-    children:
-      banmod.notify.kick:
-        description: Get notified when someone gets kicked
-      banmod.notify.mute:
-        description: Get notified when someone gets muted
-      banmod.notify.ban:
-        description: Get notified when someone gets banned
-      banmod.notify.error:
-        default: false
-        description: Get notified when the plugin gets a fatal error
 commands:
   reload:
     description: Reloads Configuration Files
@@ -83,4 +61,71 @@ commands:
     permission: banmod.category
   import:
     description: Import Data from other sources
-    permission: banmod.import
+permissions:
+  banmod:
+    description: Root permission node
+    default: false
+    children:
+      banmod.cleanup:
+        description: Permission for the /banmod:cleanup command
+        default: false
+      banmod.lookup:
+        description: Permission for the /banmod:lookup command
+        default: false
+      banmod.punish:
+        description: Permission for the /banmod:punish command
+        default: false
+      banmod.mutelist:
+        description: Permission for the /banmod:mutelist command
+        default: false
+      banmod.tempmute:
+        description: Permission for the /banmod:tempmute command
+        default: false
+      banmod.mute:
+        description: Permission for the /banmod:mute command
+        default: false
+      banmod.unmute:
+        description: Permission for the /banmod:unmute command
+        default: false
+      banmod.kick:
+        description: Permission for the /banmod:kick command
+        default: false
+      banmod.banlist:
+        description: Permission for the /banmod:banlist command
+        default: false
+      banmod.tempban:
+        description: Permission for the /banmod:tempban command
+        default: false
+      banmod.ban:
+        description: Permission for the /banmod:ban command
+        default: false
+      banmod.unban:
+        description: Permission for the /banmod:unban command
+        default: false
+      banmod.category:
+        description: Permission for the /banmod:category command
+        default: false
+      banmod.infraction:
+        description: Permission for the /banmod:infraction command
+        default: false
+      banmod.bypass:
+        description: A tree of permission nodes to bypass certain punishments
+        children:
+          banmod.bypass.kick:
+            description: /kick has no effect on you
+          banmod.bypass.mute:
+            description: /mute and /tempmute have no effect on you
+          banmod.bypass.ban:
+            description: /ban and /tempban have no effect on you
+      banmod.notify:
+        description: A tree of permission nodes to control notifications in the
+        children:
+          banmod.notify.kick:
+            description: Get notified when someone gets kicked
+          banmod.notify.mute:
+            description: Get notified when someone gets muted
+          banmod.notify.ban:
+            description: Get notified when someone gets banned
+          banmod.notify.error:
+            default: false
+            description: Get notified when the plugin gets a fatal error

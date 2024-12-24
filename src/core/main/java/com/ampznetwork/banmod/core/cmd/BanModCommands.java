@@ -6,6 +6,7 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.litebans.LiteBansImporter;
 import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
+import com.ampznetwork.banmod.generated.PluginYml.Permission.banmod;
 import com.ampznetwork.libmod.api.entity.DbObject;
 import com.ampznetwork.libmod.api.entity.Player;
 import lombok.experimental.UtilityClass;
@@ -38,7 +39,7 @@ import static org.comroid.api.func.util.Command.*;
 
 @UtilityClass
 public class BanModCommands {
-    @Command(permission = "banmod.cleanup")
+    @Command(permission = banmod.CLEANUP)
     public static Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getLib().getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
         final var service = mod.getEntityService();
@@ -120,7 +121,7 @@ public class BanModCommands {
         return text.build();
     }
 
-    @Command(permission = "banmod.lookup")
+    @Command(permission = banmod.LOOKUP)
     public static Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
         var target = mod.getLib().getPlayerAdapter().getId(name);
@@ -175,7 +176,7 @@ public class BanModCommands {
         return text;
     }
 
-    @Command(permission = "banmod.punish")
+    @Command(permission = banmod.PUNISH)
     public static Component punish(
             BanMod mod,
             UUID issuer,
@@ -202,14 +203,14 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.mutelist")
+    @Command(permission = banmod.MUTELIST)
     public static Component mutelist(
             BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
     ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Mute);
     }
 
-    @Command(permission = "banmod.tempmute")
+    @Command(permission = banmod.TEMPMUTE)
     public static Component tempmute(
             BanMod mod,
             UUID issuer,
@@ -234,7 +235,7 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.mute")
+    @Command(permission = banmod.MUTE)
     public static Component mute(
             BanMod mod,
             UUID issuer,
@@ -256,7 +257,7 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.unmute")
+    @Command(permission = banmod.UNMUTE)
     public static Component unmute(
             BanMod mod,
             UUID issuer,
@@ -275,7 +276,7 @@ public class BanModCommands {
         return text("User " + name + " was unmuted").color(GREEN);
     }
 
-    @Command(permission = "banmod.kick")
+    @Command(permission = banmod.KICK)
     public static Component kick(
             BanMod mod,
             UUID issuer,
@@ -296,14 +297,14 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.banlist")
+    @Command(permission = banmod.BANLIST)
     public static Component banlist(
             BanMod mod, @Nullable @Default("1") @Arg(value = "page", required = false, autoFillProvider = AutoFillProvider.PageNumber.class) Integer page
     ) {
         return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
     }
 
-    @Command(permission = "banmod.tempban")
+    @Command(permission = banmod.TEMPBAN)
     public static Component tempban(
             BanMod mod,
             UUID issuer,
@@ -327,7 +328,7 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.ban")
+    @Command(permission = banmod.BAN)
     public static Component ban(
             BanMod mod,
             UUID issuer,
@@ -350,7 +351,7 @@ public class BanModCommands {
         return BanMod.Displays.textPunishmentFull(mod, infraction);
     }
 
-    @Command(permission = "banmod.unban")
+    @Command(permission = banmod.UNBAN)
     public static Component unban(
             BanMod mod,
             UUID issuer,
@@ -373,7 +374,7 @@ public class BanModCommands {
         infractions, players, everything
     }
 
-    @Command(permission = "banmod.infraction")
+    @Command(permission = banmod.INFRACTION)
     @UtilityClass
     @Alias("punishment")
     public class infraction {
@@ -400,7 +401,7 @@ public class BanModCommands {
         }
     }
 
-    @Command(permission = "banmod.category")
+    @Command(permission = banmod.CATEGORY)
     @UtilityClass
     public class category {
         @Command
