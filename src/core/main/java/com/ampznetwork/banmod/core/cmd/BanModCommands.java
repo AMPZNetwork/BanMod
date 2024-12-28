@@ -124,7 +124,7 @@ public class BanModCommands {
     @Command(permission = banmod.LOOKUP)
     public static Component lookup(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name) {
         // todo: use book adapter here
-        var target = mod.getLib().getPlayerAdapter().getId(name);
+        var target = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var data = mod.getEntityService().getAccessor(Player.TYPE).get(target)
                 .orElseThrow(() -> new Command.Error("Player not found"));
         var text = text("")
@@ -186,7 +186,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(category)
                 .orElseThrow(() -> new Command.Error("Unknown category: " + category));
         final @Nullable String finalReason = reason;
@@ -220,7 +220,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt          = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var playerResult = mod.queuePlayer(tgt);
         if (playerResult.isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
@@ -244,7 +244,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         if (mod.queuePlayer(tgt).isMuted())
             return text("User " + name + " is already muted").color(YELLOW);
         final @Nullable String finalReason = reason;
@@ -263,7 +263,7 @@ public class BanModCommands {
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
     ) {
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).all()
                 .filter(Infraction.IS_IN_EFFECT)
                 .filter(i -> i.getPlayer().getId().equals(tgt))
@@ -285,7 +285,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).create()
                 .complete(e -> base(mod, tgt, Punishment.Kick, issuer)
@@ -314,7 +314,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
         final @Nullable String finalReason = reason;
@@ -337,7 +337,7 @@ public class BanModCommands {
     ) {
         if (reason == null || reason.isBlank())
             reason = null;
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         if (mod.queuePlayer(tgt).isBanned())
             return text("User " + name + " is already banned").color(YELLOW);
         final @Nullable String finalReason = reason;
@@ -357,7 +357,7 @@ public class BanModCommands {
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.PlayersByInfractionPunishment.class) String name
     ) {
-        var tgt = mod.getLib().getPlayerAdapter().getId(name);
+        var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE).all()
                 .filter(Infraction.IS_IN_EFFECT)
                 .filter(i -> i.getPlayer().getId().equals(tgt))
