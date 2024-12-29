@@ -4,6 +4,7 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 
+@Deprecated(forRemoval = true)
 public interface IPropagationAdapter {
     void cancel();
 
@@ -11,6 +12,7 @@ public interface IPropagationAdapter {
 
     @Value
     @NoArgsConstructor
+    @Deprecated(forRemoval = true)
     class Stateful implements IPropagationAdapter {
         @NonFinal
         boolean cancelled;
