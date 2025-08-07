@@ -32,6 +32,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.event.ClickEvent.*;
@@ -49,7 +51,8 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
     @Override
     default Set<Class<? extends DbObject>> getEntityTypes() {
-        return Set.of(Infraction.class, PunishmentCategory.class);
+        return Stream.concat(getLib().getEntityTypes().stream(), Stream.of(Infraction.class, PunishmentCategory.class))
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
@@ -62,11 +65,8 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                 .by(PunishmentCategory::getName)
                 .getOrCreate("default")
                 .setUpdateOriginal(original -> {
-                    original.getPunishmentThresholds().putAll(Map.of(
-                            0, Punishment.Kick,
-                            2, Punishment.Mute,
-                            5, Punishment.Ban
-                    ));
+                    original.getPunishmentThresholds()
+                            .putAll(Map.of(0, Punishment.Kick, 2, Punishment.Mute, 5, Punishment.Ban));
                     return original;
                 })
                 .complete(cat -> cat.punishmentThreshold(0, Punishment.Kick)
@@ -74,8 +74,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                         .punishmentThreshold(5, Punishment.Ban));
     }
 
-    @Nullable
-    String getBanAppealUrl();
+    @Nullable String getBanAppealUrl();
 
     Logger log();
 
@@ -93,8 +92,7 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     }
 
     default PlayerResult queuePlayer(UUID playerId) {
-        var player = getLib().getPlayerAdapter()
-                .getPlayer(playerId).orElseThrow();
+        var player = getLib().getPlayerAdapter().getPlayer(playerId).orElseThrow();
         return getEntityService().getAccessor(Infraction.TYPE)
                 .querySelect("select i.* from banmod_punishments i where i.player_id = :playerId",
                         Map.of("playerId", playerId.toString()))
@@ -146,15 +144,11 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         public static final int ENTRIES_PER_PAGE = 8;
 
         public static void notify(
-                BanMod mod,
-                UUID playerId,
-                @Nullable Punishment punishment,
-                PlayerResult result,
+                BanMod mod, UUID playerId, @Nullable Punishment punishment, PlayerResult result,
                 BiConsumer<UUID, Component> forwarder
         ) {
             var playerAdapter = mod.getLib().getPlayerAdapter();
-            if (!playerAdapter.isOnline(playerId) && mod.allowUnsafeConnections())
-                return;
+            if (!playerAdapter.isOnline(playerId) && mod.allowUnsafeConnections()) return;
             var           name       = playerAdapter.getName(playerId);
             TextComponent msgUser, msgNotify;
             Permission    permission = banmod.notify.error;
@@ -194,10 +188,10 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
 
             forwarder.accept(playerId, msgUser);
             playerAdapter.broadcast(permission.toString(), msgNotify);
-            if (punishment != null)
-                mod.log()
-                        .info("User %s is %#s (%s)".formatted(name, punishment,
-                                Displays.formatTimestamp(result.expires())));
+            if (punishment != null) mod.log()
+                    .info("User %s is %#s (%s)".formatted(name,
+                            punishment,
+                            Displays.formatTimestamp(result.expires())));
         }
 
         public static void printExceptionWithIssueReportUrl(BanMod mod, String message, Throwable t) {
@@ -205,7 +199,9 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         }
 
         public static void printExceptionWithIssueReportUrl(Logger log, String message, Throwable t) {
-            log.error(message, new RuntimeException("An unexpected internal error occurred. Please open a bugreport at " + Strings.IssuesUrl, t));
+            log.error(message,
+                    new RuntimeException("An unexpected internal error occurred. Please open a bugreport at " + Strings.IssuesUrl,
+                            t));
         }
 
         public static Command.@NotNull Error couldNotSaveError() {
@@ -217,55 +213,45 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
     final class Displays {
         @NotNull
         public static String formatDuration(Duration duration) {
-            if (duration == null)
-                return "permanent";
+            if (duration == null) return "permanent";
             return Polyfill.durationString(duration);
         }
 
         @NotNull
         public Component infractionList(BanMod mod, int page, Punishment punishment) {
-            final var infractions = mod.getLib().getEntityService()
+            final var infractions = mod.getLib()
+                    .getEntityService()
                     .getAccessor(Infraction.TYPE)
                     .all()
                     .filter(Infraction.IS_IN_EFFECT)
                     .filter(i -> i.getPunishment() == punishment)
                     .sorted(Infraction.BY_NEWEST)
-                    .distinct().toList();
+                    .distinct()
+                    .toList();
             final var pageCount = Math.ceil(1d * infractions.size() / Resources.ENTRIES_PER_PAGE);
             return infractions.stream()
-                    .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer()
-                            .getLastKnownName()
-                            .orElse("")))
+                    .sorted(Infraction.BY_SHORTEST.thenComparing(i -> i.getPlayer().getLastKnownName().orElse("")))
                     .skip(Math.max(0, (page - 1L) * Resources.ENTRIES_PER_PAGE))
                     .limit(Resources.ENTRIES_PER_PAGE)
-                    .map(infraction -> text("\n- ")
-                            .append(textPunishmentFull(mod, infraction)))
-                    .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ")
-                            .append(text("(none)").color(GRAY))))
-                    .collect(Collector.of(() -> text()
-                                    .append(text(punishment.name() + "list (Page %d of %d)"
-                                            .formatted((Integer) (pageCount == 0 ? 0 : Math.max(1, page)), (Integer) (int) pageCount))),
-                            ComponentBuilder::append,
-                            (l, r) -> {
-                                l.append(r);
-                                return l;
-                            },
-                            ComponentBuilder::build));
+                    .map(infraction -> text("\n- ").append(textPunishmentFull(mod, infraction)))
+                    .collect(Streams.atLeastOneOrElseGet(() -> text("\n- ").append(text("(none)").color(GRAY))))
+                    .collect(Collector.of(() -> text().append(text(punishment.name() + "list (Page %d of %d)".formatted(
+                            (Integer) (pageCount == 0 ? 0 : Math.max(1, page)),
+                            (Integer) (int) pageCount))), ComponentBuilder::append, (l, r) -> {
+                        l.append(r);
+                        return l;
+                    }, ComponentBuilder::build));
         }
 
         @NotNull
         public Component textPunishmentFull(BanMod mod, Infraction infraction) {
             var username = mod.getLib().getPlayerAdapter().getName(infraction.getPlayer().getId());
-            var text = text("User ")
-                    .append(text(username).color(AQUA))
+            var text = text("User ").append(text(username).color(AQUA))
                     .append(text(" has been "))
-                    .append(infraction.getPunishment()
-                            .toComponent(true));
+                    .append(infraction.getPunishment().toComponent(true));
 
             var reason = infraction.getReason();
-            if (reason != null)
-                text = text.append(text(": "))
-                        .append(text(reason).color(LIGHT_PURPLE));
+            if (reason != null) text = text.append(text(": ")).append(text(reason).color(LIGHT_PURPLE));
 
             return text.append(textExpiry(infraction.getExpires()));
         }
@@ -274,55 +260,39 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         public static TextComponent textExpiry(Instant expiry) {
             var text = text();
             if (expiry != null && !expiry.isBefore(Infraction.TOO_EARLY)) {
-                text.append(text(" (until "))
-                        .append(text(formatTimestamp(expiry)).color(YELLOW))
-                        .append(text(")"));
-            } else text.append(text(" ("))
-                    .append(text("permanently").color(RED))
-                    .append(text(")"));
+                text.append(text(" (until ")).append(text(formatTimestamp(expiry)).color(YELLOW)).append(text(")"));
+            } else text.append(text(" (")).append(text("permanently").color(RED)).append(text(")"));
             return text.build();
         }
 
         @NotNull
         public static TextComponent bannedTextUser(BanMod mod, PlayerResult result) {
-            var text = text()
-                    .append(text("You are banned from this Server")
-                            .color(RED)
-                            .decorate(BOLD, UNDERLINED))
+            var text = text().append(text("You are banned from this Server").color(RED).decorate(BOLD, UNDERLINED))
                     .append(text("\n\n"));
-            if (result.reason() != null)
-                text.append(text("Reason:\n\n")
-                                .color(AQUA)
-                                .decorate(UNDERLINED))
-                        .append(text(result.reason()).color(YELLOW))
-                        .append(text("\n\n\n"));
+            if (result.reason() != null) text.append(text("Reason:\n\n").color(AQUA).decorate(UNDERLINED))
+                    .append(text(result.reason()).color(YELLOW))
+                    .append(text("\n\n\n"));
 
             text.append(text("This punishment ").color(RED));
             if (result.expires() == null || result.expires()
-                    .isBefore(Infraction.TOO_EARLY))
-                text.append(text("is ").color(RED))
-                        .append(text("permanent")
-                                .color(DARK_RED)
-                                .decorate(BOLD))
-                        .append(text(".").color(RED));
+                    .isBefore(Infraction.TOO_EARLY)) text.append(text("is ").color(RED))
+                    .append(text("permanent").color(DARK_RED).decorate(BOLD))
+                    .append(text(".").color(RED));
             else text.append(text("ends at ").color(RED))
-                    .append(text(formatTimestamp(result.expires()))
-                            .color(YELLOW))
+                    .append(text(formatTimestamp(result.expires())).color(YELLOW))
                     .append(text(".").color(RED));
 
             var appealUrl = mod.getBanAppealUrl();
-            if (appealUrl != null)
-                text.append(text("\nYou may appeal to get unbanned at\n").color(GRAY))
-                        .append(text(appealUrl).color(AQUA)
-                                .hoverEvent(showText(text("Open Link")))
-                                .clickEvent(clickEvent(ClickEvent.Action.OPEN_URL, appealUrl)));
+            if (appealUrl != null) text.append(text("\nYou may appeal to get unbanned at\n").color(GRAY))
+                    .append(text(appealUrl).color(AQUA)
+                            .hoverEvent(showText(text("Open Link")))
+                            .clickEvent(clickEvent(ClickEvent.Action.OPEN_URL, appealUrl)));
             return text.build();
         }
 
         @NotNull
         public static String formatTimestamp(Instant expiry) {
-            if (expiry == null)
-                return "permanent";
+            if (expiry == null) return "permanent";
             var dateTime  = LocalDateTime.ofInstant(expiry, ZoneId.systemDefault());
             var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             return dateTime.format(formatter);
@@ -331,17 +301,14 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         @NotNull
         public static TextComponent mutedTextUser(PlayerResult result) {
             var text = text().append(text("You are muted!").color(RED));
-            if (result.reason() != null)
-                text.append(text(" Reason: "))
-                        .append(text(result.reason()).color(YELLOW));
+            if (result.reason() != null) text.append(text(" Reason: ")).append(text(result.reason()).color(YELLOW));
             text.append(textExpiry(result.expires()));
             return text.build();
         }
 
         @NotNull
         public static TextComponent mutedTextNotify(String name) {
-            return text("")
-                    .append(text("Player "))
+            return text("").append(text("Player "))
                     .append(text(name).color(RED))
                     .append(text(" tried to write in chat, but they are "))
                     .append(text("muted").color(YELLOW))
@@ -351,24 +318,20 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
         @NotNull
         public static TextComponent kickedTextUser(PlayerResult result) {
             var text = text().append(text("You were kicked from the server").color(RED));
-            if (result.reason() != null)
-                text.append(text("\nReason: "))
-                        .append(text(result.reason()).color(YELLOW));
+            if (result.reason() != null) text.append(text("\nReason: ")).append(text(result.reason()).color(YELLOW));
             return text.build();
         }
 
         @NotNull
         public static TextComponent kickedTextNotify(String name) {
-            return text("")
-                    .append(text("Player "))
+            return text("").append(text("Player "))
                     .append(text(name).color(RED))
                     .append(text(" was kicked from the server."));
         }
 
         @NotNull
         public static TextComponent bannedTextNotify(String name) {
-            return text("")
-                    .append(text("Player "))
+            return text("").append(text("Player "))
                     .append(text(name).color(RED))
                     .append(text(" tried to join the game, but they are "))
                     .append(text("banned").color(DARK_RED))
