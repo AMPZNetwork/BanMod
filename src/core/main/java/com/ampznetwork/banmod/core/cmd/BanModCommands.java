@@ -549,8 +549,11 @@ public class BanModCommands {
 
         @Command
         public Component litebans(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+            var database = mod.getDatabaseInfo();
+            if (database == null) throw new Command.Error("Database not found");
+
             mod.getLib().getPlayerAdapter().send(playerId, text("Starting import process..."));
-            try (var importer = new LiteBansImporter(mod, mod.getLib().getDatabaseInfo())) {
+            try (var importer = new LiteBansImporter(mod, database)) {
                 var result = importer.run();
                 var text = text("Imported ")
                         .append(text(result.muteCount() + " Mutes").color(Punishment.Mute.getColor()))
