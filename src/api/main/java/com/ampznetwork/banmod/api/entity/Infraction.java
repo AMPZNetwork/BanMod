@@ -16,6 +16,7 @@ import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.comroid.api.Polyfill;
+import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,28 +86,36 @@ public class Infraction extends DbObject {
     }
 
     public interface Factory {
-        static Factory parse(String expression) {
+        static Factory parse(BanMod mod, String expression) {
+            var split = expression.split(":");
+            var category = mod.getEntityAccessor(PunishmentCategory.TYPE)
+                    .by(PunishmentCategory::getName)
+                    .get(split[0])
+                    .orElseThrow(() -> new Command.Error("Could not find punishment category " + split[0]));
+            var duration = Polyfill.parseDuration(split[1]);
+            return new SimpleExpressionFactory(mod, category, duration);
         }
 
         PunishmentCategory getCategory();
 
-        Builder<? extends Infraction, ?> apply(BanMod mod, Builder<? extends Infraction, ?> builder, Player player);
+        Builder<? extends Infraction, ?> apply(Builder<? extends Infraction, ?> builder, Player player);
 
-        default Builder<? extends Infraction, ?> create(BanMod mod, Player target) {
-            return apply(mod, builder(), target);
+        default Builder<? extends Infraction, ?> create(Player target) {
+            return apply(builder(), target);
         }
     }
 
     @Value
     private static class SimpleExpressionFactory implements Factory {
+        BanMod mod;
         PunishmentCategory category;
         Duration           duration;
 
         @Override
-        public Builder<? extends Infraction, ?> apply(
-                BanMod mod, Builder<? extends Infraction, ?> builder, Player player) {
+        public Builder<? extends Infraction, ?> apply(Builder<? extends Infraction, ?> builder, Player player) {
             var rep = mod.findRepetition(player.getId(), category);
-            return builder.category(category).expires(now().plus(duration))
+            return builder.category(category)
+                    .expires(now().plus(duration))
                     .punishment(category.calculatePunishment(rep).orElse(Punishment.Mute));
         }
     }
