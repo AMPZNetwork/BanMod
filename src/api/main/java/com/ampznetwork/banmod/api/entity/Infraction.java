@@ -16,7 +16,6 @@ import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.comroid.api.Polyfill;
-import org.comroid.api.func.util.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +90,7 @@ public class Infraction extends DbObject {
             var category = mod.getEntityAccessor(PunishmentCategory.TYPE)
                     .by(PunishmentCategory::getName)
                     .get(split[0])
-                    .orElseThrow(() -> new Command.Error("Could not find punishment category " + split[0]));
+                    .orElseGet(mod::getDefaultCategory);
             var duration = Polyfill.parseDuration(split[1]);
             return new SimpleExpressionFactory(mod, category, duration);
         }
