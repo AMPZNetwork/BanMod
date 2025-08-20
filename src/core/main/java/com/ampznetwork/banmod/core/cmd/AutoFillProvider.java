@@ -8,7 +8,8 @@ import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.api.entity.Player;
 import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
-import org.comroid.api.func.util.Command;
+import org.comroid.commands.autofill.IAutoFillProvider;
+import org.comroid.commands.impl.CommandUsage;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -20,11 +21,11 @@ import static org.comroid.api.func.util.Streams.*;
 
 @UtilityClass
 public class AutoFillProvider {
-    public enum PageNumber implements Command.AutoFillProvider {
+    public enum PageNumber implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -44,11 +45,11 @@ public class AutoFillProvider {
         }
     }
 
-    public enum Players implements Command.AutoFillProvider {
+    public enum Players implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(SubMod.class))
                     .findAny().orElseThrow();
@@ -59,11 +60,11 @@ public class AutoFillProvider {
         }
     }
 
-    public enum PlayersByInfractionPunishment implements Command.AutoFillProvider {
+    public enum PlayersByInfractionPunishment implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -86,11 +87,11 @@ public class AutoFillProvider {
         }
     }
 
-    public enum Categories implements Command.AutoFillProvider {
+    public enum Categories implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             if (Arrays.asList(usage.getFullCommand()).contains("create"))
                 return empty();
             return usage.getContext().stream()
@@ -100,29 +101,29 @@ public class AutoFillProvider {
         }
     }
 
-    public enum InfractionQuery implements Command.AutoFillProvider {
+    public enum InfractionQuery implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }
 
-    public enum ObjectProperties implements Command.AutoFillProvider {
+    public enum ObjectProperties implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }
 
-    public enum ObjectPropertyValues implements Command.AutoFillProvider {
+    public enum ObjectPropertyValues implements IAutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(Command.Usage usage, String argName, String currentValue) {
+        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }

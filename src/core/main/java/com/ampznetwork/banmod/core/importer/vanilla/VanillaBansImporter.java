@@ -2,7 +2,6 @@ package com.ampznetwork.banmod.core.importer.vanilla;
 
 import com.ampznetwork.banmod.api.BanMod;
 import com.ampznetwork.banmod.api.entity.Infraction;
-import com.ampznetwork.banmod.api.entity.PlayerData;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.banmod.core.importer.ImportResult;
 import com.ampznetwork.banmod.core.importer.Importer;
@@ -10,7 +9,7 @@ import com.ampznetwork.banmod.core.importer.vanilla.entry.Ban;
 import com.ampznetwork.libmod.api.entity.Player;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Value;
-import org.comroid.api.func.util.Command;
+import org.comroid.commands.model.CommandError;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -51,7 +50,7 @@ public class VanillaBansImporter implements Importer {
         } catch (FileNotFoundException e) {
             return ImportResult.ZERO;
         } catch (IOException e) {
-            throw new Command.Error("Could not import vanilla bans: " + e);
+            throw new CommandError("Could not import vanilla bans: " + e);
         }
     }
 

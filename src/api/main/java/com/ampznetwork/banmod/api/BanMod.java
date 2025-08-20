@@ -16,8 +16,9 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.TextColor;
 import org.comroid.api.Polyfill;
-import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Streams;
+import org.comroid.commands.model.CommandError;
+import org.comroid.commands.model.permission.PermissionAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ import static net.kyori.adventure.text.event.HoverEvent.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
-public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
+public interface BanMod extends SubMod, PermissionAdapter {
     LibMod getLib();
 
     @Override
@@ -204,8 +205,8 @@ public interface BanMod extends SubMod, Command.PermissionChecker.Adapter {
                             t));
         }
 
-        public static Command.@NotNull Error couldNotSaveError() {
-            return new Command.Error("Could not save changes");
+        public static @NotNull CommandError couldNotSaveError() {
+            return new CommandError("Could not save changes");
         }
     }
 

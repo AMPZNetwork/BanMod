@@ -15,8 +15,10 @@ import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
 import org.comroid.api.attr.Named;
 import org.comroid.api.func.util.Bitmask;
-import org.comroid.api.func.util.Command;
 import org.comroid.api.text.StringMode;
+import org.comroid.commands.Command;
+import org.comroid.commands.autofill.impl.DurationAutoFillProvider;
+import org.comroid.commands.model.CommandError;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,7 @@ import static net.kyori.adventure.text.event.HoverEvent.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 import static org.comroid.api.Polyfill.*;
-import static org.comroid.api.func.util.Command.*;
+import static org.comroid.commands.Command.*;
 
 @UtilityClass
 public class BanModCommands {
@@ -116,7 +118,7 @@ public class BanModCommands {
                         .append(text(" IPs)")));
                 break;
             default:
-                throw new Command.Error("Unexpected value: " + method);
+                throw new CommandError("Unexpected value: " + method);
         }
         return text.build();
     }
@@ -126,7 +128,7 @@ public class BanModCommands {
         // todo: use book adapter here
         var target = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var data = mod.getEntityService().getAccessor(Player.TYPE).get(target)
-                .orElseThrow(() -> new Command.Error("Player not found"));
+                .orElseThrow(() -> new CommandError("Player not found"));
         var text = text("")
                 .append(text("Player ").decorate(BOLD))
                 .append(text(name).color(AQUA).decorate(BOLD))
@@ -188,7 +190,7 @@ public class BanModCommands {
             reason = null;
         var tgt = mod.getLib().getPlayerAdapter().getIdOrThrow(name);
         var cat = mod.getEntityService().getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(category)
-                .orElseThrow(() -> new Command.Error("Unknown category: " + category));
+                .orElseThrow(() -> new CommandError("Unknown category: " + category));
         final @Nullable String finalReason = reason;
         var infraction = mod.getEntityService().getAccessor(Infraction.TYPE)
                 .create()
@@ -215,7 +217,8 @@ public class BanModCommands {
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-            @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
+            @NotNull @Arg(value = "duration",
+                          autoFillProvider = DurationAutoFillProvider.class) String durationText,
             @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
     ) {
         if (reason == null || reason.isBlank())
@@ -269,9 +272,9 @@ public class BanModCommands {
                 .filter(i -> i.getPlayer().getId().equals(tgt))
                 .filter(i -> i.getPunishment() == Punishment.Mute)
                 .findAny()
-                .orElseThrow(() -> new Command.Error("User is not muted"));
+                .orElseThrow(() -> new CommandError("User is not muted"));
         if (infraction.getPlayer().getId().equals(issuer))
-            throw new Command.Error("You cannot unmute yourself!");
+            throw new CommandError("You cannot unmute yourself!");
         mod.revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unmuted").color(GREEN);
     }
@@ -309,7 +312,8 @@ public class BanModCommands {
             BanMod mod,
             UUID issuer,
             @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Players.class) String name,
-            @NotNull @Arg(value = "duration", autoFillProvider = Command.AutoFillProvider.Duration.class) String durationText,
+            @NotNull @Arg(value = "duration",
+                          autoFillProvider = DurationAutoFillProvider.class) String durationText,
             @Nullable @Default("") @Arg(value = "reason", required = false, stringMode = StringMode.GREEDY) String reason
     ) {
         if (reason == null || reason.isBlank())
@@ -363,9 +367,9 @@ public class BanModCommands {
                 .filter(i -> i.getPlayer().getId().equals(tgt))
                 .filter(i -> i.getPunishment() == Punishment.Ban)
                 .findAny()
-                .orElseThrow(() -> new Command.Error("User is not banned"));
+                .orElseThrow(() -> new CommandError("User is not banned"));
         if (infraction.getPlayer().getId() == issuer)
-            throw new Command.Error("You cannot unban yourself!");
+            throw new CommandError("You cannot unban yourself!");
         mod.revokeInfraction(infraction.getId(), issuer);
         return text("User " + name + " was unbanned").color(GREEN);
     }
@@ -386,7 +390,7 @@ public class BanModCommands {
                 String query
         ) {
             if (query != null)
-                throw new Command.Error("query unimplemented");
+                throw new CommandError("query unimplemented");
             return BanMod.Displays.infractionList(mod, page == null ? 1 : page, Punishment.Ban);
         }
 
@@ -397,7 +401,7 @@ public class BanModCommands {
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
                 @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value
         ) {
-            throw new Command.Error("unimplemented");
+            throw new CommandError("unimplemented");
         }
     }
 
@@ -411,7 +415,7 @@ public class BanModCommands {
                 @NotNull @Arg(value = "player", autoFillProvider = AutoFillProvider.Players.class) String playerName,
                 @Nullable @Arg(value = "repetition", required = false) Integer repetition
         ) {
-            throw new Command.Error("unimplemented");
+            throw new CommandError("unimplemented");
         }
 
         @Command
@@ -479,7 +483,8 @@ public class BanModCommands {
         public Component create(
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
-                @NotNull @Arg(value = "baseDuration", autoFillProvider = Command.AutoFillProvider.Duration.class) String baseDuration,
+                @NotNull @Arg(value = "baseDuration",
+                              autoFillProvider = DurationAutoFillProvider.class) String baseDuration,
                 @Nullable @Default("2") @Arg(value = "repetitionBase", required = false) Double repetitionBase
         ) {
             var duration = parseDuration(baseDuration);
@@ -509,16 +514,16 @@ public class BanModCommands {
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
                 @Nullable @Arg(value = "value", autoFillProvider = AutoFillProvider.ObjectPropertyValues.class) String value
         ) {
-            throw new Command.Error("unimplemented");
+            throw new CommandError("unimplemented");
         }
 
         @Command
         public Component delete(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name) {
             if ("default".equals(name))
-                throw new Command.Error("Cannot delete the default category!");
+                throw new CommandError("Cannot delete the default category!");
             var service = mod.getEntityService();
             var cat = service.getAccessor(PunishmentCategory.TYPE).by(PunishmentCategory::getName).get(name)
-                    .orElseThrow(() -> new Command.Error("Could not find category named " + name));
+                    .orElseThrow(() -> new CommandError("Could not find category named " + name));
             return service.delete(cat) > 0
                    ? text("Deleted category " + name).color(RED)
                    : text("Could not delete category " + name).color(DARK_RED);
@@ -543,14 +548,14 @@ public class BanModCommands {
             } catch (Throwable t) {
                 var msg = "Could not import bans from Vanilla Minecraft";
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
-                throw new Command.Error(msg + " " + BanMod.Strings.PleaseCheckConsole);
+                throw new CommandError(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
         }
 
         @Command
         public Component litebans(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
             var database = mod.getDatabaseInfo();
-            if (database == null) throw new Command.Error("Database not found");
+            if (database == null) throw new CommandError("Database not found");
 
             mod.getLib().getPlayerAdapter().send(playerId, text("Starting import process..."));
             try (var importer = new LiteBansImporter(mod, database)) {
@@ -571,7 +576,7 @@ public class BanModCommands {
             } catch (Throwable t) {
                 var msg = "Could not import from LiteBans.";
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
-                throw new Command.Error(msg + " " + BanMod.Strings.PleaseCheckConsole);
+                throw new CommandError(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
         }
     }
