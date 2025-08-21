@@ -25,7 +25,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -49,7 +49,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(SubMod.class))
                     .findAny().orElseThrow();
@@ -64,7 +64,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             var mod = usage.getContext().stream()
                     .flatMap(cast(BanMod.class))
                     .findAny().orElseThrow();
@@ -91,7 +91,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             if (Arrays.asList(usage.getFullCommand()).contains("create"))
                 return empty();
             return usage.getContext().stream()
@@ -105,7 +105,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }
@@ -114,7 +114,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }
@@ -123,7 +123,7 @@ public class AutoFillProvider {
         @Instance INSTANCE;
 
         @Override
-        public Stream<String> autoFill(CommandUsage usage, String argName, String currentValue) {
+        public Stream<? extends CharSequence> autoFill(CommandUsage usage, String argName, String currentValue) {
             return empty();
         }
     }
