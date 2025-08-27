@@ -18,4 +18,4 @@ apply from: "$rootProject.projectDir/gradle/scripts/setup/spigot.gradle"
 apply from: "$rootProject.projectDir/gradle/scripts/deploy/shadowJar.gradle"
 
 group = 'com.ampznetwork.banmod'
-version = "0.1.${getCommitTimestampSeconds()}"
+version = "0.1.${getCommitTimestampMinutes()}"
