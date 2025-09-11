@@ -9,7 +9,6 @@ import com.ampznetwork.banmod.generated.PluginYml.Permission.banmod;
 import com.ampznetwork.libmod.api.LibMod;
 import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.api.entity.DbObject;
-import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
@@ -131,8 +130,11 @@ public interface BanMod extends SubMod, MinecraftPermissionAdapter {
                 .setParameter("id", id));
     }
 
-    @UtilityClass
     final class Strings {
+        private Strings() {
+            throw new UnsupportedOperationException();
+        }
+
         public static final String AddonName          = "BanMod";
         public static final String AddonId            = "banmod";
         public static final String IssuesUrl          = "https://github.com/AMPZNetwork/BanMod/issues";
@@ -140,8 +142,11 @@ public interface BanMod extends SubMod, MinecraftPermissionAdapter {
         public static final String OfflineModeInfo    = "Offline mode is not fully supported! Players may be able to rejoin even after being banned.";
     }
 
-    @UtilityClass
     final class Resources {
+        private Resources() {
+            throw new UnsupportedOperationException();
+        }
+
         public static final int ENTRIES_PER_PAGE = 8;
 
         public static void notify(
@@ -210,16 +215,9 @@ public interface BanMod extends SubMod, MinecraftPermissionAdapter {
         }
     }
 
-    @UtilityClass
     final class Displays {
         @NotNull
-        public static String formatDuration(Duration duration) {
-            if (duration == null) return "permanent";
-            return Polyfill.durationString(duration);
-        }
-
-        @NotNull
-        public Component infractionList(BanMod mod, int page, Punishment punishment) {
+        public static Component infractionList(BanMod mod, int page, Punishment punishment) {
             final var infractions = mod.getLib()
                     .getEntityService()
                     .getAccessor(Infraction.TYPE)
@@ -245,7 +243,13 @@ public interface BanMod extends SubMod, MinecraftPermissionAdapter {
         }
 
         @NotNull
-        public Component textPunishmentFull(BanMod mod, Infraction infraction) {
+        public static String formatDuration(Duration duration) {
+            if (duration == null) return "permanent";
+            return Polyfill.durationString(duration);
+        }
+
+        @NotNull
+        public static Component textPunishmentFull(BanMod mod, Infraction infraction) {
             var username = mod.getLib().getPlayerAdapter().getName(infraction.getPlayer().getId());
             var text = text("User ").append(text(username).color(AQUA))
                     .append(text(" has been "))
@@ -255,6 +259,10 @@ public interface BanMod extends SubMod, MinecraftPermissionAdapter {
             if (reason != null) text = text.append(text(": ")).append(text(reason).color(LIGHT_PURPLE));
 
             return text.append(textExpiry(infraction.getExpires()));
+        }
+
+        private Displays() {
+            throw new UnsupportedOperationException();
         }
 
         @NotNull

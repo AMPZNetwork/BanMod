@@ -29,9 +29,6 @@ dependencies {
     // minecraft
     api 'net.kyori:adventure-api:4.11.+'
 
-    // database
-    api 'javax.persistence:javax.persistence-api:2.2'
-
     // logger
     compileOnly 'org.apache.logging.log4j:log4j-core:2.+'
 

@@ -9,7 +9,6 @@ import com.ampznetwork.banmod.core.importer.vanilla.VanillaBansImporter;
 import com.ampznetwork.banmod.generated.PluginYml.Permission.banmod;
 import com.ampznetwork.libmod.api.entity.DbObject;
 import com.ampznetwork.libmod.api.entity.Player;
-import lombok.experimental.UtilityClass;
 import net.kyori.adventure.text.Component;
 import org.comroid.annotations.Alias;
 import org.comroid.annotations.Default;
@@ -39,8 +38,11 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 import static org.comroid.api.Polyfill.*;
 import static org.comroid.commands.Command.*;
 
-@UtilityClass
-public class BanModCommands {
+public final class BanModCommands {
+    private BanModCommands() {
+        throw new UnsupportedOperationException();
+    }
+
     @Command(permission = banmod.CLEANUP)
     public static Component cleanup(BanMod mod, UUID playerId, @NotNull @Arg(value = "method") CleanupMethod method) {
         mod.getLib().getPlayerAdapter().send(playerId, text("Starting cleanup process..."));
@@ -379,11 +381,10 @@ public class BanModCommands {
     }
 
     @Command(permission = banmod.INFRACTION)
-    @UtilityClass
     @Alias("punishment")
-    public class infraction {
+    public static class infraction {
         @Command
-        public Component list(
+        public static Component list(
                 BanMod mod,
                 @Nullable @Arg(value = "page", autoFillProvider = AutoFillProvider.PageNumber.class, required = false) Integer page,
                 @Nullable @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class, required = false, stringMode = StringMode.GREEDY)
@@ -395,7 +396,7 @@ public class BanModCommands {
         }
 
         @Command
-        public Component set(
+        public static Component set(
                 BanMod mod,
                 @NotNull @Arg(value = "query", autoFillProvider = AutoFillProvider.InfractionQuery.class) String query,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
@@ -403,13 +404,16 @@ public class BanModCommands {
         ) {
             throw new CommandError("unimplemented");
         }
+
+        private infraction() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @Command(permission = banmod.CATEGORY)
-    @UtilityClass
-    public class category {
+    public static class category {
         @Command
-        public Component duration(
+        public static Component duration(
                 BanMod mod,
                 @NotNull @Arg(value = "category", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "player", autoFillProvider = AutoFillProvider.Players.class) String playerName,
@@ -419,7 +423,7 @@ public class BanModCommands {
         }
 
         @Command
-        public Component list(BanMod mod) {
+        public static Component list(BanMod mod) {
             // todo: use book adapter
             var text = text().append(text("Available Punishment categories:").decorate(BOLD));
             for (var category : mod.getEntityService().getAccessor(PunishmentCategory.TYPE).all().toList()) {
@@ -480,7 +484,7 @@ public class BanModCommands {
 
         @Command
         @Alias("update")
-        public Component create(
+        public static Component create(
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name,
                 @NotNull @Arg(value = "baseDuration",
@@ -508,7 +512,7 @@ public class BanModCommands {
         }
 
         @Command
-        public Component set(
+        public static Component set(
                 BanMod mod,
                 @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String categoryName,
                 @NotNull @Arg(value = "property", autoFillProvider = AutoFillProvider.ObjectProperties.class) String propertyName,
@@ -518,7 +522,10 @@ public class BanModCommands {
         }
 
         @Command
-        public Component delete(BanMod mod, @NotNull @Arg(value = "name", autoFillProvider = AutoFillProvider.Categories.class) String name) {
+        public static Component delete(
+                BanMod mod, @NotNull @Arg(value = "name", autoFillProvider =
+                        AutoFillProvider.Categories.class) String name
+        ) {
             if ("default".equals(name))
                 throw new CommandError("Cannot delete the default category!");
             var service = mod.getEntityService();
@@ -528,13 +535,19 @@ public class BanModCommands {
                    ? text("Deleted category " + name).color(RED)
                    : text("Could not delete category " + name).color(DARK_RED);
         }
+
+        private category() {
+            throw new UnsupportedOperationException();
+        }
     }
 
-    @UtilityClass
     @Command(value = "import", permission = "4")
-    public class Import {
+    public static class Import {
         @Command
-        public Component vanilla(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+        public static Component vanilla(
+                BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required =
+                        false) boolean cleanup
+        ) {
             mod.getLib().getPlayerAdapter().send(playerId, text("Starting import process..."));
             try (var importer = new VanillaBansImporter(mod)) {
                 var result = importer.run();
@@ -553,7 +566,10 @@ public class BanModCommands {
         }
 
         @Command
-        public Component litebans(BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required = false) boolean cleanup) {
+        public static Component litebans(
+                BanMod mod, UUID playerId, @Default("false") @Arg(value = "cleanup", required =
+                        false) boolean cleanup
+        ) {
             var database = mod.getDatabaseInfo();
             if (database == null) throw new CommandError("Database not found");
 
@@ -578,6 +594,10 @@ public class BanModCommands {
                 BanMod.Resources.printExceptionWithIssueReportUrl(mod, msg, t);
                 throw new CommandError(msg + " " + BanMod.Strings.PleaseCheckConsole);
             }
+        }
+
+        private Import() {
+            throw new UnsupportedOperationException();
         }
     }
 }

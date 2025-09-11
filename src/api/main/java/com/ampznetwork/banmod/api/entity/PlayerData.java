@@ -1,28 +1,15 @@
 package com.ampznetwork.banmod.api.entity;
 
 import com.ampznetwork.libmod.api.entity.Player;
-import com.ampznetwork.libmod.api.model.EntityType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.comroid.annotations.Doc;
-import org.comroid.api.Polyfill;
 import org.jetbrains.annotations.Contract;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.Table;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Comparator;

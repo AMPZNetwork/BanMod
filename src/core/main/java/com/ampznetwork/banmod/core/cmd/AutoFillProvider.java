@@ -6,7 +6,6 @@ import com.ampznetwork.banmod.api.entity.PunishmentCategory;
 import com.ampznetwork.banmod.api.model.Punishment;
 import com.ampznetwork.libmod.api.SubMod;
 import com.ampznetwork.libmod.api.entity.Player;
-import lombok.experimental.UtilityClass;
 import org.comroid.annotations.Instance;
 import org.comroid.commands.autofill.IAutoFillProvider;
 import org.comroid.commands.impl.CommandUsage;
@@ -19,8 +18,11 @@ import static java.util.function.Predicate.*;
 import static java.util.stream.Stream.*;
 import static org.comroid.api.func.util.Streams.*;
 
-@UtilityClass
 public class AutoFillProvider {
+    private AutoFillProvider() {
+        throw new UnsupportedOperationException();
+    }
+
     public enum PageNumber implements IAutoFillProvider {
         @Instance INSTANCE;
 
