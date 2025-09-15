@@ -14,7 +14,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -33,19 +34,22 @@ public final class Ban implements LiteBansEntity {
     @Column(columnDefinition = "bigint unsigned")
     long   id;
     @Column(columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class) @Type(type = "uuid-char")
+    @Convert(converter = UuidVarchar36Converter.class)
+    @JdbcTypeCode(SqlTypes.UUID)
     UUID   uuid;
     @Column(columnDefinition = "varchar(45)")
     String ip;
     @Column(columnDefinition = "varchar(2048)")
     String reason;
     @Column(name = "banned_by_uuid", columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class) @Type(type = "uuid-char")
+    @Convert(converter = UuidVarchar36Converter.class)
+    @JdbcTypeCode(SqlTypes.UUID)
     UUID   bannedByUuid;
     @Column(name = "banned_by_name", columnDefinition = "varchar(128)")
     String bannedByName;
     @Column(name = "removed_by_uuid", columnDefinition = "varchar(36)")
-    @Convert(converter = UuidVarchar36Converter.class) @Type(type = "uuid-char")
+    @Convert(converter = UuidVarchar36Converter.class)
+    @JdbcTypeCode(SqlTypes.UUID)
     UUID   removedByUuid;
     @Column(name = "removed_by_name", columnDefinition = "varchar(128)")
     String removedByName;
